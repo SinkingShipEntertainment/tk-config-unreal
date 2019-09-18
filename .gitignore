@@ -1,0 +1,5 @@
+install_location.yml
+pipeline_configuration.yml
+
+# ignore any compiled python files
+*.pyc
