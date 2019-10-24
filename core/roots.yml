@@ -7,6 +7,12 @@ primary:
   linux_path: /projects
   mac_path: /Volumes/dig/projects
   shotgun_storage_id: 3
-  windows_path: N:\projects
+  windows_path: 'N:\projects'
+
+secondary:
+  linux_path: /projects
+  mac_path: /Volumes/dig/projects
+  shotgun_storage_id: 2
+  windows_path: 'Y:\projects'
 
 # End of file.
