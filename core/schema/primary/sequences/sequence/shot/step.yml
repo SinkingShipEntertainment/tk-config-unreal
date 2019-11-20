@@ -15,6 +15,6 @@ type: "shotgun_step"
 name: "short_name"
 
 # See https://support.shotgunsoftware.com/entries/95441137
-# Update @Shervin - Integrated back TLO step.yml
+# Update @Shervin - Integrated step_tlo.yml back into step.yml 
 
 filters: [ { "path": "short_name", "relation": "in", "values": [ "ANIM", "LIGHT", "TLO", "FX", "CFX" ] } ]

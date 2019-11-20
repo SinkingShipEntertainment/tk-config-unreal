@@ -14,7 +14,6 @@ type: "shotgun_step"
 # the shotgun field to use for the folder name
 name: "short_name"
 
-# Rob Aitchison additions March 8 2016
 # See https://support.shotgunsoftware.com/entries/95441137
 
 filters: [ { "path": "short_name", "relation": "in", "values": [ "TEX" ] } ]
