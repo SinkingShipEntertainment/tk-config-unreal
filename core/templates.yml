@@ -40,6 +40,9 @@ keys:
     name:
         type: str
         filter_by: alphanumeric
+    name_description:
+        type: str
+        filter_by: alphanumeric
     iteration:
         type: int
     version:
@@ -222,9 +225,7 @@ paths:
     #
 
     # >>> from old sg_config
-    # Rob Aitchison November 9 2015
     # additions - to add tk-maya-playblast
-    # Changed June 27 2016 for secondary location
     maya_sequence_playblast:
         definition: '@sequence_root/to_editorial/{Shot}.mov'
         root_name: 'secondary'
@@ -240,21 +241,24 @@ paths:
 
     # The location of WIP files
     photoshop_shot_work:
-        definition: '@shot_root/work/photoshop/{name}.v{version}.psd'
+        #definition: '@shot_root/work/photoshop/{name}.v{version}.psd'
+        definition: '@shot_root/work/photoshop/{Shot}.[{name}.]{Step}.v{version}.psd'
         root_name: 'primary'
     shot_work_area_photoshop:
         definition: '@shot_root/work/photoshop'
         root_name: 'primary'
     # The location of backups of WIP files
     photoshop_shot_snapshot:
-        definition: '@shot_root/work/photoshop/snapshots/{name}.v{version}.{timestamp}.psd'
+        #definition: '@shot_root/work/photoshop/snapshots/{name}.v{version}.{timestamp}.psd'
+        definition: '@shot_root/work/photoshop/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.psd'
         root_name: 'primary'
     # The location of published files
     shot_publish_area_photoshop:
         definition: '@shot_root/publish/photoshop'
         root_name: 'primary'
     photoshop_shot_publish:
-        definition: '@shot_root/publish/photoshop/{name}.v{version}.psd'
+        #definition: '@shot_root/publish/photoshop/{name}.v{version}.psd'
+        definition: '@shot_root/publish/photoshop/{Shot}.[{name}.]{Step}.v{version}.psd'
         root_name: 'primary'
 
     #
@@ -263,7 +267,8 @@ paths:
 
     # The location of WIP files
     aftereffects_shot_work:
-        definition: '@shot_root/work/afx/{name}.{Step}.v{version}.aep'
+        #definition: '@shot_root/work/afx/{name}.{Step}.v{version}.aep'
+        definition: '@shot_root/work/afx/{Shot}.[{name}.]{Step}.v{version}.aep'
         root_name: 'primary'
     shot_work_area_aftereffects:
         definition: '@shot_root/work/afx'
@@ -303,32 +308,41 @@ paths:
         root_name: 'primary'
     # The location of WIP files
     maya_shot_work:
-        definition: '@shot_root/work/{current_user_name}/maya/{name}.{Step}.v{version}.{maya_extension}'
+        #definition: '@shot_root/work/{current_user_name}/maya/{name}.{Step}.v{version}.{maya_extension}'
+        # Used {name} key instead of {name_description} because any other key but name would not show a dialogbox in SG Save.
+        # TODO: To use {name_description}, we should use a popup dialog in scene_operation_tk-maya.py
+        #definition: '@shot_root/work/{current_user_name}/maya/{Shot}.[{name_description}.]{Step}.v{version}.{maya_extension}'
+        definition: '@shot_root/work/{current_user_name}/maya/{Shot}.[{name}.]{Step}.v{version}.{maya_extension}'
         root_name: 'primary'
     # The location of backups of WIP files
     maya_shot_snapshot:
-        definition: '@shot_root/work/{current_user_name}/maya/snapshots/{name}.{Step}.v{version}.{timestamp}.{maya_extension}'
+        #definition: '@shot_root/work/{current_user_name}/maya/snapshots/{name}.{Step}.v{version}.{timestamp}.{maya_extension}'
+        definition: '@shot_root/work/{current_user_name}/maya/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.{maya_extension}'
         root_name: 'primary'
     # The location of published maya files
     maya_shot_publish:
-        definition: '@shot_root/publish/maya/{name}.{Step}.v{version}.{maya_extension}'
+        #definition: '@shot_root/publish/maya/{name}.{Step}.v{version}.{maya_extension}'
+        definition: '@shot_root/publish/maya/{Shot}.[{name}.]{Step}.v{version}.{maya_extension}'
         root_name: 'primary'
 
     # >>> from old sg_config
     # Adding from tk-config-simple-master
     # TODO: Should be deprecated because of maya_shot_cache_alembic
     maya_shot_mesh_alembic_cache:
-        definition: '@shot_root/publish/maya/{name}[_{grp_name}].v{version}.abc'
+        #definition: '@shot_root/publish/maya/{name}[_{grp_name}].v{version}.abc'
+        definition: '@shot_root/publish/maya/{Shot}.[{name}.]{Step}.[{grp_name}].v{version}.abc'
         root_name: 'primary'
 
     maya_shot_camera:
-        definition: '@shot_root/publish/maya/camera/{name}.v{version}.{maya_extension}'
+        #definition: '@shot_root/publish/maya/camera/{name}.v{version}.{maya_extension}'
+        definition: '@shot_root/publish/maya/camera/{Shot}.[{name}.]{Step}.v{version}.{maya_extension}'
         root_name: 'primary'
 
     # additions - to add tk-maya-playblast
     # Added Step to playblast because Anim is not the only team that creates pb
     maya_shot_playblast:
-        definition: '@sequence_root/playblasts/{Shot}/{name}.{Step}.v{version}.mov'
+        #definition: '@sequence_root/playblasts/{Shot}/{name}.{Step}.v{version}.mov'
+        definition: '@sequence_root/playblasts/{Shot}/{Shot}.[{name}.]{Step}.v{version}.mov'
         root_name: 'secondary'
     # END >>> from old sg_config
 
@@ -346,7 +360,8 @@ paths:
         root_name: 'secondary'
 
     maya_shot_render:
-        definition: '@sequence_root/renders/{name}/3d/{maya.layer_name}/v{version}/{name}.{maya.layer_name}.v{version}.{SEQ}.exr'
+        #definition: '@sequence_root/renders/{name}/3d/{maya.layer_name}/v{version}/{name}.{maya.layer_name}.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{name}/3d/{maya.layer_name}/v{version}/{{Shot}.[{name}.]{Step}.{maya.layer_name}.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
     maya_shot_cache_folder:
@@ -354,7 +369,8 @@ paths:
         root_name: 'secondary'
     # @Shervin - Why is there a maya_shot_mesh_alembic_cache and maya_shot_cache_alembic?
     maya_shot_cache_alembic:
-        definition: '@sequence_root/caches/{Shot}/alembic/v{version}/{name}_{maya_namespace}.abc'
+        #definition: '@sequence_root/caches/{Shot}/alembic/v{version}/{name}_{maya_namespace}.abc'
+        definition: '@sequence_root/caches/{Shot}/alembic/v{version}/{Shot}.[{name}.]{Step}.{maya_namespace}.abc'
         root_name: 'secondary'
         
     # @Shervin - Not sure what Manifests do. Ported over from old sgconfig.
@@ -489,6 +505,7 @@ paths:
     #    definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}_v{version}.{SEQ}.dpx'
     #nuke_shot_render_pub_mono_dpx:
     #    definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}_v{version}.{SEQ}.dpx'
+
     # >>> from old sg_config
 
     nuke_shot_render_mono_exr:
@@ -603,11 +620,13 @@ paths:
     #
 
     asset_alembic_cache:
-        definition: '@asset_root/publish/caches/{name}.v{version}.abc'
+        #definition: '@asset_root/publish/caches/{name}.v{version}.abc'
+        definition: '@asset_root/publish/caches/{Asset}.[{name}.]{Step}.v{version}.abc'
         root_name: 'primary'
 
     asset_arnold_standin:
-        definition: '@asset_root/publish/ass/{name}.ass'
+        #definition: '@asset_root/publish/ass/{name}.ass'
+        definition: '@asset_root/publish/ass/{Asset}.[{name}.]{Step}.ass'
         root_name: 'primary'
 
     #
@@ -687,21 +706,25 @@ paths:
         root_name: 'primary'
     # The location of WIP files
     maya_asset_work:
-        definition: '@asset_root/work/{current_user_name}/maya/{name}.{Step}.v{version}.{maya_extension}'
+        #definition: '@asset_root/work/{current_user_name}/maya/{name}.{Step}.v{version}.{maya_extension}'
+        definition: '@asset_root/work/{current_user_name}/maya/{Asset}.[{name}.]{Step}.v{version}.{maya_extension}'
         root_name: 'primary'
     # The location of backups of WIP files
     maya_asset_snapshot:
-        definition: '@asset_root/work/{current_user_name}/maya/snapshots/{name}.{Step}.v{version}.{timestamp}.{maya_extension}'
+        #definition: '@asset_root/work/{current_user_name}/maya/snapshots/{name}.{Step}.v{version}.{timestamp}.{maya_extension}'
+        definition: '@asset_root/work/{current_user_name}/maya/snapshots/{Asset}.[{name}.]{Step}.v{version}.{timestamp}.{maya_extension}'
         root_name: 'primary'
     # The location of published maya files
     maya_asset_publish:
-        definition: '@asset_root/publish/maya/{name}.v{version}.{maya_extension}'
+        #definition: '@asset_root/publish/maya/{name}.v{version}.{maya_extension}'
+        definition: '@asset_root/publish/maya/{Asset}.[{name}.]v{version}.{maya_extension}'
         root_name: 'primary'
 
     # >>> from old sg_config          
     # The location where maya shader networks are stored on disk
     maya_asset_shader_network:
-        definition: '@asset_root/publish/maya/surfacing/{name}.v{version}.{maya_extension}'
+        #definition: '@asset_root/publish/maya/surfacing/{name}.v{version}.{maya_extension}'
+        definition: '@asset_root/publish/maya/surfacing/{Asset}.[{name}.]v{version}.{maya_extension}'
         root_name: 'primary'
     # END >>> from old sg_config          
 

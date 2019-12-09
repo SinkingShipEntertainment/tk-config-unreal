@@ -9,11 +9,6 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 # the type of dynamic content
-type: "shotgun_step"
+type: "user_workspace"
 
-# the shotgun field to use for the folder name
-name: "short_name"
-
-# See https://support.shotgunsoftware.com/entries/95441137
-
-filters: [ { "path": "short_name", "relation": "in", "values": [ "ANIM", "LIGHT", FX", "CFX" ] } ]
+name: "login"
