@@ -77,7 +77,7 @@ keys:
     # >>> from old sg_config
     node:
         type: str
-    # END >>> from old sg_config 
+    # END >>> from old sg_config
 
     # Represents the optional output name for frames written by the After Effects Publish Rendering Plugin
     afx.comp:
@@ -176,11 +176,11 @@ keys:
 # different files should go.
 #
 # >>> from old sg_config
-# In this default configuration, all of the root_name keys will be set to 'primary'. 
-# This is because the default configuration stores all its production data in a single 
-# tree and hence uses a single root folder on disk. If you wanted to extend the 
-# configuration to span multiple root points, for example because you want to store 
-# renders on a different server, you could define an additional root in Shotgun, and 
+# In this default configuration, all of the root_name keys will be set to 'primary'.
+# This is because the default configuration stores all its production data in a single
+# tree and hence uses a single root folder on disk. If you wanted to extend the
+# configuration to span multiple root points, for example because you want to store
+# renders on a different server, you could define an additional root in Shotgun, and
 # then switch any relevant templates to point to that one instead.
 # END >>> from old sg_config
 
@@ -264,25 +264,30 @@ paths:
     #
     # After Effects
     #
-
+    #TEMP: work/{current_user_name}/maya/{Shot}.[{name}.]{Step}.v{version}.{maya_extension}'
     # The location of WIP files
     aftereffects_shot_work:
         #definition: '@shot_root/work/afx/{name}.{Step}.v{version}.aep'
-        definition: '@shot_root/work/afx/{Shot}.[{name}.]{Step}.v{version}.aep'
+        #definition: '@shot_root/work/afx/{Shot}.[{name}.]{Step}.v{version}.aep'              # --- user work areas ~DW 2020-01-09
+        definition: '@shot_root/work/{current_user_name}/aftereffects/{Shot}.[{name}.]{Step}.v{version}.aep'
         root_name: 'primary'
     shot_work_area_aftereffects:
-        definition: '@shot_root/work/afx'
+        #definition: '@shot_root/work/afx'                                                    # --- user work areas ~DW 2020-01-09
+        definition: '@shot_root/work/{current_user_name}/aftereffects'
         root_name: 'primary'
     # The location of backups of WIP files
     aftereffects_shot_snapshot:
-        definition: '@shot_root/work/afx/snapshots/{name}.{Step}.v{version}.{timestamp}.aep'
+        #definition: '@shot_root/work/afx/snapshots/{name}.{Step}.v{version}.{timestamp}.aep' # --- user work areas ~DW 2020-01-09
+        definition: '@shot_root/work/{current_user_name}/aftereffects/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.aep'
         root_name: 'primary'
     # The location of published files
     shot_publish_area_aftereffects:
-        definition: '@shot_root/publish/afx'
+        #definition: '@shot_root/publish/afx'                                                 # --- user work areas ~DW 2020-01-09
+        definition: '@shot_root/publish/aftereffects'
         root_name: 'primary'
     aftereffects_shot_publish:
-        definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'
+        #definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'                    # --- user work areas ~DW 2020-01-09
+        definition: '@shot_root/publish/aftereffects/{Shot}.[{name}.]{Step}.v{version}.aep'
         root_name: 'primary'
     aftereffects_shot_render_pub_mono:
         definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{afx.comp}_v{version}.{SEQ}.tif'
@@ -349,11 +354,11 @@ paths:
 
     # >>> from old sg_config
     # this is the template path for your rendered images. For this example,
-    # I've inserted the camera and layer names into the directory structure. 
-    # You could also make them part of the file name or both. The version comes 
-    # from the version of the work file you're publishing from. The name is 
-    # currently the same as the layer name, but you could make it whatever 
-    # you want in the scan hook. The SEQ key is a placeholder for the frame 
+    # I've inserted the camera and layer names into the directory structure.
+    # You could also make them part of the file name or both. The version comes
+    # from the version of the work file you're publishing from. The name is
+    # currently the same as the layer name, but you could make it whatever
+    # you want in the scan hook. The SEQ key is a placeholder for the frame
     # numbers. This template represents all frames in the sequence.
     maya_shot_render_folder:
         definition: '@sequence_root/renders/{Shot}/3d/'
@@ -372,7 +377,7 @@ paths:
         #definition: '@sequence_root/caches/{Shot}/alembic/v{version}/{name}_{maya_namespace}.abc'
         definition: '@sequence_root/caches/{Shot}/alembic/v{version}/{Shot}.[{name}.]{Step}.{maya_namespace}.abc'
         root_name: 'secondary'
-        
+
     # @Shervin - Not sure what Manifests do. Ported over from old sgconfig.
     #            Potentially we can use it for building shots.
     # Manifests
@@ -482,7 +487,8 @@ paths:
 
     # define the location of a work area
     shot_work_area_nuke:
-        definition: '@shot_root/work/nuke'
+        #definition: '@shot_root/work/nuke'                              # --- user work areas ~DW 2020-01-09
+        definition: '@shot_root/work/{current_user_name}/nuke'
         root_name: 'primary'
     # define the location of a publish area
     shot_publish_area_nuke:
@@ -490,7 +496,8 @@ paths:
         root_name: 'primary'
     # The location of WIP script files
     nuke_shot_work:
-        definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'
+        #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'  # --- user work areas ~DW 2020-01-09
+        definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
         root_name: 'primary'
     # The location of backups of WIP files
     nuke_shot_snapshot:
@@ -577,12 +584,12 @@ paths:
         root_name: 'secondary'
     nuke_shot_r3d_linear_render_pub_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_linear_v{version}.{SEQ}.jpg'
-        root_name: 'secondary'    
+        root_name: 'secondary'
 
     resolve_graded_plates:
         definition: '@sequence_root/plates/{Shot}/graded_plates/'
         root_name: 'secondary'
-    # END >>> from old sg_config    
+    # END >>> from old sg_config
 
     nuke_shot_render_stereo:
         #definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}_{eye}_v{version}.{SEQ}.exr'
@@ -720,13 +727,13 @@ paths:
         definition: '@asset_root/publish/maya/{Asset}.[{name}.]v{version}.{maya_extension}'
         root_name: 'primary'
 
-    # >>> from old sg_config          
+    # >>> from old sg_config
     # The location where maya shader networks are stored on disk
     maya_asset_shader_network:
         #definition: '@asset_root/publish/maya/surfacing/{name}.v{version}.{maya_extension}'
         definition: '@asset_root/publish/maya/surfacing/{Asset}.[{name}.]v{version}.{maya_extension}'
         root_name: 'primary'
-    # END >>> from old sg_config          
+    # END >>> from old sg_config
 
     #
     # Houdini
