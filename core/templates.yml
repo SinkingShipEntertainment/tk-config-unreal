@@ -290,7 +290,8 @@ paths:
         definition: '@shot_root/publish/aftereffects/{Shot}.[{name}.]{Step}.v{version}.aep'
         root_name: 'primary'
     aftereffects_shot_render_pub_mono:
-        definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{afx.comp}_v{version}.{SEQ}.tif'
+        #definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{afx.comp}_v{version}.{SEQ}.tif'
+        definition: '@sequence_root/renders/{Shot}//2d/v{version}/{Shot}.{name}.{afx.comp}.v{version}.tif'
         root_name: 'secondary'
     # The following template uses {afx.mov.ext} this is a special key, that will be only there
     # in the beta to support different extensions on mac and windows, while using the same
