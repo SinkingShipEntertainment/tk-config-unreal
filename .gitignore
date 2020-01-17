@@ -5,4 +5,4 @@ pipeline_configuration.yml
 *.pyc
 
 # ignore PyCharm's .idea folder
-.idea/
+.idea/*.*
