@@ -3,3 +3,6 @@ pipeline_configuration.yml
 
 # ignore any compiled python files
 *.pyc
+
+# ignore PyCharm's .idea folder
+.idea/
