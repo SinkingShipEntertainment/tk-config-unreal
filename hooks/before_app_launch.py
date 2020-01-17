@@ -93,11 +93,11 @@ class BeforeAppLaunch(tank.Hook):
         maya_script_paths.append('{}/maya/scripts/mel/modeling'.format(repo_path))
         maya_script_paths.append('{}/maya/scripts/mel/rigging'.format(repo_path))
         os.environ['MAYA_SCRIPT_PATH'] = ';'.join(maya_script_paths)
-        logger.debug('>> before set MAYA_MODULE_PATH.')
-        os.environ["MAYA_MODULE_PATH"] = ""
-        os.environ['MAYA_PLUG_IN_PATH'] = ""
-        os.environ['MAYA_SCRIPT_PATH'] = ""
-        #logger.debug('>> after set maya_module_path to {}.'.format(maya_module_path))
+        #logger.debug('>> before set MAYA_MODULE_PATH.')                               # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
+        #os.environ["MAYA_MODULE_PATH"] = ""                                           # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
+        #os.environ['MAYA_PLUG_IN_PATH'] = ""                                          # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
+        #os.environ['MAYA_SCRIPT_PATH'] = ""                                           # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
+        #logger.debug('>> after set maya_module_path to {}.'.format(maya_module_path)) # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
 
         sg_a3_path = '{}/shotgun/api3'.format(repo_path)
         maya_tool_path = '{}/maya/scripts'.format(repo_path)
