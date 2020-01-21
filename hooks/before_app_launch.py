@@ -51,13 +51,24 @@ class BeforeAppLaunch(tank.Hook):
         # you can set environment variables like this:
         # os.environ["MY_SETTING"] = "foo bar"
 
+
+        # if you are using a shared hook to cover multiple applications,
+        # you can use the engine setting to figure out which application
+        # is currently being launched:
+        #
+        # > multi_launchapp = self.parent
+        # > if multi_launchapp.get_setting("engine") == "tk-nuke":
+        #       do_something()
+
         #os.environ["MAYA_SCRIPT_PATH"] = "X:\\tools\\sinking_ship\\maya\\scripts\\mel;X:\\tools\\sinking_ship\\maya\\scripts\\vtool;X:\\Tools\\release\mel\\rigging;X:\\Tools\\release\\mel\\anim;X:\\Tools\\release\\mel\\modeling;X:\\Tools\\release\\mel\\light"
 
-        # Log args
+        self.version = version
+        self.engine_name = engine_name
+        # Log execute args
         logger.debug('app_path >> {}'.format(app_path))
         logger.debug('app_args >> {}'.format(app_args))
-        logger.debug('version >> {}'.format(version))
-        logger.debug('engine_name >> {}'.format(engine_name))
+        logger.debug('version >> {}'.format(self.engine_name))
+        logger.debug('engine_name >> {}'.format(self.engine_name))
         logger.debug('kwargs >> {}'.format(kwargs))
 
         os.environ["XBMLANGPATH"] = "X:\\tools\\release\\icons"
@@ -68,7 +79,7 @@ class BeforeAppLaunch(tank.Hook):
         #os.environ["RLM_LICENSE"] = "58332@license.sinkingship.ca"
 
         # --- SG supplied ENVIRONMENT VARIABLES...
-        os.environ['SG_APP_VERSION'] = '{}'.format(version)
+        os.environ['SG_APP_VERSION'] = '{}'.format(self.version)
 
         multi_launchapp = self.parent
         os.environ['SG_CURR_ENTITY'] = '{}'.format(multi_launchapp.context.entity)
@@ -83,36 +94,36 @@ class BeforeAppLaunch(tank.Hook):
         project_name = os.environ['CURR_PROJECT']
 
         # --- Unified studio tools pathing!
-        repo_path = self._return_repo_path(project_name)
+        self.repo_path = self._return_repo_path(project_name)
+
+        if self.engine_name == 'tk-maya':
+            self.run_maya()
+
+        if self.engine_name == 'tk-nuke':
+            self.run_nuke()
+
+        if self.engine_name == 'tk-aftereffects':
+            self.run_aftereffects()
+
+    def run_maya(self):
+        import python
+        reload(python)
 
         maya_script_paths = []
-        maya_script_paths.append('{}/maya/scripts/mel'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/vtool'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/anim'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/light'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/modeling'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/rigging'.format(repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel'.format(self.repo_path))
+        maya_script_paths.append('{}/maya/scripts/vtool'.format(self.repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/anim'.format(self.repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/light'.format(self.repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/modeling'.format(self.repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/rigging'.format(self.repo_path))
         os.environ['MAYA_SCRIPT_PATH'] = ';'.join(maya_script_paths)
-        #logger.debug('>> before set MAYA_MODULE_PATH.')                               # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
-        #os.environ["MAYA_MODULE_PATH"] = ""                                           # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
-        #os.environ['MAYA_PLUG_IN_PATH'] = ""                                          # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
-        #os.environ['MAYA_SCRIPT_PATH'] = ""                                           # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
-        #logger.debug('>> after set maya_module_path to {}.'.format(maya_module_path)) # --- ~DW 2020-01-15 # --- not sure why these were here? v. regular config
 
-        sg_a3_path = '{}/shotgun/api3'.format(repo_path)
-        maya_tool_path = '{}/maya/scripts'.format(repo_path)
-        module_path = '{}/maya/modules'.format(repo_path).replace('/', '\\') # --- idk: windows slashes req for maya modules?
-        #nuke_plugin_path = '{}/nuke'.format(repo_path).replace('/', '\\')    # --- idk: windows slashes req for nuke paths?
-        plugin_path = '{}/maya/plug-ins'.format(repo_path)
+        sg_a3_path = '{}/shotgun/api3'.format(self.repo_path)
+        maya_tool_path = '{}/maya/scripts'.format(self.repo_path)
+        module_path = '{}/maya/modules'.format(self.repo_path).replace('/', '\\') # --- idk: windows slashes req for maya modules?
+        #nuke_plugin_path = '{}/nuke'.format(self.repo_path).replace('/', '\\')    # --- idk: windows slashes req for nuke paths?
+        plugin_path = '{}/maya/plug-ins'.format(self.repo_path)
 
-        # --- test for NUKE_PATH problems...
-        #if 'NUKE_PATH' in os.environ:
-        #    logger.debug('Found existing NUKE_PATH in os.environ...')
-        #    os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
-        #else:
-        #    logger.debug('No existing NUKE_PATH in os.environ, creating...')
-        #    os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
-        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
 
         script_paths = []
         script_paths.append(sg_a3_path)
@@ -134,11 +145,11 @@ class BeforeAppLaunch(tank.Hook):
                 logger.debug('new_py_path: {}'.format(new_py_path))
                 os.environ['PYTHONPATH'] = new_py_path
 
-        import python
-        reload (python)
+        #import python
+        #reload (python)
 
         # --- specific related to Maya versions...
-        if version == "2016":
+        if self.version == "2016":
             os.environ["MAYA_PLUG_IN_PATH"] = "X:\\tools\\maya\\plugins\\2016"
 
             vray_home = "C:\\Program Files\\Autodesk\\Maya2016\\vray"
@@ -164,7 +175,7 @@ class BeforeAppLaunch(tank.Hook):
 
             os.environ["PATH"] = os.environ["PATH"] + os.pathsep + "X:\\tools\\sinking_ship\\maya\\scripts\\vtool"
 
-        elif version == "2018":
+        elif self.version == "2018":
             module_path = module_path + os.sep + '2018'
             logger.debug('module_path >> {}'.format(module_path))
             #os.environ["MAYA_PLUG_IN_PATH"] = "X:\\tools\\maya\\plugins\\2018" # --- top o' the list! yikes
@@ -225,13 +236,47 @@ class BeforeAppLaunch(tank.Hook):
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
 
-        # if you are using a shared hook to cover multiple applications,
-        # you can use the engine setting to figure out which application
-        # is currently being launched:
-        #
-        # > multi_launchapp = self.parent
-        # > if multi_launchapp.get_setting("engine") == "tk-nuke":
-        #       do_something()
+
+    def run_nuke(self):
+        # Do we need to run python module in nuke?
+        import python
+        reload (python)
+
+        #sg_a3_path = 'X:/tools/projects/{0}/{0}_repo/shotgun/api3'.format(project_name)
+        sg_a3_path = '{}/shotgun/api3'.format(self.repo_path)
+        #nuke_plugin_path = os.path.join('X:\\','tools', 'projects', project_name, project_name+'_repo\\','nuke')
+        nuke_plugin_path = '{}/nuke'.format(self.repo_path).replace('/', '\\')
+
+        # Check if NUKE_PATH exists.
+        # TODO - After NUKE_PATH is purged from boxes, remove condition so we find out-of-sync boxes
+        if 'NUKE_PATH' in os.environ:
+            logger.debug('Found existing NUKE_PATH in os.environ...')
+            os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+        else:
+            logger.debug('No existing NUKE_PATH in os.environ, creating...')
+            os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
+        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+
+        logger.debug('>>>> PYTHONPATH = {}'.format(os.environ['PYTHONPATH']))
+        logger.debug('>>>> NUKE_PATH = {}'.format(os.environ['NUKE_PATH']))
+
+        self.env_paths_sanity_check()
+
+        # --- test for NUKE_PATH problems...
+        # if 'NUKE_PATH' in os.environ:
+        #    logger.debug('Found existing NUKE_PATH in os.environ...')
+        #    os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+        # else:
+        #    logger.debug('No existing NUKE_PATH in os.environ, creating...')
+        #    os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
+        # os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+
+    def run_aftereffects(self):
+        # TODO - move api3 path to the init. It should run regardless of engine
+        #sg_a3_path = 'X:/tools/projects/{0}/{0}_repo/shotgun/api3'.format(project_name)
+        sg_a3_path = '{}/shotgun/api3'.format(self.repo_path)
+
+        self.env_paths_sanity_check()
 
     def env_paths_sanity_check(self):
         '''
@@ -241,11 +286,14 @@ class BeforeAppLaunch(tank.Hook):
         env_var_str = []
 
         path_list = ['SYSTEM PATH',
-                    'PYTHONPATH',
-                    'MAYA_MODULE_PATH',
-                    'MAYA_PLUG_IN_PATH',
-                    'MAYA_SCRIPT_PATH'
+                    'PYTHONPATH'
                     ]
+        if self.engine_name == 'tk-maya':
+            maya_path_list = ['MAYA_MODULE_PATH',
+                              'MAYA_PLUG_IN_PATH',
+                              'MAYA_SCRIPT_PATH'
+                             ]
+            path_list.extend(maya_path_list)
 
         for path_item in path_list:
             env_var_str.append(my_sep)
@@ -274,7 +322,7 @@ class BeforeAppLaunch(tank.Hook):
                                based on information
                                gleaned from Shotgun.
         """
-        repo_path = None
+        _repo_path = None
 
         logger.debug(my_sep)
 
@@ -307,15 +355,15 @@ class BeforeAppLaunch(tank.Hook):
 
         if wanted_repo_key:
             if wanted_repo_key == 'dev':
-                repo_path = 'X:/dev/ss_dev_{0}/{1}_repo'.format(sgtk_core_user, project_name)
+                _repo_path = 'X:/dev/ss_dev_{0}/{1}_repo'.format(sgtk_core_user, project_name)
                 # --- If it's not a Project-specific repo, we have to resort to
                 # --- the generic studio repo...
-                if not os.path.exists(repo_path):
-                    repo_path = 'X:/dev/ss_dev_{0}/ss_studio_repo'.format(sgtk_core_user, project_name)
+                if not os.path.exists(_repo_path):
+                    _repo_path = 'X:/dev/ss_dev_{0}/ss_studio_repo'.format(sgtk_core_user, project_name)
             elif wanted_repo_key == 'project':
-                repo_path = 'X:/tools/projects/{0}/{0}_repo'.format(project_name)
+                _repo_path = 'X:/tools/projects/{0}/{0}_repo'.format(project_name)
             else:
-                repo_path = 'X:/tools/ss_studio_repo'
+                _repo_path = 'X:/tools/ss_studio_repo'
         logger.debug(my_sep)
 
-        return repo_path
+        return _repo_path
