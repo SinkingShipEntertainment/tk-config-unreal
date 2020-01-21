@@ -43,3 +43,17 @@ settings.tk-multi-launchapp.mari:
   windows_path: "@path.windows.mari"
   menu_name: Mari
   location: "@apps.tk-multi-launchapp.location"
+
+################################################################################
+
+# Sining Ship app-specific launchapp configurations
+
+# SSE Harvest Tool
+settings.tk-multi-launchapp.harvest:
+  engine: ''
+  hook_app_launch: default
+  hook_before_app_launch: default
+  windows_path: "@path.windows.harvest"
+  menu_name: PublishAndHarvest
+  location: "@apps.tk-multi-launchapp.location"
+  icon: "X:\\tools\\sinking_ship\\shotgun\\icons\\ss_logo_256x256.png"

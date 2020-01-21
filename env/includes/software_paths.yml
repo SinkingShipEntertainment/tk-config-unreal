@@ -23,3 +23,6 @@ path.windows.mari: C:\Program Files\Mari4.2v1\Bundle\bin\Mari4.2v1.exe
 path.linux.rv: "rv"
 path.mac.rv: "/Applications/RV64.app"
 path.windows.rv: C:\Program Files\Shotgun\RV-7.3.1\bin\rv.exe
+
+# Sinking Ship Publish and Harvest
+path.windows.harvest: X:\tools\sinking_ship\shotgun\RunHarvestPublish.bat
