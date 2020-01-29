@@ -154,6 +154,7 @@ class MayaActions(HookBaseClass):
         # ---       downstream yet (maybe the namespace normalizing method in
         # ---       initial light builds). ~DW 2020-01-29
         namespace = '{}'.format(sg_publish_data.get('name'))
+        namespace = self._remove_file_ext_from_namespace(namespace)
 
         # --- SinkingShip: if RIG, check for 'versionless' filepath, and
         # --- substitute it if you find it (DW 2019-03-20)...
@@ -199,7 +200,14 @@ class MayaActions(HookBaseClass):
         # --- SinkingShip: under an Entity we have multiple Publish names
         # --- (e.g. WhiteRabbit_MOD, WhiteRabbit_RIG, WhiteRabbit_SURF, etc.)
         # --- so we'll use the Publish name, not the Entity name (DW 2019-03-09)...
+        # --- NOTE: Under the 'new' shotgun configuration, the Publish name will
+        # ---       be e.g. WhiteRabbit.MOD, WhiteRabbit.RIG, WhiteRabbit.SURF,
+        # ---       and Maya will convert the '.' to a '_' if you try to use the
+        # ---       '.' in a namespace. Not sure if it will affect anything
+        # ---       downstream yet (maybe the namespace normalizing method in
+        # ---       initial light builds). ~DW 2020-01-29
         namespace = '{}'.format(sg_publish_data.get('name'))
+        namespace = self._remove_file_ext_from_namespace(namespace)
 
         # perform a more or less standard maya import, putting all nodes brought in into a specific namespace
         cmds.file(path, i=True, renameAll=True, namespace=namespace, loadReferenceDepth="all", preserveReferences=True)
@@ -251,3 +259,33 @@ class MayaActions(HookBaseClass):
             if major_version_number_str and major_version_number_str.isdigit():
                 self._maya_major_version = int(major_version_number_str)
         return self._maya_major_version
+
+    def _remove_file_ext_from_namespace(self, orig_nspc):
+        """
+        For some reason under the new Shotgun configuration,
+        we're getting file extensions in the Publish names,
+        so this method is to strip them out of potential
+        namespaces if they appear. (SSE ~ DW 2020-01-29)
+
+        :param str orig_nspc: The original namespace string to check
+                              and possibly modify.
+        :return str new_nspc: The new namespace.
+        """
+        file_exts = [
+            'ma',
+            'mb',
+            'abc',
+            'ass',
+            'obj'
+        ]
+
+        new_nspc = orig_nspc
+
+        _cfg_delimiter = '.'
+        _cfg_delimiter_max = 1
+        if orig_nspc.count(_cfg_delimiter) > _cfg_delimiter_max:
+            orig_nspc_parts = orig_nspc.split(_cfg_delimiter)
+            if orig_nspc_parts[-1] in file_exts:
+                new_nspc = '.'.join(orig_nspc_parts[:2])
+
+        return new_nspc
