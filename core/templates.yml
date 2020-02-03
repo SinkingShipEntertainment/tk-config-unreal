@@ -895,7 +895,7 @@ paths:
         root_name: 'primary'
     # The location of published ZBrush Ztool files
     zbrush_asset_publish:
-        definition: '@asset_root/publish/zbrush/ztool/{Asset}.[{name}.]v{version}.ztl'
+        definition: '@asset_root/publish/zbrush/ztool/{Asset}.[{name}.]{Step}.v{version}.ztl'
         root_name: 'primary'
 
 
