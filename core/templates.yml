@@ -869,6 +869,33 @@ paths:
         definition: '@asset_root/publish/nuke/{name}.v{version}.nk'
         root_name: 'primary'
 
+    #
+    # ZBrush Ztools
+    #
+    # NOTE: This is an SSE add, doing ZTL Publishes for Shotgun would
+    #       require some development effort, getting the Asset pathing
+    #       in here for now (-DW 2020-02-03)
+    # define the location of a work area
+    asset_work_area_zbrush:
+        definition: '@asset_root/work/{current_user_name}/zbrush/ztool'
+        root_name: 'primary'
+    # define the location of a publish area
+    asset_publish_area_zbrush:
+        definition: '@asset_root/publish/zbrush/ztool'
+        root_name: 'primary'
+    # The location of WIP files
+    zbrush_asset_work:
+        definition: '@asset_root/work/{current_user_name}/zbrush/ztool/{Asset}.[{name}.]{Step}.v{version}.ztl'
+        root_name: 'primary'
+    # The location of backups of WIP files
+    zbrush_asset_snapshot:
+        definition: '@asset_root/work/{current_user_name}/zbrush/ztool/snapshots/{Asset}.[{name}.]{Step}.v{version}.{timestamp}.ztl'
+        root_name: 'primary'
+    # The location of published ZBrush Ztool files
+    zbrush_asset_publish:
+        definition: '@asset_root/publish/zbrush/ztool/{Asset}.[{name}.]v{version}.ztl'
+        root_name: 'primary'
+
 
 #
 # The strings section is similar to the paths section - but rather than defining paths
