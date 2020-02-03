@@ -400,11 +400,7 @@ settings.tk-multi-publish2.aftereffects.shot_step:
     settings: {}
   - name: Render Render Queue Items
     hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/make_rendering.py"
-    settings:
-        Publish Sequence Template: aftereffects_shot_render_pub_mono
-        Publish Movie Template: aftereffects_shot_render_movie
-        Default Sequence Output Module: TIFF Sequence with Alpha
-        Default Movie Output Module: Lossless with Alpha
+    settings: {}
   - name: Copy Renderings to Publish Location
     hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/copy_rendering.py"
     settings:
