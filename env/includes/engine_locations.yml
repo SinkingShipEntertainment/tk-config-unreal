@@ -23,25 +23,25 @@ engines.tk-3dsmaxplus.location:
 engines.tk-aftereffects.location:
   type: app_store
   name: tk-aftereffects
-  version: v0.1.2
+  version: v0.1.4
 
 # Desktop
 engines.tk-desktop.location:
   type: app_store
   name: tk-desktop
-  version: v2.4.12
+  version: v2.4.14
 
 # Desktop2
 engines.tk-desktop2.location:
   type: app_store
   name: tk-desktop2
-  version: v1.2.5
+  version: v1.3.1
 
 # Houdini
 engines.tk-houdini.location:
   type: app_store
   name: tk-houdini
-  version: v1.6.1
+  version: v1.6.3
 
 # Mari
 engines.tk-mari.location:
@@ -53,19 +53,19 @@ engines.tk-mari.location:
 engines.tk-maya.location:
   type: app_store
   name: tk-maya
-  version: v0.9.8
+  version: v0.9.10
 
 # Nuke
 engines.tk-nuke.location:
   type: app_store
   name: tk-nuke
-  version: v0.12.4
+  version: v0.12.5
 
 # Photoshop
 engines.tk-photoshopcc.location:
   type: app_store
   name: tk-photoshopcc
-  version: v1.7.2
+  version: v1.7.5
 
 # Shell
 engines.tk-shell.location:
