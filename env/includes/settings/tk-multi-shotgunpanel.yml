@@ -248,3 +248,34 @@ settings.tk-multi-shotgunpanel.aftereffects:
       filters: {}
   actions_hook: "{engine}/tk-multi-shotgunpanel/basic/scene_actions.py"
   location: "@apps.tk-multi-shotgunpanel.location"
+
+# --- SSE add (-DW 2020-02-04)
+# natron
+settings.tk-multi-shotgunpanel.natron:
+  action_mappings:
+    PublishedFile:
+    - actions: [read_node]
+      filters: {published_file_type: Alembic Cache}
+    - actions: [read_node]
+      filters: {published_file_type: Flame Render}
+    - actions: [read_node]
+      filters: {published_file_type: Flame Quicktime}
+    - actions: [read_node]
+      filters: {published_file_type: Image}
+    - actions: [read_node]
+      filters: {published_file_type: Movie}
+    - actions: [read_node]
+      filters: {published_file_type: Photoshop Image}
+    - actions: [read_node]
+      filters: {published_file_type: Rendered Image}
+    - actions: [read_node]
+      filters: {published_file_type: Texture}
+    - actions: [publish_clipboard]
+      filters: {}
+    Task:
+    - actions: [assign_task, task_to_ip]
+      filters: {}
+    Version:
+    - actions: [quicktime_clipboard, sequence_clipboard, add_to_playlist]
+      filters: {}
+  location: "@apps.tk-multi-shotgunpanel.location"
