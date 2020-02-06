@@ -171,11 +171,11 @@ keys:
     # --- SSE adds below (-DW 2020-02-04) --- #
     # --------------------------------------- #
     # Natron
-    keys:
-        natron.output:
-            alias: output
-            type: str
-            filter_by: alphanumeric
+
+    natron.output:
+        alias: output
+        type: str
+        filter_by: alphanumeric
     # --- ^^^ ------------------------------- #
 
 #
