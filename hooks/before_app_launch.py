@@ -81,7 +81,7 @@ class BeforeAppLaunch(tank.Hook):
         self._repo_path = self._return_repo_path(project_name)
 
         # --- Make the SSE Shotgun API available...
-        self._sg_a3_path = '{}/shotgun/api3'.format(repo_path)
+        self._sg_a3_path = '{}/shotgun/api3'.format(self._repo_path)
 
         # --- Call methods based on the Toolkit engine we're invoking
         # --- (e.g. Maya > 'tk-maya', Nuke > 'tk-nuke', etc.)...
@@ -203,7 +203,7 @@ class BeforeAppLaunch(tank.Hook):
         module_path = '{0}{1}{2}'.format(module_path, os.sep, self._version)
         logger.debug('module_path > {}'.format(module_path))
 
-        if version == '2018':
+        if self._version == '2018':
             # --- General plugins...
             os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(plugin_path, os.sep, self._version)
 
