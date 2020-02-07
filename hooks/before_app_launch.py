@@ -303,7 +303,7 @@ class BeforeAppLaunch(tank.Hook):
             logger.debug('No Maya product/version specific environment variables required.')
 
         # --- Tell the user what's up...
-        self.env_paths_sanity_check()
+        self.env_paths_sanity_check(engine_setup=_setup)
 
     def _tk_nuke_env_setup(self, repo_path, sg_a3_path, version):
         """
@@ -320,7 +320,7 @@ class BeforeAppLaunch(tank.Hook):
         self._headers(_setup)
 
         # --- Tell the user what's up...
-        self.env_paths_sanity_check()
+        self.env_paths_sanity_check(engine_setup=_setup)
 
     def _headers(self, user_title):
         """
