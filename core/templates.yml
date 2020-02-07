@@ -937,7 +937,8 @@ paths:
 
     # define the location of a work area
     shot_work_area_natron:
-        definition: '@shot_root/work/natron'
+        #definition: '@shot_root/work/natron'
+        definition: '@shot_root/work/{current_user_name}/natron'                                       # --- user work areas ~DW 2020-02-07
         root_name: 'primary'
     # define the location of a publish area
     shot_publish_area_natron:
@@ -945,7 +946,8 @@ paths:
         root_name: 'primary'
     # The location of WIP script files
     natron_shot_work:
-        definition: '@shot_root/work/natron/{name}.v{version}.ntp'
+        #definition: '@shot_root/work/natron/{name}.v{version}.ntp'
+        definition: '@shot_root/work/{current_user_name}/natron/{Shot}.[{name}.]{Step}.v{version}.ntp' # --- user work areas ~DW 2020-02-07
         root_name: 'primary'
     # The location of backups of WIP files
     natron_shot_snapshot:
@@ -953,7 +955,7 @@ paths:
         root_name: 'primary'
     # The location of published natron script files
     natron_shot_publish:
-        definition: '@shot_root/publish/natron/{name}.v{version}.ntp'
+        definition: '@shot_root/publish/natron/{Shot}.[{name}.]{Step}.v{version}.ntp'
         root_name: 'primary'
     # write node outputs
     natron_shot_render_mono_dpx:
