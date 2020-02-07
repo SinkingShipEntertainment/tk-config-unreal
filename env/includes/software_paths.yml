@@ -29,3 +29,6 @@ path.windows.rv: C:\Program Files\Shotgun\RV-7.3.1\bin\rv.exe
 path.linux.natron: "Natron"
 path.mac.natron: "/Applications/Natron.app"
 path.windows.natron: C:\Program Files\INRIA\Natron-2.3.14\bin\Natron.exe
+
+# Sinking Ship Publish and Harvest
+path.windows.harvest: X:\tools\sinking_ship\shotgun\RunHarvestPublish.bat

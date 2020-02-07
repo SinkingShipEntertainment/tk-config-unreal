@@ -105,6 +105,7 @@ settings.tk-multi-shotgunpanel.maya:
     Version:
     - actions: [quicktime_clipboard, sequence_clipboard, add_to_playlist]
       filters: {}
+  actions_hook: '{self}/general_actions.py:{self}/tk-maya_actions.py'
   location: "@apps.tk-multi-shotgunpanel.location"
 
 # nuke

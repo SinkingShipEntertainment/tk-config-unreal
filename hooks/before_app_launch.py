@@ -73,38 +73,32 @@ class BeforeAppLaunch(tank.Hook):
         os.environ['CURR_PROJECT'] = '{}'.format(multi_launchapp.context.project['name'])
         project_name = os.environ['CURR_PROJECT']
 
+        # --- Set instance variables...
+        self._version = version
+        self._engine_name = engine_name
+
         # --- Unified studio tools pathing!
-        repo_path = self._return_repo_path(project_name)
+        self._repo_path = self._return_repo_path(project_name)
 
         # --- Make the SSE Shotgun API available...
-        sg_a3_path = '{}/shotgun/api3'.format(repo_path)
+        self._sg_a3_path = '{}/shotgun/api3'.format(repo_path)
 
         # --- Call methods based on the Toolkit engine we're invoking
         # --- (e.g. Maya > 'tk-maya', Nuke > 'tk-nuke', etc.)...
         if engine_name == 'tk-maya':
-            self._tk_maya_env_setup(repo_path, sg_a3_path, version)
+            self._tk_maya_env_setup()
 
         if engine_name == 'tk-nuke':
-            self._tk_nuke_env_setup(repo_path, sg_a3_path, version)
+            self._tk_nuke_env_setup()
 
-        #nuke_plugin_path = '{}/nuke'.format(repo_path).replace('/', '\\')    # --- idk: windows slashes req for nuke paths?
+        if engine_name == 'tk-aftereffects':
+            self._tk_aftereffects_env_setup()
 
-        # --- test for NUKE_PATH problems...
-        #if 'NUKE_PATH' in os.environ:
-        #    logger.debug('Found existing NUKE_PATH in os.environ...')
-        #    os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
-        #else:
-        #    logger.debug('No existing NUKE_PATH in os.environ, creating...')
-        #    os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
-        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+        if engine_name == 'tk-houdini':
+            self._tk_houdini_env_setup()
 
-        # if you are using a shared hook to cover multiple applications,
-        # you can use the engine setting to figure out which application
-        # is currently being launched:
-        #
-        # > multi_launchapp = self.parent
-        # > if multi_launchapp.get_setting("engine") == "tk-nuke":
-        #       do_something()
+        if engine_name == 'tk-natron':
+            self._tk_natron_env_setup()
 
     def _return_repo_path(self, project_name):
         """
@@ -161,35 +155,29 @@ class BeforeAppLaunch(tank.Hook):
 
         return repo_path
 
-    def _tk_maya_env_setup(self, repo_path, sg_a3_path, version):
+    def _tk_maya_env_setup(self):
         """
         Method to set up all the wanted environment
         variables when launching a Maya session.
-        @param str repo_path: path to the proper Project
-                              code repository.
-        @param str sg_a3_path: path to the SSE SG API
-                               code repository.
-        @param str version: the version of Maya that's
-                            called.
         """
         _setup = '_tk_maya_env_setup'
         self._headers(_setup)
 
         maya_script_paths = []
-        maya_script_paths.append('{}/maya/scripts/mel'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/vtool'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/anim'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/light'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/modeling'.format(repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/rigging'.format(repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel'.format(self._repo_path))
+        maya_script_paths.append('{}/maya/scripts/vtool'.format(self._repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/anim'.format(self._repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/light'.format(self._repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/modeling'.format(self._repo_path))
+        maya_script_paths.append('{}/maya/scripts/mel/rigging'.format(self._repo_path))
         os.environ['MAYA_SCRIPT_PATH'] = ';'.join(maya_script_paths)
 
-        maya_tool_path = '{}/maya/scripts'.format(repo_path)
-        module_path = '{}/maya/modules'.format(repo_path)
-        plugin_path = '{}/maya/plug-ins'.format(repo_path)
+        maya_tool_path = '{}/maya/scripts'.format(self._repo_path)
+        module_path = '{}/maya/modules'.format(self._repo_path)
+        plugin_path = '{}/maya/plug-ins'.format(self._repo_path)
 
         script_paths = []
-        script_paths.append(sg_a3_path)
+        script_paths.append(self._sg_a3_path)
         script_paths.append(maya_tool_path)
         for script_path in script_paths:
             sys.path.insert(0, script_path)
@@ -212,12 +200,12 @@ class BeforeAppLaunch(tank.Hook):
         reload (python)
 
         # --- specific related to Maya versions...
-        module_path = '{0}{1}{2}'.format(module_path, os.sep, version)
+        module_path = '{0}{1}{2}'.format(module_path, os.sep, self._version)
         logger.debug('module_path > {}'.format(module_path))
 
         if version == '2018':
             # --- General plugins...
-            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(plugin_path, os.sep, version)
+            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(plugin_path, os.sep, self._version)
 
             # --- VRay (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
@@ -294,24 +282,82 @@ class BeforeAppLaunch(tank.Hook):
             logger.debug('No Maya product/version specific environment variables required.')
 
         # --- Tell the user what's up...
-        self.env_paths_sanity_check(engine_setup=_setup)
+        self.env_paths_sanity_check()
 
-    def _tk_nuke_env_setup(self, repo_path, sg_a3_path, version):
+    def _tk_nuke_env_setup(self):
         """
         Method to set up all the wanted environment
         variables when launching a Nuke session.
-        @param str repo_path: path to the proper Project
-                              code repository.
-        @param str sg_a3_path: path to the SSE SG API
-                               code repository.
-        @param str version: the version of Nuke that's
-                            called.
         """
         _setup = '_tk_nuke_env_setup'
         self._headers(_setup)
 
+        script_paths = []
+        script_paths.append(self._sg_a3_path)
+        for script_path in script_paths:
+            sys.path.insert(0, script_path)
+
+        # Check if NUKE_PATH exists.
+        # TODO - After NUKE_PATH is purged from boxes, remove condition so we find out-of-sync boxes
+        nuke_plugin_path = '{}/nuke'.format(self._repo_path).replace('/', '\\')
+        if 'NUKE_PATH' in os.environ:
+            logger.debug('Found existing NUKE_PATH in os.environ...')
+            os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+        else:
+            logger.debug('No existing NUKE_PATH in os.environ, creating...')
+            os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
+        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+
         # --- Tell the user what's up...
-        self.env_paths_sanity_check(engine_setup=_setup)
+        self.env_paths_sanity_check()
+
+    def _tk_aftereffects_env_setup(self):
+        """
+        Method to set up all the wanted environment
+        variables when launching an AE session.
+        """
+        _setup = '_tk_aftereffects_env_setup'
+        self._headers(_setup)
+
+        script_paths = []
+        script_paths.append(self._sg_a3_path)
+        for script_path in script_paths:
+            sys.path.insert(0, script_path)
+
+        # --- Tell the user what's up...
+        self.env_paths_sanity_check()
+
+    def _tk_houdini_env_setup(self):
+        """
+        Method to set up all the wanted environment
+        variables when launching a Houdini session.
+        """
+        _setup = '_tk_aftereffects_env_setup'
+        self._headers(_setup)
+
+        script_paths = []
+        script_paths.append(self._sg_a3_path)
+        for script_path in script_paths:
+            sys.path.insert(0, script_path)
+
+        # --- Tell the user what's up...
+        self.env_paths_sanity_check()
+
+    def _tk_natron_env_setup(self):
+        """
+        Method to set up all the wanted environment
+        variables when launching a Houdini session.
+        """
+        _setup = '_tk_natron_env_setup'
+        self._headers(_setup)
+
+        script_paths = []
+        script_paths.append(self._sg_a3_path)
+        for script_path in script_paths:
+            sys.path.insert(0, script_path)
+
+        # --- Tell the user what's up...
+        self.env_paths_sanity_check()
 
     def _headers(self, user_title):
         """
@@ -328,7 +374,7 @@ class BeforeAppLaunch(tank.Hook):
         else:
             logger.debug('Please provide a title string.')
 
-    def env_paths_sanity_check(self, engine_setup=None):
+    def env_paths_sanity_check(self):
         '''
         Print the lists of source paths to the Shotgun
         Desktop Console.
@@ -344,15 +390,29 @@ class BeforeAppLaunch(tank.Hook):
         ]
 
         # --- Per engine checks if required...
-        if engine_setup:
-            if engine_setup == '_tk_maya_env_setup':
-                _maya_paths = [
-                    'MAYA_MODULE_PATH',
-                    'MAYA_PLUG_IN_PATH',
-                    'MAYA_SCRIPT_PATH'
-                ]
+        if self._engine_name == 'tk-maya':
+            _maya_paths = [
+                'MAYA_MODULE_PATH',
+                'MAYA_PLUG_IN_PATH',
+                'MAYA_SCRIPT_PATH'
+            ]
 
-                path_list.extend(_maya_paths)
+            path_list.extend(_maya_paths)
+
+        if self._engine_name == 'tk-nuke':
+            _nuke_paths = [
+                'NUKE_PATH'
+            ]
+            path_list.extend(_nuke_paths)
+
+        if self._engine_name == 'tk-aftereffects':
+            pass
+
+        if self._engine_name == 'tk-houdini':
+            pass
+
+        if self._engine_name == 'tk-natron':
+            pass
 
         # --- Iterate over the paths...
         for path_item in path_list:
