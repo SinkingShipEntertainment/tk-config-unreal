@@ -270,23 +270,14 @@ class BeforeAppLaunch(tank.Hook):
                 main_module_list.append(_home)
                 logger.debug('Added Maya module > {}'.format(_home))
 
-            # brweights_home = '{0}{1}brSmoothWeights'.format(module_path, os.sep)
-            # logger.debug('brweights_home > {}'.format(brweights_home))
-
-            # ideform_home = '{0}{1}iDeform'.format(module_path, os_sep)
-            # logger.debug('ideform_home >> {}'.format(ideform_home))
-
-            # atomscrowd_home = module_path + os.sep + 'AtomsMaya'
-            # logger.debug('atomscrowd_home >> {}'.format(atomscrowd_home))
-
-            # module_list = [module_path, yeti_home, brweights_home, ideform_home, atomscrowd_home]
-            #maya_module_path = (os.pathsep).join(module_list)
-
             maya_module_path = (os.pathsep).join(main_module_list)
             logger.debug('maya_module_path > {}'.format(maya_module_path))
 
-            os.environ["MAYA_MODULE_PATH"] = maya_module_path
-            os.environ["PATH"] = os.environ["PATH"] + os.pathsep + "X:\\tools\\sinking_ship\\maya\\scripts\\vtool"
+            os.environ['MAYA_MODULE_PATH'] = maya_module_path
+
+            # --- Legacy vtool stuff, need to revisit/update/remove possibly...
+            vtool_legacy_path = 'X:\\tools\\sinking_ship\\maya\\scripts\\vtool'
+            os.environ['PATH'] = '{0}{1}{2}'.format(os.environ['PATH'], os.pathsep, vtool_legacy_path)
 
             # --- Redshift (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
