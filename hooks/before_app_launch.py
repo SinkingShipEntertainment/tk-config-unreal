@@ -352,9 +352,24 @@ class BeforeAppLaunch(tank.Hook):
         self._headers(_setup)
 
         script_paths = []
+
+        # --- NOTE: switch to the commented out line in the near future,
+        # ---       'X:/tools/natron' is temporary...
+        #studio_na_root = '{}/natron'.format(self._repo_path).replace('/', '\\')
+        studio_na_root = 'X:/tools/natron'
+        script_paths.append(studio_na_root)
+        script_paths.append('{}/tools_sse'.format(studio_na_root))
+        script_paths.append('{}/tools_sse/Plugins'.format(studio_na_root))
         script_paths.append(self._sg_a3_path)
-        for script_path in script_paths:
-            sys.path.insert(0, script_path)
+        studio_na_paths = os.pathsep.join(script_paths)
+
+        if 'NATRON_PLUGIN_PATH' in os.environ:
+            logger.debug('Found existing NATRON_PLUGIN_PATH in os.environ...')
+            os.environ['NATRON_PLUGIN_PATH'] = os.pathsep.join([studio_na_paths,
+                os.environ['NATRON_PLUGIN_PATH']])
+        else:
+            logger.debug('No existing NATRON_PLUGIN_PATH in os.environ, creating...')
+            os.environ['NATRON_PLUGIN_PATH'] = '{}'.format(studio_na_paths)
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -412,7 +427,10 @@ class BeforeAppLaunch(tank.Hook):
             pass
 
         if self._engine_name == 'tk-natron':
-            pass
+            _natron_paths = [
+                'NATRON_PLUGIN_PATH',
+            ]
+            path_list.extend(_natron_paths)
 
         # --- Iterate over the paths...
         for path_item in path_list:
