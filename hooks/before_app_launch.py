@@ -222,23 +222,39 @@ class BeforeAppLaunch(tank.Hook):
             logger.debug('yeti_home > {}'.format(yeti_home))
 
             os.environ['YETI_HOME'] = yeti_home
-            os.environ['PATH'] = '{0}{1}{2}{1}bin'.format(os.environ['PATH'], os.pathsep, yeti_home)
-            os.environ['XBMLANGPATH'] = '{0}{1}{2}{1}icons'.format(os.environ['XBMLANGPATH'], os.pathsep, yeti_home)
-            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}{1}plug-ins'.format(os.environ['MAYA_PLUG_IN_PATH'], os.pathsep, yeti_home)
-            os.environ['MAYA_SCRIPT_PATH'] = '{0}{1}{2}{1}scripts'.format(os.environ['MAYA_SCRIPT_PATH'], os.pathsep, yeti_home)
+            os.environ['PATH'] = '{0}{1}{2}{3}bin'.format(os.environ['PATH'], os.pathsep, yeti_home, os.sep)
+            os.environ['XBMLANGPATH'] = '{0}{1}{2}{3}icons'.format(os.environ['XBMLANGPATH'], os.pathsep, yeti_home, os.sep)
+            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}{3}plug-ins'.format(os.environ['MAYA_PLUG_IN_PATH'], os.pathsep, yeti_home, os.sep)
+            os.environ['MAYA_SCRIPT_PATH'] = '{0}{1}{2}{3}scripts'.format(os.environ['MAYA_SCRIPT_PATH'], os.pathsep, yeti_home, os.sep)
 
             if 'VRAY_PLUGINS_x64' in os.environ.keys():
-                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}{2}{1}bin'.format(os.environ['VRAY_PLUGINS_x64'], os.pathsep, yeti_home)
+                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}{2}{3}bin'.format(os.environ['VRAY_PLUGINS_x64'], os.pathsep, yeti_home, os.sep)
             else:
                 os.environ['VRAY_PLUGINS_x64'] = '{0}{1}bin'.format(yeti_home, os.sep)
 
             if 'VRAY_FOR_MAYA2018_PLUGINS_x64' in os.environ.keys():
-                os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}{2}{1}bin'.format(os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'], os.pathsep, yeti_home)
+                os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}{2}{3}bin'.format(
+                    os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'],
+                    os.pathsep,
+                    yeti_home,
+                    os.sep
+                )
             else:
                 os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}bin'.format(yeti_home, os.sep)
 
-            os.environ['ARNOLD_PLUGIN_PATH'] = '{0}{1}{2}{1}bin'.format(os.environ['ARNOLD_PLUGIN_PATH'], os.pathsep, yeti_home)
-            os.environ['MTOA_EXTENSIONS_PATH'] = '{0}{1}{2}{1}plug-ins'.format(os.environ["MTOA_EXTENSIONS_PATH"], os.pathsep, yeti_home)
+            os.environ['ARNOLD_PLUGIN_PATH'] = '{0}{1}{2}{3}bin'.format(
+                os.environ['ARNOLD_PLUGIN_PATH'],
+                os.pathsep,
+                yeti_home,
+                os.sep
+            )
+
+            os.environ['MTOA_EXTENSIONS_PATH'] = '{0}{1}{2}{3}plug-ins'.format(
+                os.environ["MTOA_EXTENSIONS_PATH"],
+                os.pathsep,
+                yeti_home,
+                os.sep
+            )
 
             # --- Module path wrap-up (additions should be placed in
             # --- the 'add_modules' *NOT* 'main_module_list')...
