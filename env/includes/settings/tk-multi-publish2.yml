@@ -366,7 +366,8 @@ settings.tk-multi-publish2.aftereffects.asset_step:
     hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/make_rendering.py"
     settings: {}
   - name: Copy Renderings to Publish Location
-    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/copy_rendering.py"
+    #hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/copy_rendering.py"
+    hook: "{self}/publish_file.py:{config}/tk-aftereffects/tk-multi-publish2/copy_rendering.py"    
     settings:
         Publish Sequence Template: aftereffects_asset_render_pub_mono
         Publish Movie Template: aftereffects_asset_render_movie
@@ -380,7 +381,8 @@ settings.tk-multi-publish2.aftereffects.asset_step:
     settings:
         Publish Template: aftereffects_asset_publish
   - name: Upload for review
-    hook: "{self}/upload_version.py:{engine}/tk-multi-publish2/basic/upload_version.py"
+    #hook: "{self}/upload_version.py:{engine}/tk-multi-publish2/basic/upload_version.py"
+    hook: "{self}/upload_version.py:{config}/tk-aftereffects/tk-multi-publish2/upload_version.py"
     settings:
         Movie Output Module: Lossless with Alpha
   help_url: *help_url
@@ -402,12 +404,15 @@ settings.tk-multi-publish2.aftereffects.shot_step:
     hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/make_rendering.py"
     settings: {}
   - name: Copy Renderings to Publish Location
-    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/copy_rendering.py"
+    #hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/copy_rendering.py"
+    hook: "{self}/publish_file.py:{config}/tk-aftereffects/tk-multi-publish2/copy_rendering.py"
     settings:
-        Publish Sequence Template: aftereffects_shot_render_pub_mono
+        #Publish Sequence Template: aftereffects_shot_render_pub_mono
         Publish Movie Template: aftereffects_shot_render_movie
-        Default Sequence Output Module: TIFF Sequence with Alpha
+        Publish Sequence Template: aftereffects_shot_render_exr_aces
+        #Default Sequence Output Module: TIFF Sequence with Alpha
         Default Movie Output Module: Lossless with Alpha
+        Default Sequence Output Module: ACES EXR
   - name: Publish Renderings to Shotgun
     hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_rendering.py"
     settings: {}
@@ -416,9 +421,11 @@ settings.tk-multi-publish2.aftereffects.shot_step:
     settings:
         Publish Template: aftereffects_shot_publish
   - name: Upload for review
-    hook: "{self}/upload_version.py:{engine}/tk-multi-publish2/basic/upload_version.py"
+    #hook: "{self}/upload_version.py:{engine}/tk-multi-publish2/basic/upload_version.py"
+    hook: "{self}/upload_version.py:{config}/tk-aftereffects/tk-multi-publish2/upload_version.py"    
     settings:
-        Movie Output Module: Lossless with Alpha
+        #Movie Output Module: Lossless with Alpha
+        Movie Output Module: sRGB AVI
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
 
