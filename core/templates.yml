@@ -139,6 +139,8 @@ keys:
         type: str
         shotgun_entity_type: Task
         shotgun_field_name: content
+    Task:
+        type: str
     # >>> from old sg_config
     grp_name:
         type: str
@@ -280,37 +282,41 @@ paths:
     aftereffects_shot_work:
         #definition: '@shot_root/work/afx/{name}.{Step}.v{version}.aep'
         #definition: '@shot_root/work/afx/{Shot}.[{name}.]{Step}.v{version}.aep'              # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/work/{current_user_name}/aftereffects/{Shot}.[{name}.]{Step}.v{version}.aep'
+        definition: '@shot_root/work/{current_user_name}/aftereffects/{Shot}.[{name}.]{task_name}.v{version}.aep'
         root_name: 'primary'
     shot_work_area_aftereffects:
-        #definition: '@shot_root/work/afx'                                                    # --- user work areas ~DW 2020-01-09
+        #definition: '@shot_root/work/afx'                                                    
         definition: '@shot_root/work/{current_user_name}/aftereffects'
         root_name: 'primary'
     # The location of backups of WIP files
     aftereffects_shot_snapshot:
         #definition: '@shot_root/work/afx/snapshots/{name}.{Step}.v{version}.{timestamp}.aep' # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/work/{current_user_name}/aftereffects/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.aep'
+        definition: '@shot_root/work/{current_user_name}/aftereffects/snapshots/{Shot}.[{name}.]{task_name}.v{version}.{timestamp}.aep'
         root_name: 'primary'
     # The location of published files
     shot_publish_area_aftereffects:
-        #definition: '@shot_root/publish/afx'                                                 # --- user work areas ~DW 2020-01-09
+        #definition: '@shot_root/publish/afx'                                                 #
         definition: '@shot_root/publish/aftereffects'
         root_name: 'primary'
     aftereffects_shot_publish:
-        #definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'                    # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/publish/aftereffects/{Shot}.[{name}.]{Step}.v{version}.aep'
+        #definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'                    
+        definition: '@shot_root/publish/aftereffects/{Shot}.[{name}.]{task_name}.v{version}.aep'
         root_name: 'primary'
     aftereffects_shot_render_pub_mono:
         #definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{afx.comp}_v{version}.{SEQ}.tif'
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{Step}.v{version}.{SEQ}.tif'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{task_name}.v{version}.{SEQ}.tif'
         root_name: 'secondary'
-    # The following template uses {afx.mov.ext} this is a special key, that will be only there
+    # SSE Custom
+    aftereffects_shot_render_exr_aces:
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{task_name}.v{version}.{SEQ}.exr'
+        root_name: 'secondary'    # The following template uses {afx.mov.ext} this is a special key, that will be only there
     # in the beta to support different extensions on mac and windows, while using the same
     # output module (Lossless with Alpha)
     aftereffects_shot_render_movie:
         #definition: '@shot_root/review/{Shot}_{name}_{afx.comp}_v{version}.{afx.mov.ext}'
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{Step}.v{version}.{afx.mov.ext}'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{task_name}.v{version}.{afx.mov.ext}'
         root_name: 'secondary'
+
 
     #
     # Maya
