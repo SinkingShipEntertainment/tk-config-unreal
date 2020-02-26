@@ -370,7 +370,7 @@ class AfterEffectsUploadVersionPlugin(HookBaseClass):
         )
 
         upload_path = item.properties["upload_path"]
-
+        self.logger.debug(">> upload_version.finalize upload_path = {}".format(upload_path))
         # remove the tmp file
         if item.properties.get("remove_upload", False):
             try:
