@@ -274,7 +274,7 @@ paths:
         definition: '@shot_root/work/{current_user_name}/aftereffects/{Shot}.[{name}.]{task_name}.v{version}.aep'
         root_name: 'primary'
     shot_work_area_aftereffects:
-        #definition: '@shot_root/work/afx'                                                    
+        #definition: '@shot_root/work/afx'
         definition: '@shot_root/work/{current_user_name}/aftereffects'
         root_name: 'primary'
     # The location of backups of WIP files
@@ -288,7 +288,7 @@ paths:
         definition: '@shot_root/publish/aftereffects'
         root_name: 'primary'
     aftereffects_shot_publish:
-        #definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'                    
+        #definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'
         definition: '@shot_root/publish/aftereffects/{Shot}.[{name}.]{task_name}.v{version}.aep'
         root_name: 'primary'
     aftereffects_shot_render_pub_mono:
@@ -505,15 +505,18 @@ paths:
     # The location of WIP script files
     nuke_shot_work:
         #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'  # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
+        #definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
+        definition: '@shot_root/work/{current_user_name}/nuke/{Shot}.[{name}.]v{version}.nk' # ~DW 2020-03-09
         root_name: 'primary'
     # The location of backups of WIP files
     nuke_shot_snapshot:
-        definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
+        #definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
+        definition: '@shot_root/work/nuke/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.nk' # ~DW 2020-03-09
         root_name: 'primary'
     # The location of published nuke script files
     nuke_shot_publish:
-        definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
+        #definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
+        definition: '@shot_root/publish/nuke/{Shot}.[{name}.]{Step}.v{version}.nk' # ~DW 2020-03-09
         root_name: 'primary'
     # write node outputs
     #nuke_shot_render_mono_dpx:
@@ -548,7 +551,8 @@ paths:
 
     # NEW COMP
     nuke_shot_comp_render_exr:
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.Comp.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
         root_name: 'secondary'
     nuke_shot_comp_render_pub_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
