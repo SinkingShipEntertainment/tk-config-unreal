@@ -85,7 +85,7 @@ settings.tk-nuke-writenode.shot:
     proxy_render_template:
     publish_template: nuke_shot_comp_render_pub_exr
     render_template: nuke_shot_comp_render_exr
-    settings: {channels: rgb, colorspace: Output - Rec.709, write_ACES_compliant_EXR: true, compression: DWAB,
+    settings: {channels: rgb, colorspace: Output - Rec.709, write_ACES_compliant_EXR: false, compression: DWAB,
         dw_compression_level: 45, autocrop: true, datatype: 16 bit half}
     tank_type: Rendered Image
     tile_color: []
