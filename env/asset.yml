@@ -14,7 +14,7 @@ description: Apps and engines loaded when an Asset is loaded. Since std VFX
   steps, this environment is largely empty. Most of the work takes place on a
   level in the file system where both an asset and a pipeline step is available
   - e.g Asset Hero, modeling, so all apps for loading, publishing etc. are
-  located in 
+  located in
   utility apps and the tank work files app, which lets you choose a task to work
   on and load associated content into an application.
 
@@ -31,6 +31,7 @@ includes:
 - ./includes/settings/tk-aftereffects.yml
 - ./includes/settings/tk-shell.yml
 - ./includes/settings/tk-shotgun.yml
+- ./includes/settings/tk-natron.yml               # --- SSE add (-DW 2020-02-04)
 
 ################################################################################
 # configuration for all engines to load in an asset context
@@ -45,6 +46,7 @@ engines:
   tk-aftereffects: "@settings.tk-aftereffects.asset"
   tk-shell: "@settings.tk-shell.asset"
   tk-shotgun: "@settings.tk-shotgun.asset"
+  tk-natron: "@settings.tk-natron.asset"          # --- SSE add (-DW 2020-02-04)
 
 ################################################################################
 # reference all of the common frameworks

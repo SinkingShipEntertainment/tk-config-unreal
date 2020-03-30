@@ -79,4 +79,13 @@ engines.tk-shotgun.location:
   name: tk-shotgun
   version: v0.8.2
 
-
+# -------------------------------------------- #
+# --- SSE additions below (-DW 2020-02-04) --- #
+# -------------------------------------------- #
+# Natron
+engines.tk-natron.location:
+  type: git
+  branch: master
+  path: https://github.com/diegogarciahuerta/tk-natron.git
+  version: v1.0.1
+# --- ^^^ ------------------------------------ #
