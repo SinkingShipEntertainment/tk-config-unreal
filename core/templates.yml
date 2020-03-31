@@ -139,6 +139,8 @@ keys:
         type: str
         shotgun_entity_type: Task
         shotgun_field_name: content
+    Task:
+        type: str
     # >>> from old sg_config
     grp_name:
         type: str
@@ -166,6 +168,17 @@ keys:
         shotgun_entity_type: HumanUser
         shotgun_field_name: login
     # END >>> from old sg_config
+
+    # --------------------------------------- #
+    # --- SSE adds below (-DW 2020-02-04) --- #
+    # --------------------------------------- #
+    # Natron
+
+    natron.output:
+        alias: output
+        type: str
+        filter_by: alphanumeric
+    # --- ^^^ ------------------------------- #
 
 #
 # The paths section contains all the the key locations where files are to be stored
@@ -269,37 +282,41 @@ paths:
     aftereffects_shot_work:
         #definition: '@shot_root/work/afx/{name}.{Step}.v{version}.aep'
         #definition: '@shot_root/work/afx/{Shot}.[{name}.]{Step}.v{version}.aep'              # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/work/{current_user_name}/aftereffects/{Shot}.[{name}.]{Step}.v{version}.aep'
+        definition: '@shot_root/work/{current_user_name}/aftereffects/{Shot}.[{name}.]{task_name}.v{version}.aep'
         root_name: 'primary'
     shot_work_area_aftereffects:
-        #definition: '@shot_root/work/afx'                                                    # --- user work areas ~DW 2020-01-09
+        #definition: '@shot_root/work/afx'
         definition: '@shot_root/work/{current_user_name}/aftereffects'
         root_name: 'primary'
     # The location of backups of WIP files
     aftereffects_shot_snapshot:
         #definition: '@shot_root/work/afx/snapshots/{name}.{Step}.v{version}.{timestamp}.aep' # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/work/{current_user_name}/aftereffects/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.aep'
+        definition: '@shot_root/work/{current_user_name}/aftereffects/snapshots/{Shot}.[{name}.]{task_name}.v{version}.{timestamp}.aep'
         root_name: 'primary'
     # The location of published files
     shot_publish_area_aftereffects:
-        #definition: '@shot_root/publish/afx'                                                 # --- user work areas ~DW 2020-01-09
+        #definition: '@shot_root/publish/afx'                                                 #
         definition: '@shot_root/publish/aftereffects'
         root_name: 'primary'
     aftereffects_shot_publish:
-        #definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'                    # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/publish/aftereffects/{Shot}.[{name}.]{Step}.v{version}.aep'
+        #definition: '@shot_root/publish/afx/{name}.{Step}.v{version}.aep'
+        definition: '@shot_root/publish/aftereffects/{Shot}.[{name}.]{task_name}.v{version}.aep'
         root_name: 'primary'
     aftereffects_shot_render_pub_mono:
         #definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{afx.comp}_v{version}.{SEQ}.tif'
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{Step}.v{version}.{SEQ}.tif'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{task_name}.v{version}.{SEQ}.tif'
         root_name: 'secondary'
-    # The following template uses {afx.mov.ext} this is a special key, that will be only there
+    # SSE Custom
+    aftereffects_shot_render_exr_aces:
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{task_name}.v{version}.{SEQ}.exr'
+        root_name: 'secondary'    # The following template uses {afx.mov.ext} this is a special key, that will be only there
     # in the beta to support different extensions on mac and windows, while using the same
     # output module (Lossless with Alpha)
     aftereffects_shot_render_movie:
         #definition: '@shot_root/review/{Shot}_{name}_{afx.comp}_v{version}.{afx.mov.ext}'
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{Step}.v{version}.{afx.mov.ext}'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.{task_name}.v{version}.{afx.mov.ext}'
         root_name: 'secondary'
+
 
     #
     # Maya
@@ -499,15 +516,18 @@ paths:
     # The location of WIP script files
     nuke_shot_work:
         #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'  # --- user work areas ~DW 2020-01-09
-        definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
+        #definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
+        definition: '@shot_root/work/{current_user_name}/nuke/{Shot}.[{name}.]v{version}.nk' # ~DW 2020-03-09
         root_name: 'primary'
     # The location of backups of WIP files
     nuke_shot_snapshot:
-        definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
+        #definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
+        definition: '@shot_root/work/nuke/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.nk' # ~DW 2020-03-09
         root_name: 'primary'
     # The location of published nuke script files
     nuke_shot_publish:
-        definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
+        #definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
+        definition: '@shot_root/publish/nuke/{Shot}.[{name}.]{Step}.v{version}.nk' # ~DW 2020-03-09
         root_name: 'primary'
     # write node outputs
     #nuke_shot_render_mono_dpx:
@@ -542,7 +562,8 @@ paths:
 
     # NEW COMP
     nuke_shot_comp_render_exr:
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.Comp.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
         root_name: 'secondary'
     nuke_shot_comp_render_pub_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
@@ -877,6 +898,7 @@ paths:
     # NOTE: This is an SSE add, doing ZTL Publishes for Shotgun would
     #       require some development effort, getting the Asset pathing
     #       in here for now (-DW 2020-02-03)
+    # NOTE2: Purely dev to future-proof when SG ZBrush Engine is released.
     # define the location of a work area
     asset_work_area_zbrush:
         definition: '@asset_root/work/{current_user_name}/zbrush/ztool'
@@ -898,6 +920,102 @@ paths:
         definition: '@asset_root/publish/zbrush/ztool/{Asset}.[{name}.]{Step}.v{version}.ztl'
         root_name: 'primary'
 
+    # --------------------------------------- #
+    # --- SSE adds below (-DW 2020-02-04) --- #
+    # --------------------------------------- #
+
+    #
+    # Natron
+    #
+
+    # asset based
+
+    # define the location of a work area
+    asset_work_area_natron:
+        definition: '@asset_root/work/natron'
+        root_name: 'primary'
+    # define the location of a publish area
+    asset_publish_area_natron:
+        definition: '@asset_root/publish/natron'
+        root_name: 'primary'
+    # The location of WIP script files
+    natron_asset_work:
+        definition: '@asset_root/work/natron/{name}.v{version}.ntp'
+        root_name: 'primary'
+    # The location of backups of WIP files
+    natron_asset_snapshot:
+        definition: '@asset_root/work/natron/snapshots/{name}.v{version}.{timestamp}.ntp'
+        root_name: 'primary'
+    # The location of published natron script files
+    natron_asset_publish:
+        definition: '@asset_root/publish/natron/{name}.v{version}.ntp'
+        root_name: 'primary'
+    # write node outputs
+    natron_asset_render_mono_dpx:
+        definition: '@asset_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
+        root_name: 'primary'
+    natron_asset_render_pub_mono_dpx:
+        definition: '@asset_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
+        root_name: 'primary'
+    natron_asset_render_stereo:
+        definition: '@asset_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
+        root_name: 'primary'
+    natron_asset_render_pub_stereo:
+        definition: '@asset_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
+        root_name: 'primary'
+    # review output
+    asset_quicktime_quick:
+        definition: '@asset_root/review/quickdaily/{Shot}_{name}_{iteration}.mov'
+        root_name: 'primary'
+    natron_asset_render_movie:
+        definition: '@asset_root/review/{Shot}_{name}_v{version}.mov'
+        root_name: 'primary'
+
+    # shot based
+
+    # define the location of a work area
+    shot_work_area_natron:
+        #definition: '@shot_root/work/natron'
+        definition: '@shot_root/work/{current_user_name}/natron'                                       # --- user work areas ~DW 2020-02-07
+        root_name: 'primary'
+    # define the location of a publish area
+    shot_publish_area_natron:
+        definition: '@shot_root/publish/natron'
+        root_name: 'primary'
+    # The location of WIP script files
+    natron_shot_work:
+        #definition: '@shot_root/work/natron/{name}.v{version}.ntp'
+        definition: '@shot_root/work/{current_user_name}/natron/{Shot}.[{name}.]{Step}.v{version}.ntp' # --- user work areas ~DW 2020-02-07
+        root_name: 'primary'
+    # The location of backups of WIP files
+    natron_shot_snapshot:
+        definition: '@shot_root/work/natron/snapshots/{name}.v{version}.{timestamp}.ntp'
+        root_name: 'primary'
+    # The location of published natron script files
+    natron_shot_publish:
+        definition: '@shot_root/publish/natron/{Shot}.[{name}.]{Step}.v{version}.ntp'
+        root_name: 'primary'
+    # write node outputs
+    natron_shot_render_mono_dpx:
+        definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
+        root_name: 'primary'
+    natron_shot_render_pub_mono_dpx:
+        definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
+        root_name: 'primary'
+    natron_shot_render_stereo:
+        definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
+        root_name: 'primary'
+    natron_shot_render_pub_stereo:
+        definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
+        root_name: 'primary'
+    # review output
+    shot_quicktime_quick:
+        definition: '@shot_root/review/quickdaily/{Shot}_{name}_{iteration}.mov'
+        root_name: 'primary'
+    natron_shot_render_movie:
+        definition: '@shot_root/review/{Shot}_{name}_v{version}.mov'
+        root_name: 'primary'
+    # --- ^^^ ------------------------------- #
 
 #
 # The strings section is similar to the paths section - but rather than defining paths

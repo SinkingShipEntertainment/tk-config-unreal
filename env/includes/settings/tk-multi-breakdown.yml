@@ -18,3 +18,8 @@ includes:
 settings.tk-multi-breakdown.nukestudio:
   hook_scene_operations: '{self}/tk-nuke_scene_operations.py'
   location: "@apps.tk-multi-breakdown.location"
+
+# --- SSE add (-DW 2020-02-04)
+settings.tk-multi-breakdown.natron:
+  hook_scene_operations: '{engine}/tk-multi-breakdown/tk-natron_scene_operations.py'
+  location: "@apps.tk-multi-breakdown.location"

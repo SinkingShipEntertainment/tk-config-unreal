@@ -25,6 +25,7 @@ includes:
 - ./includes/settings/tk-aftereffects.yml
 - ./includes/settings/tk-shell.yml
 - ./includes/settings/tk-shotgun.yml
+- ./includes/settings/tk-natron.yml               # --- SSE add (-DW 2020-02-04)
 
 ################################################################################
 # configuration for all engines to load in an asset step context
@@ -41,6 +42,7 @@ engines:
   tk-aftereffects: "@settings.tk-aftereffects.asset_step"
   tk-shell: "@settings.tk-shell.asset_step"
   tk-shotgun: "@settings.tk-shotgun.asset_step"
+  tk-natron: "@settings.tk-natron.asset_step"     # --- SSE add (-DW 2020-02-04)
 
 ################################################################################
 # reference all of the common frameworks
