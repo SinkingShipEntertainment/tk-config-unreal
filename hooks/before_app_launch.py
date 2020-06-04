@@ -267,6 +267,7 @@ class BeforeAppLaunch(tank.Hook):
                 'brSmoothWeights',
                 'iDeform',
                 'AtomsMaya',
+                'ziva'
             ]
 
             for add_module in add_modules:
