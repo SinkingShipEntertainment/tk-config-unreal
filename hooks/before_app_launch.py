@@ -203,19 +203,23 @@ class BeforeAppLaunch(tank.Hook):
         module_path = '{0}{1}{2}'.format(module_path, os.sep, self._version)
         logger.debug('module_path > {}'.format(module_path))
 
-        if self._version == '2018':
+        if self._version in ['2018', '2020']:
             # --- General plugins...
             os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(plugin_path, os.sep, self._version)
 
             # --- VRay (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
-            vray_home = 'C:{0}Program Files{0}Autodesk{0}Maya2018{0}vray'.format(os.sep)
-            os.environ['VRAY_FOR_MAYA2018_MAIN_x64'] = vray_home
-            os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}{2}'.format(vray_home, os.sep, 'vrayplugins')
+            vray_home = 'C:{0}Program Files{0}Autodesk{0}Maya{1}{0}vray'.format(os.sep, self._version)
+            v_main_key = 'VRAY_FOR_MAYA{}_MAIN_x64'.format(self._version)
+            os.environ[v_main_key] = vray_home
+            v_plug_key =  'VRAY_FOR_MAYA{}_PLUGINS_x64'.format(self._version)
+            os.environ[v_plug_key] = '{0}{1}{2}'.format(vray_home, os.sep, 'vrayplugins')
 
-            vray_chaos_root = 'C:{0}Program Files{0}Chaos Group{0}V-Ray{0}Maya 2018 for x64'.format(os.sep)
-            os.environ['VRAY_TOOLS_MAYA2018_x64'] = '{0}{1}bin'.format(vray_chaos_root, os.sep)
-            os.environ['VRAY_OSL_PATH_MAYA2018_x64'] = '{0}{1}opensl'.format(vray_chaos_root, os.sep)
+            vray_chaos_root = 'C:{0}Program Files{0}Chaos Group{0}V-Ray{0}Maya {1} for x64'.format(os.sep, self._version)
+            v_tools_key = 'VRAY_TOOLS_MAYA{}_x64'.format(self._version)
+            os.environ[v_tools_key] = '{0}{1}bin'.format(vray_chaos_root, os.sep)
+            v_osl_key = 'VRAY_OSL_PATH_MAYA{}_x64'.format(self._version)
+            os.environ[v_osl_key] = '{0}{1}opensl'.format(vray_chaos_root, os.sep)
 
             # --- Yeti...
             yeti_home = '{0}{1}yeti'.format(module_path, os.sep)
@@ -232,6 +236,7 @@ class BeforeAppLaunch(tank.Hook):
             else:
                 os.environ['VRAY_PLUGINS_x64'] = '{0}{1}bin'.format(yeti_home, os.sep)
 
+            # --- I think this might be unnecessary based on above? (DW 2020-07-08)
             if 'VRAY_FOR_MAYA2018_PLUGINS_x64' in os.environ.keys():
                 os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}{2}{3}bin'.format(
                     os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'],
@@ -241,6 +246,7 @@ class BeforeAppLaunch(tank.Hook):
                 )
             else:
                 os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}bin'.format(yeti_home, os.sep)
+            # --- ^^^
 
             os.environ['ARNOLD_PLUGIN_PATH'] = '{0}{1}{2}{3}bin'.format(
                 os.environ['ARNOLD_PLUGIN_PATH'],
@@ -287,12 +293,12 @@ class BeforeAppLaunch(tank.Hook):
             # --- Redshift (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
             os.environ["REDSHIFT_COREDATAPATH"] =  "C:\\ProgramData\\Redshift"
-            os.environ["REDSHIFT_PLUG_IN_PATH"] = "C:\\ProgramData\\Redshift\\Plugins\\Maya\\2018\\nt-x86-64"
+            os.environ["REDSHIFT_PLUG_IN_PATH"] = "C:\\ProgramData\\Redshift\\Plugins\\Maya\\{}\\nt-x86-64".format(self._version)
             os.environ["REDSHIFT_SCRIPT_PATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\scripts"
             os.environ["REDSHIFT_XBMLANGPATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\icons"
             os.environ["REDSHIFT_RENDER_DESC_PATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\rendererDesc"
             os.environ["REDSHIFT_CUSTOM_TEMPLATE_PATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\scripts\\NETemplate"
-            os.environ["REDSHIFT_MAYAEXTENSIONSPATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\2018\\nt-x86-64\\extensions"
+            os.environ["REDSHIFT_MAYAEXTENSIONSPATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\{}\\nt-x86-64\\extensions".format(self._version)
             os.environ["REDSHIFT_PROCEDURALSPATH"] =  "C:\\ProgramData\\Redshift\\Procedural"
 
         else:
