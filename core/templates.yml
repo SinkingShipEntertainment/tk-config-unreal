@@ -747,7 +747,7 @@ paths:
     # The location of published maya files
     maya_asset_publish:
         #definition: '@asset_root/publish/maya/{name}.v{version}.{maya_extension}'
-        definition: '@asset_root/publish/maya/{Asset}.[{name}.]v{version}.{maya_extension}'
+        definition: '@asset_root/publish/maya/{Asset}.[{name}.]{Step}.v{version}.{maya_extension}'
         root_name: 'primary'
 
     # >>> from old sg_config
