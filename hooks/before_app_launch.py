@@ -242,16 +242,17 @@ class BeforeAppLaunch(tank.Hook):
             else:
                 os.environ['VRAY_PLUGINS_x64'] = '{0}{1}bin'.format(yeti_home, os.sep)
 
-            # --- I think this might be unnecessary based on above? (DW 2020-07-08)
-            if 'VRAY_FOR_MAYA2018_PLUGINS_x64' in os.environ.keys():
-                os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}{2}{3}bin'.format(
-                    os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'],
+            # --- Needed to get the module path in, as earlier just defines the
+            # --- local Vray install path initially (DW 2020-07-09)
+            if v_plug_key in os.environ.keys():
+                os.environ[v_plug_key] = '{0}{1}{2}{3}bin'.format(
+                    os.environ[v_plug_key],
                     os.pathsep,
                     yeti_home,
                     os.sep
                 )
             else:
-                os.environ['VRAY_FOR_MAYA2018_PLUGINS_x64'] = '{0}{1}bin'.format(yeti_home, os.sep)
+                os.environ[v_plug_key] = '{0}{1}bin'.format(yeti_home, os.sep)
             # --- ^^^
 
             os.environ['ARNOLD_PLUGIN_PATH'] = '{0}{1}{2}{3}bin'.format(
