@@ -222,7 +222,11 @@ class BeforeAppLaunch(tank.Hook):
             os.environ[v_osl_key] = '{0}{1}opensl'.format(vray_chaos_root, os.sep)
 
             # --- Yeti...
-            yeti_home = '{0}{1}yeti'.format(module_path, os.sep)
+            yeti_vers = 'v3.1.10'
+            if self._version == '2020':
+                yeti_vers = 'v3.6.2'
+
+            yeti_home = '{1}{0}yeti{0}{2}'.format(os.sep, module_path, yeti_vers)
             logger.debug('yeti_home > {}'.format(yeti_home))
 
             os.environ['YETI_HOME'] = yeti_home
