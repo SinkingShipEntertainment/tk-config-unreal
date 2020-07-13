@@ -15,8 +15,8 @@ includes:
 
 ################################################################################
 
-# 3dsmax
-settings.tk-multi-loader2.3dsmax:
+# 3dsmaxplus
+settings.tk-multi-loader2.3dsmaxplus: &settings_tk-multi-loader2_3dsmaxplus
   action_mappings:
     3dsmax Scene: [import, reference]
     Alembic Cache: [import]
@@ -41,6 +41,13 @@ settings.tk-multi-loader2.3dsmax:
     - [project, is, '{context.project}']
     hierarchy: [entity, content]
   location: "@apps.tk-multi-loader2.location"
+
+# 3dsmax
+# Uses the same settings, but a different hook.
+settings.tk-multi-loader2.3dsmax:
+  <<: *settings_tk-multi-loader2_3dsmaxplus
+  actions_hook: "{engine}/tk-multi-loader2/basic/scene_actions.py"
+
 
 # flame
 settings.tk-multi-loader2.flame:
@@ -319,8 +326,69 @@ settings.tk-multi-loader2.motionbuilder:
     hierarchy: [entity, content]
   location: "@apps.tk-multi-loader2.location"
 
+# alias
+settings.tk-multi-loader2.alias:
+  action_mappings:
+    Alias File: [import, import_as_reference]
+    Wref File: [reference]
+    Igs File: [import, import_as_reference]
+    Stp File: [import, import_as_reference]
+    Stl File: [import, import_as_reference]
+    Jt File: [import, import_as_reference]
+    Catpart File: [import, import_as_reference]
+    Fbx File: [import]
+    Image: [texture_node]
+    Photoshop Image: [texture_node]
+    Obj File: [import_subdiv]
+    Tsm File: [import_subdiv]
+    F3d File: [import_subdiv]
+    Sf3d File: [import_subdiv]
+  entities:
+  - caption: Assets
+    entity_type: Asset
+    filters:
+    - [project, is, '{context.project}']
+    hierarchy: [sg_asset_type, code]
+  - caption: My Tasks
+    entity_type: Task
+    filters:
+    - [task_assignees, is, '{context.user}']
+    - [project, is, '{context.project}']
+    hierarchy: [entity, content]
+  actions_hook: "{engine}/tk-multi-loader2/basic/scene_actions.py"
+  publish_filters: [["sg_status_list", "is_not", null]]
+  location: "@apps.tk-multi-loader2.location"
+
+# VRED
+settings.tk-multi-loader2.vred:
+  action_mappings:
+    Alias File: [import]
+    Igs File: [import]
+    Stp File: [import]
+    Stl File: [import]
+    Jt File: [import]
+    Catpart File: [import]
+    Fbx File: [import]
+    VRED Scene: [import]
+    Osb File: [import]
+  entities:
+  - caption: Assets
+    entity_type: Asset
+    filters:
+    - [project, is, '{context.project}']
+    hierarchy: [sg_asset_type, code]
+  - caption: My Tasks
+    entity_type: Task
+    filters:
+    - [task_assignees, is, '{context.user}']
+    - [project, is, '{context.project}']
+    hierarchy: [entity, content]
+  actions_hook: "{engine}/tk-multi-loader2/basic/scene_actions.py"
+  publish_filters: [["sg_status_list", "is_not", null]]
+  location: "@apps.tk-multi-loader2.location"
+
 # --- SSE add (-DW 2020-02-04)
-# natron
+# Natron
 settings.tk-multi-loader2.natron:
   actions_hook: '{engine}/tk-multi-loader2/tk-natron_actions.py'
   action_mappings:
@@ -351,3 +419,4 @@ settings.tk-multi-loader2.natron:
     hierarchy: [entity, content]
   publish_filters: [["sg_status_list", "is_not", null]]
   location: "@apps.tk-multi-loader2.location"
+

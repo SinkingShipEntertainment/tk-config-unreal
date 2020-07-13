@@ -95,6 +95,11 @@ keys:
         type: sequence
         format_spec: "04"
 
+    # Represents a frame sequence exported from Flame
+    flame.frame:
+        type: sequence
+        format_spec: "08"
+
     eye:
         type: str
 
@@ -173,12 +178,35 @@ keys:
     # --- SSE adds below (-DW 2020-02-04) --- #
     # --------------------------------------- #
     # Natron
-
     natron.output:
         alias: output
         type: str
         filter_by: alphanumeric
-    # --- ^^^ ------------------------------- #
+
+    # needed by the Alias import as reference functionality
+    alias.extension:
+        type: str
+        filter_by: alphanumeric
+
+    # represents the optional render pass for frames written by VRED
+    vred.render_pass:
+        type: str
+        filter_by: alphanumeric
+
+    # represents the image extension for frames written by VRED
+    vred.render_extension:
+        type: str
+        choices:
+            png: PNG Image
+            exr: EXR Image
+        default: png
+
+    # Represents a frame sequence exported from VRED
+    vred.frame:
+        type: sequence
+        format_spec: "05"
+        alias: SEQ
+
 
 #
 # The paths section contains all the the key locations where files are to be stored
@@ -247,6 +275,25 @@ paths:
     ##########################################################################################
     # Shot level paths
     #
+
+    #
+    # Flame
+    #
+
+    flame_segment_clip:
+        definition: 'sequences/{Sequence}/{Shot}/finishing/clip/sources/{segment_name}.clip'
+    flame_shot_clip:
+        definition: 'sequences/{Sequence}/{Shot}/finishing/clip/{Shot}.clip'
+    flame_shot_batch:
+        definition: 'sequences/{Sequence}/{Shot}/finishing/batch/{Shot}.v{version}.batch'
+    flame_shot_render_dpx:
+        definition: 'sequences/{Sequence}/{Shot}/finishing/renders/{segment_name}_v{version}/{Shot}_{segment_name}_v{version}.{flame.frame}.dpx'
+    flame_shot_render_exr:
+        definition: 'sequences/{Sequence}/{Shot}/finishing/renders/{segment_name}_v{version}/{Shot}_{segment_name}_v{version}.{flame.frame}.exr'
+    flame_shot_comp_dpx:
+        definition: 'sequences/{Sequence}/{Shot}/finishing/comp/{segment_name}_v{version}/{Shot}_{segment_name}_v{version}.{flame.frame}.dpx'
+    flame_shot_comp_exr:
+        definition: 'sequences/{Sequence}/{Shot}/finishing/comp/{segment_name}_v{version}/{Shot}_{segment_name}_v{version}.{flame.frame}.exr'
 
     #
     # Photoshop
@@ -447,8 +494,10 @@ paths:
     # Additional mantra outputs
     houdini_shot_ifd:
         definition: '@shot_root/work/ifds/{name}/{houdini.node}/v{version}/{width}x{height}/{Shot}_{name}_v{version}.{SEQ}.ifd'
+
     houdini_shot_dcm:
         definition: '@shot_root/work/dcms/{name}/{houdini.node}/v{version}/{width}x{height}/{Shot}_{name}_v{version}.{SEQ}.dcm'
+
     houdini_shot_extra_plane:
         definition: '@shot_root/work/images/{name}/{houdini.node}/{aov_name}/v{version}/{width}x{height}/{Shot}_{name}_v{version}.{SEQ}.exr'
 
@@ -639,6 +688,56 @@ paths:
         root_name: 'primary'
     hiero_render_path:
         definition: '@sequence_root/{Shot}/editorial/{YYYY}_{MM}_{DD}/renders/{project}_{Shot}.{SEQ}.dpx'
+        root_name: 'primary'
+
+    # --------------------------------------- #
+    # --- SSE adds below (-DW 2020-02-04) --- #
+    # --------------------------------------- #
+    #
+    # Natron
+    #
+
+    # define the location of a work area
+    shot_work_area_natron:
+        #definition: '@shot_root/work/natron'
+        definition: '@shot_root/work/{current_user_name}/natron'                                       # --- user work areas ~DW 2020-02-07
+        root_name: 'primary'
+    # define the location of a publish area
+    shot_publish_area_natron:
+        definition: '@shot_root/publish/natron'
+        root_name: 'primary'
+    # The location of WIP script files
+    natron_shot_work:
+        #definition: '@shot_root/work/natron/{name}.v{version}.ntp'
+        definition: '@shot_root/work/{current_user_name}/natron/{Shot}.[{name}.]{Step}.v{version}.ntp' # --- user work areas ~DW 2020-02-07
+        root_name: 'primary'
+    # The location of backups of WIP files
+    natron_shot_snapshot:
+        definition: '@shot_root/work/natron/snapshots/{name}.v{version}.{timestamp}.ntp'
+        root_name: 'primary'
+    # The location of published natron script files
+    natron_shot_publish:
+        definition: '@shot_root/publish/natron/{Shot}.[{name}.]{Step}.v{version}.ntp'
+        root_name: 'primary'
+    # write node outputs
+    natron_shot_render_mono_dpx:
+        definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
+        root_name: 'primary'
+    natron_shot_render_pub_mono_dpx:
+        definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
+        root_name: 'primary'
+    natron_shot_render_stereo:
+        definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
+        root_name: 'primary'
+    natron_shot_render_pub_stereo:
+        definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
+        root_name: 'primary'
+    # review output
+    shot_quicktime_quick:
+        definition: '@shot_root/review/quickdaily/{Shot}_{name}_{iteration}.mov'
+        root_name: 'primary'
+    natron_shot_render_movie:
+        definition: '@shot_root/review/{Shot}_{name}_v{version}.mov'
         root_name: 'primary'
 
     ##########################################################################################
@@ -893,8 +992,88 @@ paths:
         root_name: 'primary'
 
     #
+    # Alias
+    #
+
+    # define the location of a work area
+    asset_work_area_alias:
+        definition: '@asset_root/work/alias'
+    # define the location of a publish area
+    asset_publish_area_alias:
+        definition: '@asset_root/publish/alias'
+    # The location of WIP files
+    alias_asset_work:
+        definition: '@asset_root/work/alias/{name}.v{version}.wire'
+    # The location of backups of WIP files
+    alias_asset_snapshot:
+        definition: '@asset_root/work/alias/snapshots/{name}.v{version}.{timestamp}.wire'
+    # The location of published Alias files
+    alias_asset_publish:
+        definition: '@asset_root/publish/alias/{name}.v{version}.wire'
+
+    # Alias translations
+
+    # The location of the reference created on the fly by Alias when importing a file as ref
+    alias_asset_reference_publish:
+        definition: '@asset_root/publish/alias/translations/{name}_{alias.extension}.v{version}.wref'
+    alias_asset_igs_publish:
+        definition: '@asset_root/publish/alias/translations/{name}.v{version}.igs'
+    alias_asset_catpart_publish:
+        definition: '@asset_root/publish/alias/translations/{name}.v{version}.CATPart'
+    alias_asset_jt_publish:
+        definition: '@asset_root/publish/alias/translations/{name}.v{version}.jt'
+    alias_asset_stp_publish:
+        definition: '@asset_root/publish/alias/translations/{name}.v{version}.stp'
+    alias_asset_wref_publish:
+        definition: '@asset_root/publish/alias/translations/{name}.v{version}.wref'
+
+    #
+    # VRED
+    #
+
+    # define the location of a work area
+    asset_work_area_vred:
+        definition: '@asset_root/work/vred'
+    # define the location of a publish area
+    asset_publish_area_vred:
+        definition: '@asset_root/publish/vred'
+    # The location of WIP files
+    vred_asset_work:
+        definition: '@asset_root/work/vred/{name}.v{version}.vpb'
+    # The location of backups of WIP files
+    vred_asset_snapshot:
+        definition: '@asset_root/work/vred/snapshots/{name}.v{version}.{timestamp}.vpb'
+    # The location of published VRED files
+    vred_asset_publish:
+        definition: '@asset_root/publish/vred/{name}.v{version}.vpb'
+
+    # define the location of VRED geometry published files
+    vred_asset_geometry_publish:
+        definition: '@asset_root/publish/vred/geometry/{name}.v{version}.osb'
+
+    # define the location of the WIP render images
+    vred_asset_render_work:
+        definition: '@asset_root/work/images/{name}/v{version}/{Asset}_{name}_v{version}[-{vred.render_pass}].{vred.render_extension}'
+
+    # define the location of the WIP renderings for an image sequence
+    vred_asset_render_sequence_work:
+        definition: '@asset_root/work/images/{name}/v{version}/{Asset}_{name}_v{version}[-{vred.render_pass}]-{vred.frame}.{vred.render_extension}'
+
+    # define the location of the published render images
+    vred_asset_render_publish:
+        definition: '@asset_root/publish/images/{name}/v{version}/{Asset}_{name}_v{version}[-{vred.render_pass}].{vred.render_extension}'
+
+    # define the location of the published renderings for an image sequence
+    vred_asset_render_sequence_publish:
+        definition: '@asset_root/publish/images/{name}/v{version}/{Asset}_{name}_v{version}[-{vred.render_pass}]-{vred.frame}.{vred.render_extension}'
+
+    # --------------------------------------- #
+    # --- SSE adds below (-DW 2020-02-04) --- #
+    # --------------------------------------- #
+    #
     # ZBrush Ztools
     #
+
     # NOTE: This is an SSE add, doing ZTL Publishes for Shotgun would
     #       require some development effort, getting the Asset pathing
     #       in here for now (-DW 2020-02-03)
@@ -920,15 +1099,9 @@ paths:
         definition: '@asset_root/publish/zbrush/ztool/{Asset}.[{name}.]{Step}.v{version}.ztl'
         root_name: 'primary'
 
-    # --------------------------------------- #
-    # --- SSE adds below (-DW 2020-02-04) --- #
-    # --------------------------------------- #
-
     #
     # Natron
     #
-
-    # asset based
 
     # define the location of a work area
     asset_work_area_natron:
@@ -971,51 +1144,6 @@ paths:
         definition: '@asset_root/review/{Shot}_{name}_v{version}.mov'
         root_name: 'primary'
 
-    # shot based
-
-    # define the location of a work area
-    shot_work_area_natron:
-        #definition: '@shot_root/work/natron'
-        definition: '@shot_root/work/{current_user_name}/natron'                                       # --- user work areas ~DW 2020-02-07
-        root_name: 'primary'
-    # define the location of a publish area
-    shot_publish_area_natron:
-        definition: '@shot_root/publish/natron'
-        root_name: 'primary'
-    # The location of WIP script files
-    natron_shot_work:
-        #definition: '@shot_root/work/natron/{name}.v{version}.ntp'
-        definition: '@shot_root/work/{current_user_name}/natron/{Shot}.[{name}.]{Step}.v{version}.ntp' # --- user work areas ~DW 2020-02-07
-        root_name: 'primary'
-    # The location of backups of WIP files
-    natron_shot_snapshot:
-        definition: '@shot_root/work/natron/snapshots/{name}.v{version}.{timestamp}.ntp'
-        root_name: 'primary'
-    # The location of published natron script files
-    natron_shot_publish:
-        definition: '@shot_root/publish/natron/{Shot}.[{name}.]{Step}.v{version}.ntp'
-        root_name: 'primary'
-    # write node outputs
-    natron_shot_render_mono_dpx:
-        definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
-        root_name: 'primary'
-    natron_shot_render_pub_mono_dpx:
-        definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_v{version}.{SEQ}.dpx'
-        root_name: 'primary'
-    natron_shot_render_stereo:
-        definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
-        root_name: 'primary'
-    natron_shot_render_pub_stereo:
-        definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{natron.output}_{eye}_v{version}.{SEQ}.exr'
-        root_name: 'primary'
-    # review output
-    shot_quicktime_quick:
-        definition: '@shot_root/review/quickdaily/{Shot}_{name}_{iteration}.mov'
-        root_name: 'primary'
-    natron_shot_render_movie:
-        definition: '@shot_root/review/{Shot}_{name}_v{version}.mov'
-        root_name: 'primary'
-    # --- ^^^ ------------------------------- #
 
 #
 # The strings section is similar to the paths section - but rather than defining paths

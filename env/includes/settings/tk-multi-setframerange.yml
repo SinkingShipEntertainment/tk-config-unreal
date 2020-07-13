@@ -7,6 +7,7 @@
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
+#
 
 ################################################################################
 
@@ -15,7 +16,7 @@ includes:
 
 ################################################################################
 
-settings.tk-shotgun-launchfolder:
-  deny_permissions: []
-  deny_platforms: []
-  location: "@apps.tk-shotgun-launchfolder.location"
+# asset
+settings.tk-multi-setframerange.3dsmax:
+  hook_frame_operation: "{engine}/tk-multi-setframerange/basic/frame_operations.py"
+  location: "@apps.tk-multi-setframerange.location"
