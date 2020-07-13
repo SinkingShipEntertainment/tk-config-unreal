@@ -207,6 +207,14 @@ class BeforeAppLaunch(tank.Hook):
             # --- General plugins...
             os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(plugin_path, os.sep, self._version)
 
+            # --- Arnold (experimental *NOT CALLED BY ANYTHING YET*
+            # --- ~ DW 202-07-13)
+            arnold_home = 'C:/solidangle/mtoadeploy/{}'.format(self._version)
+            if self._version == '2020':
+                arnold_home = 'C:/Program Files/Autodesk/Arnold/maya{}'.format(self._version)
+
+            arnold_bin = '{}/bin'.format(arnold_home)
+
             # --- VRay (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
             vray_home = 'C:{0}Program Files{0}Autodesk{0}Maya{1}{0}vray'.format(os.sep, self._version)
@@ -225,7 +233,6 @@ class BeforeAppLaunch(tank.Hook):
             # yeti_vers = 'v3.1.10'
             # if self._version == '2020':
             #     yeti_vers = 'v3.6.2'
-
             yeti_vers = 'v3.6.2'
 
             yeti_home = '{1}{0}yeti{0}{2}'.format(os.sep, module_path, yeti_vers)
@@ -255,19 +262,31 @@ class BeforeAppLaunch(tank.Hook):
                 os.environ[v_plug_key] = '{0}{1}bin'.format(yeti_home, os.sep)
             # --- ^^^
 
-            os.environ['ARNOLD_PLUGIN_PATH'] = '{0}{1}{2}{3}bin'.format(
-                os.environ['ARNOLD_PLUGIN_PATH'],
-                os.pathsep,
-                yeti_home,
-                os.sep
-            )
+            y_arn_keys = [
+                'ARNOLD_PLUGIN_PATH',
+                'MTOA_EXTENSIONS_PATH'
+            ]
+            for y_arn_key in y_arn_keys:
+                sub_dir = ''
+                if y_arn_key == y_arn_keys[0]:
+                    sub_dir = 'bin'
+                if y_arn_key == y_arn_keys[1]:
+                    sub_dir = 'plug-ins'
 
-            os.environ['MTOA_EXTENSIONS_PATH'] = '{0}{1}{2}{3}plug-ins'.format(
-                os.environ["MTOA_EXTENSIONS_PATH"],
-                os.pathsep,
-                yeti_home,
-                os.sep
-            )
+                if y_arn_key in os.environ.keys():
+                    os.environ[y_arn_key] = '{0}{1}{2}{3}{4}'.format(
+                        os.environ[y_arn_key],
+                        os.pathsep,
+                        yeti_home,
+                        os.sep,
+                        sub_dir
+                    )
+                else:
+                    os.environ[y_arn_key] = '{0}{1}{2}'.format(
+                        yeti_home,
+                        os.sep,
+                        sub_dir
+                    )
 
             # --- Module path wrap-up (additions should be placed in
             # --- the 'add_modules' *NOT* 'main_module_list')...
@@ -294,19 +313,23 @@ class BeforeAppLaunch(tank.Hook):
             os.environ['MAYA_MODULE_PATH'] = maya_module_path
 
             # --- Legacy vtool stuff, need to revisit/update/remove possibly...
-            vtool_legacy_path = 'X:\\tools\\sinking_ship\\maya\\scripts\\vtool'
+            vtool_legacy_path = 'X:/tools/sinking_ship/maya/scripts/vtool'
             os.environ['PATH'] = '{0}{1}{2}'.format(os.environ['PATH'], os.pathsep, vtool_legacy_path)
 
             # --- Redshift (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
-            os.environ["REDSHIFT_COREDATAPATH"] =  "C:\\ProgramData\\Redshift"
-            os.environ["REDSHIFT_PLUG_IN_PATH"] = "C:\\ProgramData\\Redshift\\Plugins\\Maya\\{}\\nt-x86-64".format(self._version)
-            os.environ["REDSHIFT_SCRIPT_PATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\scripts"
-            os.environ["REDSHIFT_XBMLANGPATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\icons"
-            os.environ["REDSHIFT_RENDER_DESC_PATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\rendererDesc"
-            os.environ["REDSHIFT_CUSTOM_TEMPLATE_PATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\Common\\scripts\\NETemplate"
-            os.environ["REDSHIFT_MAYAEXTENSIONSPATH"] =  "C:\\ProgramData\\Redshift\\Plugins\\Maya\\{}\\nt-x86-64\\extensions".format(self._version)
-            os.environ["REDSHIFT_PROCEDURALSPATH"] =  "C:\\ProgramData\\Redshift\\Procedural"
+            r_core = 'C:/ProgramData/Redshift'
+            r_plug_maya = '{}/Plugins/Maya'.format(r_core)
+            r_common = '{}/Common'.format(r_plug_maya)
+
+            os.environ['REDSHIFT_COREDATAPATH'] =  r_core
+            os.environ['REDSHIFT_PLUG_IN_PATH'] = '{0}/{1}/nt-x86-64'.format(r_plug_maya, self._version)
+            os.environ['REDSHIFT_SCRIPT_PATH'] =  '{}/scripts'.format(r_common)
+            os.environ['REDSHIFT_XBMLANGPATH'] =  '{}/icons'.format(r_common)
+            os.environ['REDSHIFT_RENDER_DESC_PATH'] =  '{}/rendererDesc'.format(r_common)
+            os.environ['REDSHIFT_CUSTOM_TEMPLATE_PATH'] =  '{}/scripts/NETemplate'.format(r_common)
+            os.environ['REDSHIFT_MAYAEXTENSIONSPATH'] =  '{0}/{1}/nt-x86-64/extensions'.format(r_plug_maya, self._version)
+            os.environ['REDSHIFT_PROCEDURALSPATH'] =  '{}/Procedural'.format(r_core)
 
         else:
             logger.debug('No Maya product/version specific environment variables required.')
