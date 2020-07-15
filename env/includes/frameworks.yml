@@ -76,3 +76,11 @@ frameworks:
       version: v0.1.1
       type: app_store
       name: tk-framework-desktopclient
+
+  # unrealqt - PySide build for Unreal (Windows-only)
+  tk-framework-unrealqt_v1.x.x:
+    location:
+      type: github_release
+      organization: ue4plugins
+      repository: tk-framework-unrealqt
+      version: v1.0.0

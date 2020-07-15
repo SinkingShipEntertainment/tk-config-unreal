@@ -108,6 +108,13 @@ engines.tk-vred.location:
   name: tk-vred
   version: v2.0.6
 
+# Unreal
+engines.tk-unreal.location:
+  type: github_release
+  organization: ue4plugins
+  repository: tk-unreal
+  version: v1.0.1
+
 # -------------------------------------------- #
 # --- SSE additions below (-DW 2020-02-04) --- #
 # -------------------------------------------- #
