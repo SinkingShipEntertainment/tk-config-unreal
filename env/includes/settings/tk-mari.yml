@@ -52,5 +52,4 @@ settings.tk-mari.project:
       location: "@apps.tk-multi-about.location"
     tk-multi-shotgunpanel: "@settings.tk-multi-shotgunpanel"
     tk-multi-workfiles: "@settings.tk-multi-workfiles.mari"
-<<<<<<< HEAD
   location: "@engines.tk-mari.location"
