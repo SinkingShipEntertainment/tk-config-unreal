@@ -40,7 +40,7 @@ engines.tk-alias.location:
 engines.tk-desktop.location:
   type: app_store
   name: tk-desktop
-  version: v2.5.3
+  version: v2.5.4
 
 # Desktop2
 engines.tk-desktop2.location:
@@ -108,8 +108,6 @@ engines.tk-vred.location:
   name: tk-vred
   version: v2.0.6
 
-  version: v1.0.1
-
 # Unreal
 engines.tk-unreal.location:
   type: github_release
@@ -125,3 +123,4 @@ engines.tk-natron.location:
   type: git
   branch: master
   path: https://github.com/diegogarciahuerta/tk-natron.git
+  version: v1.0.1
