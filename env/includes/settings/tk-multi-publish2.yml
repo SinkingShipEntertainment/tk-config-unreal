@@ -169,9 +169,9 @@ settings.tk-multi-publish2.mari.asset_step:
 
 # asset step
 settings.tk-multi-publish2.maya.asset_step:
-  collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+  #collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
   # Comment out entry by Unreal config until we know why config doesn't load
-#  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-maya/basic/collector.py"
+  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-maya/basic/collector.py"
   collector_settings:
       Work Template: maya_asset_work
   publish_plugins:
@@ -188,25 +188,25 @@ settings.tk-multi-publish2.maya.asset_step:
     hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
     settings:
         Publish Template: maya_asset_publish
-#  - name: Publish to Shotgun
-#    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session_geometry.py"
-#    settings:
-#        Publish Template: asset_alembic_cache
-  #SSE - comment out entry by Unreal until config proves to work
+    #SSE - comment out entry by Unreal until config proves to work
+  # - name: Publish to Shotgun
+  #   hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_fbx.py"
+  #   settings:
+  #       Publish Template: maya_asset_fbx_publish
+  # - name: Publish and Submit for Review
+  #   hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_turntable.py"
+  #   settings:
+  #       Work Template: maya_ue4_turntable_render
+  #       Publish Template: maya_ue4_turntable_publish
+  #       Unreal Engine Version: "4.25"
+  #       Unreal Project Path: "{config}/tk-multi-publish2/tk-maya/unreal/resources/{unreal_engine_version}/turntable/turntable.uproject"
+  #       Turntable Map Path: "/Game/turntable/level/turntable.umap"
+  #       Sequence Path: "/Game/turntable/sequence/turntable_sequence.turntable_sequence"
+  #       Turntable Assets Path: "/Game/maya_turntable_assets/"   # note the trailing '/' must be included
   - name: Publish to Shotgun
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_fbx.py"
+    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session_geometry.py"
     settings:
-        Publish Template: maya_asset_fbx_publish
-  - name: Publish and Submit for Review
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_turntable.py"
-    settings:
-        Work Template: maya_ue4_turntable_render
-        Publish Template: maya_ue4_turntable_publish
-        Unreal Engine Version: "4.25"
-        Unreal Project Path: "{config}/tk-multi-publish2/tk-maya/unreal/resources/{unreal_engine_version}/turntable/turntable.uproject"
-        Turntable Map Path: "/Game/turntable/level/turntable.umap"
-        Sequence Path: "/Game/turntable/sequence/turntable_sequence.turntable_sequence"
-        Turntable Assets Path: "/Game/maya_turntable_assets/"   # note the trailing '/' must be included
+        Publish Template: asset_alembic_cache
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
 

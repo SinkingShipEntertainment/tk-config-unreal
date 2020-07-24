@@ -883,12 +883,18 @@ paths:
         root_name: 'primary'
     # The location of FBX exports for Unreal
     maya_asset_fbx_publish:
-        definition: '@asset_root/publish/fbx/{name}.v{version}.fbx'
+        # definition: '@asset_root/publish/fbx/{name}.v{version}.fbx'
+        definition: '@asset_root/publish/fbx/{Asset}.[{name}.]{Step}.v{version}.fbx'
+        root_name: 'primary'
     # The location of turntable review output rendered in Unreal
     maya_ue4_turntable_render:
-        definition: '@asset_root/work/images/{name}_turntable_v{version}.avi'
+        # definition: '@asset_root/work/images/{name}_turntable_v{version}.avi'
+        definition: '@asset_root/work/{current_user_name}/images/{Asset}[_{name}]_turntable_v{version}.avi'
+        root_name: 'primary'
     maya_ue4_turntable_publish:
-        definition: '@asset_root/review/{Asset}_{name}_turntable_v{version}.avi'
+        # definition: '@asset_root/review/{Asset}_{name}_turntable_v{version}.avi'
+        definition: '@asset_root/review/{Asset}[_{name}]_turntable_v{version}.avi'
+        root_name: 'primary'
 
     # >>> from old sg_config
     # The location where maya shader networks are stored on disk
@@ -1111,7 +1117,10 @@ paths:
     # Hook implementation intended to be a starting point for a pipeline
     # No context info used in template, developers expected to further customize
     unreal_asset_publish:
-        definition: 'assets/unrealdemo/exports/{YYYY}_{MM}_{DD}/{name}.fbx'
+        #definition: 'assets/unrealdemo/exports/{YYYY}_{MM}_{DD}/{name}.fbx'
+        # SSE temp customize - TODO: create unreal/exports in Schema and change this path
+        definition: '@asset_root/work/{current_user_name}/exports/{YYYY}_{MM}_{DD}/{name}.fbx'
+        root_name: 'primary'
 
     # --------------------------------------- #
     # --- SSE adds below (-DW 2020-02-04) --- #
