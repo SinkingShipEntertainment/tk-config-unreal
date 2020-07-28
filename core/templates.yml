@@ -788,7 +788,7 @@ paths:
 
     asset_arnold_standin:
         #definition: '@asset_root/publish/ass/{name}.ass'
-        definition: '@asset_root/publish/ass/{Asset}.[{name}.]{Step}.ass'
+        definition: '@asset_root/publish/ass/{Asset}.[{name}.]{Step}.v{version}.ass'
         root_name: 'primary'
 
     #

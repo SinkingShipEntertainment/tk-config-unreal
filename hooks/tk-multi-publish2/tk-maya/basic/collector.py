@@ -1,11 +1,11 @@
 ﻿# Copyright (c) 2017 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import glob
@@ -150,6 +150,42 @@ class MayaSessionCollector(HookBaseClass):
         )
         session_item.set_icon_from_path(icon_path)
 
+        # Add an ABC export item as child of the session item (DW 2020-07-28)
+        filename = os.path.splitext(display_name)[0]
+        abc_display_name = filename + ".abc"
+        abc_item = session_item.create_item(
+            "maya.abc",
+            "Alembic Export",
+            abc_display_name
+        )
+
+        icon_path = os.path.join(
+            self.disk_location,
+            os.pardir,
+            "icons",
+            "alembic_cache.png"
+        )
+
+        abc_item.set_icon_from_path(icon_path)
+
+        # Add an ASS export item as child of the session item (DW 2020-07-28)
+        filename = os.path.splitext(display_name)[0]
+        ass_display_name = filename + ".ass"
+        ass_item = session_item.create_item(
+            "maya.ass",
+            "Arnold Standin Export",
+            ass_display_name
+        )
+
+        icon_path = os.path.join(
+            self.disk_location,
+            os.pardir,
+            "icons",
+            "arnold_standin.png"
+        )
+
+        ass_item.set_icon_from_path(icon_path)
+
         # Add an FBX export item as child of the session item
         filename = os.path.splitext(display_name)[0]
         fbx_display_name = filename + ".fbx"
@@ -158,7 +194,7 @@ class MayaSessionCollector(HookBaseClass):
             "FBX Export",
             fbx_display_name
         )
-        
+
         # get the icon path to display for this item
         icon_path = os.path.join(
             self.disk_location,
@@ -185,7 +221,7 @@ class MayaSessionCollector(HookBaseClass):
         )
 
         turntable_item.set_icon_from_path(icon_path)
-        
+
         # discover the project root which helps in discovery of other
         # publishable items
         project_root = cmds.workspace(q=True, rootDirectory=True)

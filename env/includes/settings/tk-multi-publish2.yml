@@ -192,21 +192,31 @@ settings.tk-multi-publish2.maya.asset_step:
 #    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session_geometry.py"
 #    settings:
 #        Publish Template: asset_alembic_cache
-    #SSE - comment out entry by Unreal until config proves to work
-  - name: Publish to Shotgun
+  # ABC publish (DW 2020-07-28)
+  - name: Publish to Shotgun (Alembic)
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_abc.py"
+    settings:
+        Publish Template: asset_alembic_cache
+  # ASS publish (DW 2020-07-28)
+  - name: Publish to Shotgun (Arnold Standin)
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_ass.py"
+    settings:
+        Publish Template: asset_arnold_standin
+  # SSE - comment out entry by Unreal until config proves to work (Shervin)
+  - name: Publish to Shotgun (FBX)
     hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_fbx.py"
     settings:
         Publish Template: maya_asset_fbx_publish
-  - name: Publish and Submit for Review
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_turntable.py"
-    settings:
-        Work Template: maya_ue4_turntable_render
-        Publish Template: maya_ue4_turntable_publish
-        Unreal Engine Version: "4.25"
-        Unreal Project Path: "{config}/tk-multi-publish2/tk-maya/unreal/resources/{unreal_engine_version}/turntable/turntable.uproject"
-        Turntable Map Path: "/Game/turntable/level/turntable.umap"
-        Sequence Path: "/Game/turntable/sequence/turntable_sequence.turntable_sequence"
-        Turntable Assets Path: "/Game/maya_turntable_assets/"   # note the trailing '/' must be included
+  # - name: Publish and Submit for Review
+  #   hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_turntable.py"
+  #   settings:
+  #       Work Template: maya_ue4_turntable_render
+  #       Publish Template: maya_ue4_turntable_publish
+  #       Unreal Engine Version: "4.25"
+  #       Unreal Project Path: "{config}/tk-multi-publish2/tk-maya/unreal/resources/{unreal_engine_version}/turntable/turntable.uproject"
+  #       Turntable Map Path: "/Game/turntable/level/turntable.umap"
+  #       Sequence Path: "/Game/turntable/sequence/turntable_sequence.turntable_sequence"
+  #       Turntable Assets Path: "/Game/maya_turntable_assets/"   # note the trailing '/' must be included
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
 
