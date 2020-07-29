@@ -194,17 +194,17 @@ settings.tk-multi-publish2.maya.asset_step:
 #        Publish Template: asset_alembic_cache
   # ABC publish (DW 2020-07-28)
   - name: Publish to Shotgun (Alembic)
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_abc.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_abc.py"
     settings:
         Publish Template: asset_alembic_cache
   # ASS publish (DW 2020-07-28)
   - name: Publish to Shotgun (Arnold Standin)
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_ass.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_ass.py"
     settings:
         Publish Template: asset_arnold_standin
   # SSE - comment out entry by Unreal until config proves to work (Shervin)
   - name: Publish to Shotgun (FBX)
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_fbx.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_fbx.py"
     settings:
         Publish Template: maya_asset_fbx_publish
   # - name: Publish and Submit for Review

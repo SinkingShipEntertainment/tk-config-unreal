@@ -32,8 +32,11 @@ settings.tk-multi-reviewsubmission.nuke.shot:
 # Maya Playblast
 settings.tk-multi-reviewsubmission.maya:
   display_name: Playblast to Create
-  render_media_hook: '{self}/render_media.py:{self}/{engine_name}/render_media.py'
-  submitter_hook: '{self}/submitter_create.py'
+  # SSE: Experiment at getting tk-maya-playblast functionality in here (DW 2020-07-29)
+  # render_media_hook: '{self}/render_media.py:{self}/{engine_name}/render_media.py'
+  # submitter_hook: '{self}/submitter_create.py'
+  render_media_hook: '{self}/render_media.py:{config}/tk-multi-reviewsubmission/{engine_name}/render_media.py'
+  submitter_hook: '{self}/submitter_create.py:{config}/tk-multi-reviewsubmission/submitter_create.py'
   location: "@apps.tk-multi-reviewsubmission.location"
 
 # Photoshop Submit for review
