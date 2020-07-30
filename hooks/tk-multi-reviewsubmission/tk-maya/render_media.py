@@ -10,6 +10,7 @@ import re
 # import json
 # import heapq
 # import traceback
+import tempfile
 
 import maya.cmds as cmds
 import pymel.core as pm
@@ -27,7 +28,6 @@ CAMERA_NAME_PATTERN = r'\w+:TRACKCAMShape'
 DEFAULT_WIDTH = 1280
 DEFAULT_HEIGHT = 720
 TIME_STR_FMT = '%Y-%m-%d (%A) %H.%M %p'
-ORIG_HUDS = []
 
 MODEL_EDITOR_PARAMS = {
     "activeView": True,
@@ -144,10 +144,8 @@ class RenderMedia(HookBaseClass):
         )
         self.logger.info(m)
 
-        # initial huds
-        huds = pm.headsUpDisplay(listHeadsUpDisplays=True)
-        if huds:
-            ORIG_HUDS.extend(huds)
+        # initial overscan TODO
+        # i_overscan = cmds.camera(camera, q=True, overscan=True)
 
         # custom playblast window
         create_window = self.create_window()
@@ -224,6 +222,35 @@ class RenderMedia(HookBaseClass):
 
         # m = 'Failed to create playblast. Unable to find it on disk.'
         # raise RuntimeError(m)
+
+    def _get_temp_media_path(self, name, version, extension):
+        '''
+        Build a temporary path to put the rendered media.
+
+        :param str name:            Name of the media being rendered
+        :param str version:         Version number of the media being rendered
+        :param str extension:       Extension of the media being rendered
+
+        :returns:               Temporary path to put the rendered version
+        :rtype:                 str
+        '''
+
+        name = name or ''
+
+        if version:
+            # suffix = "_v" + version + extension
+            suffix = '.v{0}.{1}'.format(version, extension)
+        else:
+            suffix = extension
+
+        self.logger.info('     name > {}'.format(name))
+        self.logger.info('  version > {}'.format(version))
+        self.logger.info('extension > {}'.format(extension))
+        self.logger.info('   suffix > {}'.format(suffix))
+
+        ntp = tempfile.NamedTemporaryFile(prefix=name, suffix=suffix)
+        with ntp as temp_file:
+            return temp_file.name
 
     def get_default_playblastlast_args(self, output_path):
         """Returns a dictionary of playblast arguments key/value pairs, using
@@ -329,9 +356,11 @@ class RenderMedia(HookBaseClass):
         return w_success
 
     def set_huds(self, action='set', v_huds=[]):
+        huds = pm.headsUpDisplay(listHeadsUpDisplays=True)
+
         if action == 'set':
             v_huds = [
-                f for f in ORIG_HUDS
+                f for f in huds
                 if pm.headsUpDisplay(f, query=True, vis=True)
             ]
 
@@ -340,29 +369,22 @@ class RenderMedia(HookBaseClass):
 
             # add required HUD
             # user name
-            edit_existing_hud = 'HUDUserName' in ORIG_HUDS
+            edit_existing_hud = 'HUDUserName' in huds
+            user_name = self.return_tank_login()
 
             pm.headsUpDisplay(
                 'HUDUserName',
                 edit=edit_existing_hud,
-                command=lambda: self.return_tank_login(),
-                event='playblasting',
+                visible=True,
+                label='User: {}'.format(user_name),
                 section=8,
                 block=1,
                 blockSize='small',
                 padding=0
             )
 
-            pm.headsUpDisplay(
-                'HUDUserName',
-                edit=True,
-                visible=True,
-                label='User:',
-                padding=0
-            )
-
             # scene name
-            edit_existing_hud = 'HUDSceneName' in ORIG_HUDS
+            edit_existing_hud = 'HUDSceneName' in huds
             sh_name = cmds.file(q=True, loc=True, shn=True).rsplit('.', 1)[0]
 
             pm.headsUpDisplay(
@@ -401,7 +423,7 @@ class RenderMedia(HookBaseClass):
 
             # date & time
             # get the time at the point of playblast
-            edit_existing_hud = 'HUDTime' in ORIG_HUDS
+            edit_existing_hud = 'HUDTime' in huds
 
             current_time = datetime.now().strftime(TIME_STR_FMT)
             pm.headsUpDisplay(
@@ -422,7 +444,7 @@ class RenderMedia(HookBaseClass):
             map(
                 lambda f:
                     pm.headsUpDisplay(f, edit=True, visible=False),
-                    ORIG_HUDS
+                    huds
             )
 
             # show the originally visible HUDs again
@@ -464,8 +486,6 @@ class RenderMedia(HookBaseClass):
 
     def set_imageplanes_colorspace(self, c_type='sRGB'):
         """Method to set all imagePlanes colorspace, default is 'sRGB'.
-        TODO: migrate this out eventually to somewhere more appropriate
-        and call it.
 
         Args:
             c_type (str, optional): The colorspace type. Defaults to 'sRGB'.
@@ -482,8 +502,6 @@ class RenderMedia(HookBaseClass):
 
     def generate_all_uv_tile_previews(self, res_max=1024):
         """Regenerate all UV-tile preview textures.
-        TODO: migrate this out eventually to somewhere more appropriate
-        and call it.
 
         Args:
             res_max (int, optional): Maximum resolution. Defaults to 1024.
