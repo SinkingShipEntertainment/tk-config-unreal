@@ -3,12 +3,13 @@
 # our requirements (DW 2020-07-30)
 
 import sgtk
+import tank
 import os
 # import sys
 import re
 # import json
-import heapq
-import traceback
+# import heapq
+# import traceback
 
 import maya.cmds as cmds
 import pymel.core as pm
@@ -25,6 +26,8 @@ PLAYBLAST_WINDOW = 'Playblast_Window'
 CAMERA_NAME_PATTERN = r'\w+:TRACKCAMShape'
 DEFAULT_WIDTH = 1280
 DEFAULT_HEIGHT = 720
+TIME_STR_FMT = '%Y-%m-%d (%A) %H.%M %p'
+ORIG_HUDS = []
 
 MODEL_EDITOR_PARAMS = {
     "activeView": True,
@@ -141,19 +144,50 @@ class RenderMedia(HookBaseClass):
         )
         self.logger.info(m)
 
+        # initial huds
+        huds = pm.headsUpDisplay(listHeadsUpDisplays=True)
+        if huds:
+            ORIG_HUDS.extend(huds)
+
         # custom playblast window
         create_window = self.create_window()
         if create_window:
             pb_success = False
 
+            # set required visible HUDs
+            v_huds = self.set_huds(action='set')
+
+            # hide all controls groups
+            self.set_ctrls_visibility(switch_val=0)
+
+            # playblast
+            output_path = ''
+            try:
+                output_path = pm.playblast(**playblast_args)
+                m = 'Playblast succeeded > {}'.format(output_path)
+                self.logger.info(m)
+                pb_success = True
+            except Exception as e:
+                m = 'Playblast failed > {}'.format(str(e))
+                self.logger.info(m)
+            finally:
+                # clean up
+                self.set_ctrls_visibility(switch_val=1)
+                self.set_huds(action='unset', v_huds=v_huds)
+                self.destroy_window()
+
+            if pb_success:
+                return output_path
+
         # playblast
-        output_path = cmds.playblast(**playblast_args)
-        self.logger.info("Playblast maybe written to %s" % output_path)
+        # output_path = cmds.playblast(**playblast_args)
+        # self.logger.info("Playblast maybe written to %s" % output_path)
 
-        if os.path.exists(output_path):
-            self.logger.info("Playblast written to %s" % output_path)
-            return output_path
+        # if os.path.exists(output_path):
+        #     self.logger.info("Playblast written to %s" % output_path)
+        #     return output_path
 
+        # DW - I don't know that we need this...
         # Now, we did a playblast and the file is not on disk
         # What's happening is that if you render a movie, Maya appends the
         # movie name to the file name, and if you render a file sequence, Maya
@@ -161,42 +195,40 @@ class RenderMedia(HookBaseClass):
         # Now we need to find the file on disk given the prefix we provided to
         # the playblast command.
 
-        output_folder, output_file = os.path.split(playblast_args['filename'])
+        # output_folder, output_file = os.path.split(playblast_args['filename'])
 
-        files = []
-        for f in os.listdir(output_folder):
+        # files = []
+        # for f in os.listdir(output_folder):
 
-            f_path = os.path.join(output_folder, f)
-            if not f.startswith(output_file) or not os.path.isfile(f_path):
-                continue
+        #     f_path = os.path.join(output_folder, f)
+        #     if not f.startswith(output_file) or not os.path.isfile(f_path):
+        #         continue
 
-            try:
-                # This method raise OSError if the file does not exist or is
-                # somehow inaccessible.
-                m_time = os.path.getmtime(f_path)
-            except OSError:
-                continue
-            else:
-                # Insert with a negative access time so the first elment in the
-                # list is the most recent file
-                heapq.heappush(files, (-m_time, f))
+        #     try:
+        #         # This method raise OSError if the file does not exist or is
+        #         # somehow inaccessible.
+        #         m_time = os.path.getmtime(f_path)
+        #     except OSError:
+        #         continue
+        #     else:
+        #         # Insert with a negative access time so the first elment in the
+        #         # list is the most recent file
+        #         heapq.heappush(files, (-m_time, f))
 
-        if files:
-            f = heapq.heappop(files)[1]
+        # if files:
+        #     f = heapq.heappop(files)[1]
 
-            output_path = os.path.join(output_folder, f)
-            self.logger.info("Playblast written to %s" % output_path)
-            return output_path
+        #     output_path = os.path.join(output_folder, f)
+        #     self.logger.info("Playblast written to %s" % output_path)
+        #     return output_path
 
-        m = 'Failed to create playblast. Unable to find it on disk.'
-        raise RuntimeError(m)
+        # m = 'Failed to create playblast. Unable to find it on disk.'
+        # raise RuntimeError(m)
 
     def get_default_playblastlast_args(self, output_path):
-        """SSE: Changed to match the outside-vendor-provided tk-maya-playblast
-        functionality that worked with old-style Shotgun configurations.
-        Returns a dictionary of playblast arguments key/value pairs, using
-        values that are sepcific to SSE's requirements, e.g. H.264, never use
-        '.iff' sequences, etcetera (DW 2020-07-30).
+        """Returns a dictionary of playblast arguments key/value pairs, using
+        values that are specific to SSE's requirements, e.g. H.264, never use
+        '.iff' sequences, etcetera.
 
         For more information about the playblast API:
         https://help.autodesk.com/view/MAYAUL/2020/ENU/...
@@ -242,62 +274,163 @@ class RenderMedia(HookBaseClass):
             pm.windowPref(PLAYBLAST_WINDOW, remove=True)
 
     def create_window(self):
-        # call various pre-window methods
-        self.set_camera()
-        self.set_imageplanes_colorspace()
-        self.set_vp2_globals()
-
-        # create window
-        self.destroy_window()
-
-        window = pm.window(
-            PLAYBLAST_WINDOW,
-            titleBar=True,
-            iconify=True,
-            leftEdge=100,
-            topEdge=100,
-            width=DEFAULT_WIDTH,
-            height=DEFAULT_HEIGHT,
-            sizeable=False
-        )
-
-        # create window model editor
-        layout = pm.formLayout()
-        editor = pm.modelEditor(**MODEL_EDITOR_PARAMS)
-        pm.setFocus(editor)
-
-        pm.formLayout(
-            layout,
-            edit=True,
-            attachForm=(
-                (editor, "left", 0),
-                (editor, "top", 0),
-                (editor, "right", 0),
-                (editor, "bottom", 0)
-            )
-        )
-
-        # show window
-        pm.setFocus(editor)
-        pm.showWindow(window)
-        pm.refresh()
-
-        # call various post-window methods
-        self.generate_all_uv_tile_previews()
+        w_success = False
 
         try:
-            yield True
-        except Exception:
-            traceback.print_exc()
-        finally:
-            pm.deleteUI(window)
+            # call various pre-window methods
+            self.set_camera()
+            self.set_imageplanes_colorspace()
+            self.set_vp2_globals()
 
-    def set_huds(self, action='set'):
+            # create window (clean up first)
+            self.destroy_window()
+
+            window = pm.window(
+                PLAYBLAST_WINDOW,
+                titleBar=True,
+                iconify=True,
+                leftEdge=100,
+                topEdge=100,
+                width=DEFAULT_WIDTH,
+                height=DEFAULT_HEIGHT,
+                sizeable=False
+            )
+
+            # create window model editor
+            layout = pm.formLayout()
+            editor = pm.modelEditor(**MODEL_EDITOR_PARAMS)
+            pm.setFocus(editor)
+
+            pm.formLayout(
+                layout,
+                edit=True,
+                attachForm=(
+                    (editor, "left", 0),
+                    (editor, "top", 0),
+                    (editor, "right", 0),
+                    (editor, "bottom", 0)
+                )
+            )
+
+            # show window
+            pm.setFocus(editor)
+            pm.showWindow(window)
+            pm.refresh()
+
+            # call various post-window methods
+            self.generate_all_uv_tile_previews()
+
+            # success!
+            w_success = True
+        except Exception as e:
+            m = 'Failed to create playblast window > {}'.format(str(e))
+            self.logger.info(m)
+
+        return w_success
+
+    def set_huds(self, action='set', v_huds=[]):
         if action == 'set':
-            pass
+            v_huds = [
+                f for f in ORIG_HUDS
+                if pm.headsUpDisplay(f, query=True, vis=True)
+            ]
+
+            # hide all visible HUDs
+            map(lambda f: pm.headsUpDisplay(f, edit=True, vis=False), v_huds)
+
+            # add required HUD
+            # user name
+            edit_existing_hud = 'HUDUserName' in ORIG_HUDS
+
+            pm.headsUpDisplay(
+                'HUDUserName',
+                edit=edit_existing_hud,
+                command=lambda: self.return_tank_login(),
+                event='playblasting',
+                section=8,
+                block=1,
+                blockSize='small',
+                padding=0
+            )
+
+            pm.headsUpDisplay(
+                'HUDUserName',
+                edit=True,
+                visible=True,
+                label='User:',
+                padding=0
+            )
+
+            # scene name
+            edit_existing_hud = 'HUDSceneName' in ORIG_HUDS
+            sh_name = cmds.file(q=True, loc=True, shn=True).rsplit('.', 1)[0]
+
+            pm.headsUpDisplay(
+                'HUDSceneName',
+                edit=edit_existing_hud,
+                visible=True,
+                label='Shot: {}'.format(sh_name),
+                section=6,
+                block=1,
+                blockSize='small',
+                padding=0
+            )
+
+            # focal length
+            pm.headsUpDisplay(
+                'HUDFocalLength',
+                edit=True,
+                visible=True,
+                section=3,
+                block=1,
+                blockSize='small',
+                padding=0
+            )
+
+            # current frame
+            pm.headsUpDisplay(
+                'HUDCurrentFrame',
+                edit=True,
+                visible=True,
+                dataFontSize='large',
+                section=8,
+                block=0,
+                blockSize='small',
+                padding=0
+            )
+
+            # date & time
+            # get the time at the point of playblast
+            edit_existing_hud = 'HUDTime' in ORIG_HUDS
+
+            current_time = datetime.now().strftime(TIME_STR_FMT)
+            pm.headsUpDisplay(
+                'HUDTime',
+                edit=edit_existing_hud,
+                visible=True,
+                label=current_time,
+                section=6,
+                block=0,
+                blockSize='small',
+                padding=0
+            )
+
+            return v_huds
 
         if action == 'unset':
-            pass
+            # hide the playblast-specific HUDs
+            map(
+                lambda f:
+                    pm.headsUpDisplay(f, edit=True, visible=False),
+                    ORIG_HUDS
+            )
+
+            # show the originally visible HUDs again
+            map(
+                lambda f:
+                    pm.headsUpDisplay(f, edit=True, visible=True),
+                    v_huds
+            )
 
     def set_camera(self):
         """Find first camera matching pattern and set as active camera, if not
@@ -411,7 +544,7 @@ class RenderMedia(HookBaseClass):
             try:
                 cmds.setAttr(grp_attr, switch_val)
             except Exception as e:
-                self._app.log_debug(str(e))
+                self.logger.info(str(e))
 
         # --- Compensating for nurbsCurves that fall outside of references
         # --- (e.g. in-scene duplicates of RIG control curves, animator
@@ -424,4 +557,34 @@ class RenderMedia(HookBaseClass):
             for _nr in nr_ncurves:
                 _nr_attr = '{}.visibility'.format(_nr)
                 cmds.setAttr(_nr_attr, switch_val)
+
+    def return_tank_login(self):
+        """Method to rely on the sgtk login for user name in playblasts, *not*
+        the system user (e.g. you're logged in as another user in Shotgun, but
+        you're logged in as yourself in the operating system). If we can't get
+        anything from sgtk, we'll get the system user as a fallback.
+
+        Returns:
+            str: the sgtk session user
+        """
+        tank_login = 'unknown.user'
+
+        tank_session_user = tank.get_authenticated_user()
+        if tank_session_user:
+            tank_login = tank_session_user.login
+
+        # --- Problem where this seems to be returning 'None' if people have
+        # --- multiple SG Desktops open, will grab the OS user if that's the
+        # --- case... (~DW 2019-09-03)
+        if not tank_login:
+            m = '>> Failed to get SG authenticated user, using OS user...'
+            self.logger.info(m)
+
+            import getpass
+            tank_login = getpass.getuser()
+
+        m = '>> tank authenticated user >> {}'.format(tank_login)
+        self.logger.info(m)
+
+        return tank_login
 # --- eof
