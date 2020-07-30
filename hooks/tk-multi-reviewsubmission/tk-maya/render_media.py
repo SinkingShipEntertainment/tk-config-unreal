@@ -1,22 +1,17 @@
-# Copyright (c) 2019 Shotgun Software Inc.
-#
-# CONFIDENTIAL AND PROPRIETARY
-#
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
-# Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
-
+# SSE: Modified to encompass the outside-vendor-provided
+# tk-maya-playblast app functionailty, which we had also customized to fit
+# our requirements (DW 2020-07-30)
 
 import sgtk
-import maya
 import os
-import sys
+# import sys
 import re
-import json
+# import json
 import heapq
+import traceback
 
+import maya.cmds as cmds
+import pymel.core as pm
 from datetime import datetime
 
 HookBaseClass = sgtk.get_hook_baseclass()
@@ -24,6 +19,9 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # Play with the regex here: https://regex101.com/r/S1ei8H/1
 PLAYBLAST_ARG_RE = re.compile(r"^doPlayblastArgList.*(\{.*\});$")
 
+# SSE: migrating the tk-maya-playblast global variables in here
+# (DW 2020-07-29)
+PLAYBLAST_WINDOW = 'Playblast_Window'
 CAMERA_NAME_PATTERN = r'\w+:TRACKCAMShape'
 DEFAULT_WIDTH = 1280
 DEFAULT_HEIGHT = 720
@@ -103,22 +101,31 @@ class RenderMedia(HookBaseClass):
         """
         Render the media using the Maya Playblast API
 
-        :param str input_path:      Path to the input frames for the movie      (Unused)
-        :param str output_path:     Path to the output movie that will be rendered
-        :param int width:           Width of the output movie                   (Unused)
-        :param int height:          Height of the output movie                  (Unused)
-        :param int first_frame:     The first frame of the sequence of frames.  (Unused)
-        :param int last_frame:      The last frame of the sequence of frames.   (Unused)
-        :param int version:         Version number to use for the output movie slate and burn-in
-        :param str name:            Name to use in the slate for the output movie
-        :param str color_space:     Colorspace of the input frames              (Unused)
+        :param str input_path:      Path to the input frames for the movie
+                                    (Unused)
+        :param str output_path:     Path to the output movie that will be
+                                    rendered
+        :param int width:           Width of the output movie
+                                    (Unused)
+        :param int height:          Height of the output movie
+                                    (Unused)
+        :param int first_frame:     The first frame of the sequence of frames
+                                    (Unused)
+        :param int last_frame:      The last frame of the sequence of frames
+                                    (Unused)
+        :param int version:         Version number to use for the output movie
+                                    slate and burn-in
+        :param str name:            Name to use in the slate for the output
+                                    movie
+        :param str color_space:     Colorspace of the input frames
+                                    (Unused)
 
         :returns:               Location of the rendered media
         :rtype:                 str
         """
 
         if name == "Unnamed":
-            current_file_path = maya.cmds.file(query=True, sn=True)
+            current_file_path = cmds.file(query=True, sn=True)
 
             if current_file_path:
                 name = os.path.basename(current_file_path)
@@ -128,11 +135,19 @@ class RenderMedia(HookBaseClass):
 
         playblast_args = self.get_default_playblastlast_args(output_path)
 
-        self.logger.info(
-            "Writing playblast to: %s using (%s)" % (output_path, playblast_args)
+        m = 'Writing playblast to: {0} using ({1})'.format(
+            output_path,
+            playblast_args
         )
+        self.logger.info(m)
 
-        output_path = maya.cmds.playblast(**playblast_args)
+        # custom playblast window
+        create_window = self.create_window()
+        if create_window:
+            pb_success = False
+
+        # playblast
+        output_path = cmds.playblast(**playblast_args)
         self.logger.info("Playblast maybe written to %s" % output_path)
 
         if os.path.exists(output_path):
@@ -140,11 +155,13 @@ class RenderMedia(HookBaseClass):
             return output_path
 
         # Now, we did a playblast and the file is not on disk
-        # What's happening is that if you render a movie, Maya append the movie name to the file name
-        # and if you render a file sequence, Maya append the sequence number and the extension to the file.
-        # Now we need to find the file on disk given the prefix we provided to the playblast command.
+        # What's happening is that if you render a movie, Maya appends the
+        # movie name to the file name, and if you render a file sequence, Maya
+        # appends the sequence number and the extension to the file.
+        # Now we need to find the file on disk given the prefix we provided to
+        # the playblast command.
 
-        output_folder, output_file = os.path.split(playblast_args["filename"])
+        output_folder, output_file = os.path.split(playblast_args['filename'])
 
         files = []
         for f in os.listdir(output_folder):
@@ -154,12 +171,14 @@ class RenderMedia(HookBaseClass):
                 continue
 
             try:
-                # This method raise OSError if the file does not exist or is somehow inaccessible.
+                # This method raise OSError if the file does not exist or is
+                # somehow inaccessible.
                 m_time = os.path.getmtime(f_path)
             except OSError:
                 continue
             else:
-                # Insert with a negative access time so the first elment in the list is the most recent file
+                # Insert with a negative access time so the first elment in the
+                # list is the most recent file
                 heapq.heappush(files, (-m_time, f))
 
         if files:
@@ -169,150 +188,240 @@ class RenderMedia(HookBaseClass):
             self.logger.info("Playblast written to %s" % output_path)
             return output_path
 
-        raise RuntimeError(
-            "Something went wrong with the playblast. Unable to find it on disk."
-        )
+        m = 'Failed to create playblast. Unable to find it on disk.'
+        raise RuntimeError(m)
 
     def get_default_playblastlast_args(self, output_path):
+        """SSE: Changed to match the outside-vendor-provided tk-maya-playblast
+        functionality that worked with old-style Shotgun configurations.
+        Returns a dictionary of playblast arguments key/value pairs, using
+        values that are sepcific to SSE's requirements, e.g. H.264, never use
+        '.iff' sequences, etcetera (DW 2020-07-30).
+
+        For more information about the playblast API:
+        https://help.autodesk.com/view/MAYAUL/2020/ENU/...
+                                       ...?guid=__CommandsPython_playblast_html
+
+        For more information: about the doPlayblastArgList mel function, look
+        at the doPlayblastArgList.mel in the Autodesk Maya app bundle.
+
+        Args:
+            output_path (str): Path to the output movie that will be
+            rendered
+
+        Returns:
+            dict: Playblast arguments
         """
-        Build the playblast command arguments. This implementation grab the playblast arguments from Maya.
+        playblast_args = PLAYBLAST_PARAMS
+        playblast_args['filename'] = output_path  # TEMP
+        playblast_args['width'] = DEFAULT_WIDTH
+        playblast_args['height'] = DEFAULT_HEIGHT
 
-        For more informations about the playblast API,
-        https://help.autodesk.com/view/MAYAUL/2020/ENU/?guid=__CommandsPython_playblast_html
+        # frame range
+        playblast_args['startTime'] = float(1)
+        playblast_args['endTime'] = float(50)     # TEMP
 
-        For more informations about the doPlayblastArgList mel function, look at the doPlayblastArgList.mel in the Autodesk Maya app bundle.
+        # include audio if available
+        audio_list = pm.ls(type='audio')
+        if audio_list:
+            playblast_args['sound'] = audio_list[0]
 
-        :param str output_path:     Path to the output movie that will be rendered
+        return playblast_args
 
-        :returns:               Playblast arguments
-        :rtype:                 dict
-
+    def destroy_window(self):
+        """If the PLAYBLAST_WINDOW exists, destroy it (window and its prefs).
         """
+        try:
+            pm.deleteUI(PLAYBLAST_WINDOW)
+            m = 'Found and deleted existing window > {}'.format()
+            self.logger.info(m)
+        except Exception:
+            pass
 
-        # This command returns something like "doPlayblastArgList 6 { } {  } { "0 ","movies/playblast","1","avfoundation","1","0.5","H.264","1","256","256","0","1","10","1","0","4","0","70","0"};"
-        perform_playblast_output = maya.mel.eval("performPlayblast 2")
-        self.logger.debug(
-            "'mel.eval(performPlayblast 2)' output: " + perform_playblast_output
+        if pm.windowPref(PLAYBLAST_WINDOW, exists=True):
+            pm.windowPref(PLAYBLAST_WINDOW, remove=True)
+
+    def create_window(self):
+        # call various pre-window methods
+        self.set_camera()
+        self.set_imageplanes_colorspace()
+        self.set_vp2_globals()
+
+        # create window
+        self.destroy_window()
+
+        window = pm.window(
+            PLAYBLAST_WINDOW,
+            titleBar=True,
+            iconify=True,
+            leftEdge=100,
+            topEdge=100,
+            width=DEFAULT_WIDTH,
+            height=DEFAULT_HEIGHT,
+            sizeable=False
         )
 
-        # And we only want to keep the last part of the string.. ({ "0 ","movies/playblast","1","avfoundation","1","0.5","H.264","1","256","256","0","1","10","1","0","4","0","70","0"})
-        playblast_arg_match = PLAYBLAST_ARG_RE.match(perform_playblast_output)
+        # create window model editor
+        layout = pm.formLayout()
+        editor = pm.modelEditor(**MODEL_EDITOR_PARAMS)
+        pm.setFocus(editor)
 
-        # If there's no match, there's nothing we can do...
-        if not playblast_arg_match:
-            raise RuntimeError("Failed to extract the playblast arguments.")
+        pm.formLayout(
+            layout,
+            edit=True,
+            attachForm=(
+                (editor, "left", 0),
+                (editor, "top", 0),
+                (editor, "right", 0),
+                (editor, "bottom", 0)
+            )
+        )
 
-        # Store the value of the playblast args
-        # We now have '{ "0 ","movies/playblast","1","avfoundation","1","0.5","H.264","1","256","256","0","1","10","1","0","4","0","70","0"}'
-        playblast_arg_list_str = playblast_arg_match.group(1)
+        # show window
+        pm.setFocus(editor)
+        pm.showWindow(window)
+        pm.refresh()
 
-        # Remove the curly brackets arount the list and surround it with square brackets
-        # We now have '[ "0 ","movies/playblast","1","avfoundation","1","0.5","H.264","1","256","256","0","1","10","1","0","4","0","70","0"]'
-        playblast_arg_list_str = "[" + playblast_arg_list_str[1:-1] + "]"
-
-        # Now that the argument list is a parsable JSON list, let's parse it.
-        playblast_arg_list = json.loads(playblast_arg_list_str)
-
-        # SSE: migrating the tk-maya-plast playblast parameters in here
-        # (DW 2020-07-29)
-        # playblast_args = {"filename": output_path, "forceOverwrite": True}
-        playblast_args = PLAYBLAST_PARAMS
-        playblast_args["filename"] = output_path
-        playblast_args["width"] = DEFAULT_WIDTH
-        playblast_args["height"] = DEFAULT_HEIGHT
+        # call various post-window methods
+        self.generate_all_uv_tile_previews()
 
         try:
-            # We don't need playblast_arg_list[0] because we want to save the file on disk
-            # We don't need playblast_arg_list[1] because we provides the name of the movie
-
-            # We don't need playblast_arg_list[2] because we do not need to show the viewer
-            # playblast_args["viewer"] = False
-
-            # playblast_arg_list[3] is the playblast format to use
-            # playblast_args["format"] = playblast_arg_list[3]
-
-            # playblast_arg_list[4] sets whether or not model view ornaments (e.g. the axis icon) should be displayed
-            # playblast_args["showOrnaments"] = playblast_arg_list[4] == "1"
-
-            # playblast_arg_list[5] is the percentage of the current view to use during playblast
-            # playblast_args["percent"] = round(float(playblast_arg_list[5]) * 100)
-
-            # playblast_arg_list[6] specify the compression to use for the movie file.
-            # playblast_args["compression"] = playblast_arg_list[6]
-
-            # playblast_arg_list[7] is the displaySource
-            # 1 : Use current view
-            # 2 : Use Render Globals
-            # 3 : Use values specified from option box
-            # if playblast_arg_list[7] == "1":
-            #     pass  # Nothing to do, free pass !
-            # elif playblast_arg_list[7] == "2":
-            #     # Grab the renderGlobals
-            #     render_globals = maya.mel.eval("ls -type renderGlobals")
-            #     if not render_globals:
-            #         raise RuntimeError("Unable to find renderGlobals in Maya")
-
-            #     # List all the connected nodes
-            #     connections = maya.mel.eval("listConnections %s" % render_globals[0])
-            #     if not connections:
-            #         raise RuntimeError("Unable to list renderGlobals connections")
-
-            #     # Grab the resolution node from the connections
-            #     resolution_node = ""
-            #     for connection in connections:
-            #         node_type = maya.mel.eval("nodeType %s" % connection)
-            #         if node_type == "resolution":
-            #             resolution_node = connection
-            #             break
-
-            #     if not resolution_node:
-            #         raise RuntimeError("Unable to find a resolution node")
-
-            #     # Collect the width and height from that node
-            #     playblast_args["width"] = int(
-            #         maya.mel.eval("getAttr %s.width" % resolution_node)
-            #     )
-            #     playblast_args["height"] = int(
-            #         maya.mel.eval("getAttr %s.height" % resolution_node)
-            #     )
-            # else:
-            #     # Playblast setting is set to Custom, so let use the value provided
-            #     # playblast_arg_list[8] is the display width
-            #     playblast_args["width"] = int(playblast_arg_list[8])
-
-            #     # playblast_arg_list[9] is the display height
-            #     playblast_args["height"] = int(playblast_arg_list[9])
-
-            # playblast_arg_list[10] is the flag telling to use the startTime and the endTime
-            if playblast_arg_list[10] == "1":
-                # playblast_arg_list[11] is the start time
-                playblast_args["startTime"] = float(playblast_arg_list[11])
-
-                # playblast_arg_list[12] is the end time
-                playblast_args["endTime"] = float(playblast_arg_list[12])
-
-            # playblast_arg_list[13] is the flag telling if we need to clean the unnamed cached playblasts
-            # playblast_args["clearCache"] = playblast_arg_list[13] == "1"
-
-            # playblast_arg_list[14] is the flag telling if we should render offscreen
-            # playblast_args["offScreen"] = playblast_arg_list[14] == "1"
-
-            # playblast_arg_list[15] is the number of zero to pad with
-            # playblast_args["framePadding"] = int(playblast_arg_list[15])
-
-            # playblast_arg_list[16] is the flag telling to use the sequence time
-            # playblast_args["sequenceTime"] = playblast_arg_list[16] == "1"
-
-            # playblast_arg_list[17] is the quality setting
-            # playblast_args["quality"] = int(playblast_arg_list[17])
-
-            # playblast_arg_list[18] is the flag telling if we should output depth with image in 'iff' format
-            playblast_args["saveDepth"] = playblast_arg_list[18] == "1"
-        except IndexError:
-            # If we run this function on an old version of Maya, we might end with an IndexError being raised
-            # because the amount of arguments returned by "performPlayblast". Since we want to gracefully handle
-            # the cases where the argument list is shorter and we access all argument in an incremental way, it's
-            # ok to just catch the error and return the collected arguments.
-            pass
+            yield True
+        except Exception:
+            traceback.print_exc()
         finally:
-            return playblast_args
+            pm.deleteUI(window)
+
+    def set_huds(self, action='set'):
+        if action == 'set':
+            pass
+
+        if action == 'unset':
+            pass
+
+    def set_camera(self):
+        """Find first camera matching pattern and set as active camera, if not
+        use default current active camera. Also set the overscan.
+        """
+        camera_list = [
+            c.name() for c in pm.ls(type='camera', r=True)
+            if re.match(CAMERA_NAME_PATTERN, c.name())
+        ]
+        self.logger.info('>> camera_list >> {}'.format(camera_list))
+
+        if 'cam' not in MODEL_EDITOR_PARAMS.keys() and camera_list:
+            MODEL_EDITOR_PARAMS['cam'] = camera_list[0]
+
+        cmds.camera(camera_list[0], e=True, overscan=1.0)
+
+    def set_vp2_globals(self):
+        """Sets various Viewport2.0 attribute values, e.g. if a Maya
+        useBackground shader is in the Maya file, turn off SSAO.
+        """
+        use_bg_exists = pm.ls(type='useBackground')
+        hrg = pm.general.PyNode('hardwareRenderingGlobals')
+        if use_bg_exists:
+            hrg.ssaoEnable.set(0)
+        else:
+            hrg.ssaoEnable.set(1)
+            hrg.ssaoRadius.set(32)
+            hrg.ssaoFilterRadius.set(16)
+            hrg.ssaoSamples.set(32)
+        hrg.multiSampleEnable.set(1)
+
+    def set_imageplanes_colorspace(self, c_type='sRGB'):
+        """Method to set all imagePlanes colorspace, default is 'sRGB'.
+        TODO: migrate this out eventually to somewhere more appropriate
+        and call it.
+
+        Args:
+            c_type (str, optional): The colorspace type. Defaults to 'sRGB'.
+        """
+        im_planes = cmds.ls(type='imagePlane')
+        for im_plane in im_planes:
+            im_attr = '{}.colorSpace'.format(im_plane)
+            try:
+                cmds.setAttr(im_attr, c_type, type='string')
+                self.logger.info('>> Set {0} >> {1}'.format(im_attr, c_type))
+            except Exception as e:
+                m = '>> Could not set {0} >> {1}'.format(im_attr, str(e))
+                self.logger.info(m)
+
+    def generate_all_uv_tile_previews(self, res_max=1024):
+        """Regenerate all UV-tile preview textures.
+        TODO: migrate this out eventually to somewhere more appropriate
+        and call it.
+
+        Args:
+            res_max (int, optional): Maximum resolution. Defaults to 1024.
+        """
+        # --- Set the resolution...
+        try:
+            hrg_texmax_attr = 'hardwareRenderingGlobals.textureMaxResolution'
+            cmds.setAttr(hrg_texmax_attr, res_max)
+            m = '>> Set {0} > {1}'.format(hrg_texmax_attr, res_max)
+            self.logger.info(m)
+        except Exception as e:
+            m = '>> Failed to set {0} > {1}'.format(hrg_texmax_attr, str(e))
+            self.logger.info(m)
+
+        # --- Generate for all file nodes in *_RIG shaders...
+        f_nodes = cmds.ls(typ='file')
+        if f_nodes:
+            for f_node in f_nodes:
+                uvtm_attr = '{}.uvTilingMode'.format(f_node)
+                uvtq_attr = '{}.uvTileProxyQuality'.format(f_node)
+
+                uvtm_val = cmds.getAttr(uvtm_attr)
+                uvtq_val = cmds.getAttr(uvtq_attr)
+                if uvtm_val != 0 and uvtq_val != 0:
+                    try:
+                        cmds.ogs(rup=f_node)
+                        m = '>> UV Tile Preview > {}'.format(f_node)
+                        self.logger.info(m)
+                    except Exception as e:
+                        m = '>> Failed UV Tile Preview {0} > {1}'.format(
+                            f_node,
+                            str(e)
+                        )
+                        self.logger.info(m)
+
+    def set_ctrls_visibility(self, switch_val=1):
+        """
+        Need to see NURBS curves in playblast for END2 character 'sparky',
+        so leave them on in the viewport & hide/show any controls group in
+        the active Maya scene file as a workaround.
+        """
+        # --- Inconsitent naming in RIG controls group root nodes,
+        # --- unfortunately (get Assets dept. to standardize in
+        # --- future)...
+        grp_root_nodes = [
+            '*:controls',           # --- is this what should be standard?
+            '*:controls_gr',        # --- ...or is this correct?
+            '*:control_gr',         # --- sometimes e.g. DroneRobot_RIG v005
+            '*:model_controls_gr',  # --- sometimes e.g. Ling_RIG v048
+            '*:model_rig_gr',       # --- no idea e.g. Ling_RIG v050
+            '*:Controls',           # --- legacy rigs e.g. Dragon_RIG v036
+            '*:rig'                 # --- guidelines e.g. PolarBear_RIG v050
+        ]
+
+        all_ctrl_grps = cmds.ls(grp_root_nodes)
+        for a_ctrl_grp in all_ctrl_grps:
+            grp_attr = '{}.visibility'.format(a_ctrl_grp)
+            try:
+                cmds.setAttr(grp_attr, switch_val)
+            except Exception as e:
+                self._app.log_debug(str(e))
+
+        # --- Compensating for nurbsCurves that fall outside of references
+        # --- (e.g. in-scene duplicates of RIG control curves, animator
+        # --- created curves, etc.)...
+        all_ncurves = cmds.ls(type='nurbsCurve')
+        nr_ncurves = [
+            _n for _n in all_ncurves if not cmds.referenceQuery(_n, inr=True)
+        ]
+        if nr_ncurves:
+            for _nr in nr_ncurves:
+                _nr_attr = '{}.visibility'.format(_nr)
+                cmds.setAttr(_nr_attr, switch_val)
+# --- eof
