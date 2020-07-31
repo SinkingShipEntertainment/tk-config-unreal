@@ -8,13 +8,16 @@ import os
 # import sys
 import re
 # import json
-# import heapq
+import heapq
 # import traceback
 import tempfile
 
 import maya.cmds as cmds
 import pymel.core as pm
+
 from datetime import datetime
+from sgtk.platform.qt import QtCore
+from sgtk.platform.qt import QtGui
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -127,25 +130,24 @@ class RenderMedia(HookBaseClass):
         :rtype:                 str
         """
 
-        if name == "Unnamed":
+        # name of the playblast file
+        if name == 'Unnamed':
             current_file_path = cmds.file(query=True, sn=True)
 
             if current_file_path:
                 name = os.path.basename(current_file_path)
+                name = os.path.splitext(name)[0]
 
         if not output_path:
-            output_path = self._get_temp_media_path(name, version, "")
+            output_path = self._get_temp_media_path(name, version, '')
 
         playblast_args = self.get_default_playblastlast_args(output_path)
 
-        m = 'Writing playblast to: {0} using ({1})'.format(
+        m = '>> Playblast arguments: {0} using ({1})'.format(
             output_path,
             playblast_args
         )
         self.logger.info(m)
-
-        # initial overscan TODO
-        # i_overscan = cmds.camera(camera, q=True, overscan=True)
 
         # custom playblast window
         create_window = self.create_window()
@@ -162,66 +164,63 @@ class RenderMedia(HookBaseClass):
             output_path = ''
             try:
                 output_path = pm.playblast(**playblast_args)
-                m = 'Playblast succeeded > {}'.format(output_path)
+                m = '>> Playblast succeeded > {}'.format(output_path)
                 self.logger.info(m)
                 pb_success = True
             except Exception as e:
-                m = 'Playblast failed > {}'.format(str(e))
+                m = '>> Playblast failed > {}'.format(str(e))
                 self.logger.info(m)
             finally:
                 # clean up
                 self.set_ctrls_visibility(switch_val=1)
                 self.set_huds(action='unset', v_huds=v_huds)
                 self.destroy_window()
+                m = '>> Post-playblast-attempt cleanup finished'
+                self.logger.info(m)
 
             if pb_success:
-                return output_path
+                # find the file on disk, return output_path
+                # TODO: make this its own method
+                o_split = os.path.split(playblast_args['filename'])
+                o_folder = o_split[0]
+                o_file = o_split[1]
 
-        # playblast
-        # output_path = cmds.playblast(**playblast_args)
-        # self.logger.info("Playblast maybe written to %s" % output_path)
+                files = []
+                for f in os.listdir(o_folder):
+                    f_path = os.path.join(o_folder, f)
 
-        # if os.path.exists(output_path):
-        #     self.logger.info("Playblast written to %s" % output_path)
-        #     return output_path
+                    if not f.startswith(o_file) or not os.path.isfile(f_path):
+                        continue
 
-        # DW - I don't know that we need this...
-        # Now, we did a playblast and the file is not on disk
-        # What's happening is that if you render a movie, Maya appends the
-        # movie name to the file name, and if you render a file sequence, Maya
-        # appends the sequence number and the extension to the file.
-        # Now we need to find the file on disk given the prefix we provided to
-        # the playblast command.
+                    try:
+                        # the following call raises an OSError if the file
+                        # does not exist or is somehow inaccessible
+                        m_time = os.path.getmtime(f_path)
+                    except OSError:
+                        continue
+                    else:
+                        # insert with a negative access time so the first
+                        # element in the list is the most recent file
+                        heapq.heappush(
+                            files,
+                            (-m_time, f)
+                        )
 
-        # output_folder, output_file = os.path.split(playblast_args['filename'])
+                if files:
+                    f = heapq.heappop(files)[1]
+                    output_path = os.path.join(o_folder, f)
 
-        # files = []
-        # for f in os.listdir(output_folder):
+                    m = '>> Playblast written to > {}'.format(output_path)
+                    self.logger.info(m)
 
-        #     f_path = os.path.join(output_folder, f)
-        #     if not f.startswith(output_file) or not os.path.isfile(f_path):
-        #         continue
+                    return output_path
 
-        #     try:
-        #         # This method raise OSError if the file does not exist or is
-        #         # somehow inaccessible.
-        #         m_time = os.path.getmtime(f_path)
-        #     except OSError:
-        #         continue
-        #     else:
-        #         # Insert with a negative access time so the first elment in the
-        #         # list is the most recent file
-        #         heapq.heappush(files, (-m_time, f))
-
-        # if files:
-        #     f = heapq.heappop(files)[1]
-
-        #     output_path = os.path.join(output_folder, f)
-        #     self.logger.info("Playblast written to %s" % output_path)
-        #     return output_path
-
-        # m = 'Failed to create playblast. Unable to find it on disk.'
-        # raise RuntimeError(m)
+                # not found
+                m = '>> Failed to create playblast. Unable to find it on disk.'
+                raise RuntimeError(m)
+        else:
+            m = '>> Failed to create playblast. Custom window creation failed.'
+            raise RuntimeError(m)
 
     def _get_temp_media_path(self, name, version, extension):
         '''
@@ -238,15 +237,15 @@ class RenderMedia(HookBaseClass):
         name = name or ''
 
         if version:
-            # suffix = "_v" + version + extension
             suffix = '.v{0}.{1}'.format(version, extension)
         else:
             suffix = extension
 
-        self.logger.info('     name > {}'.format(name))
-        self.logger.info('  version > {}'.format(version))
-        self.logger.info('extension > {}'.format(extension))
-        self.logger.info('   suffix > {}'.format(suffix))
+        # sanity check
+        self.logger.info('>> name > {}'.format(name))
+        self.logger.info('>> version > {}'.format(version))
+        self.logger.info('>> extension > {}'.format(extension))
+        self.logger.info('>> suffix > {}'.format(suffix))
 
         ntp = tempfile.NamedTemporaryFile(prefix=name, suffix=suffix)
         with ntp as temp_file:
@@ -272,13 +271,13 @@ class RenderMedia(HookBaseClass):
             dict: Playblast arguments
         """
         playblast_args = PLAYBLAST_PARAMS
-        playblast_args['filename'] = output_path  # TEMP
+        playblast_args['filename'] = output_path
         playblast_args['width'] = DEFAULT_WIDTH
         playblast_args['height'] = DEFAULT_HEIGHT
 
         # frame range
         playblast_args['startTime'] = float(1)
-        playblast_args['endTime'] = float(50)     # TEMP
+        playblast_args['endTime'] = float(50)     # TODO
 
         # include audio if available
         audio_list = pm.ls(type='audio')
@@ -287,12 +286,15 @@ class RenderMedia(HookBaseClass):
 
         return playblast_args
 
+    def get_cam_overscan_pre(self):
+        pass
+
     def destroy_window(self):
         """If the PLAYBLAST_WINDOW exists, destroy it (window and its prefs).
         """
         try:
             pm.deleteUI(PLAYBLAST_WINDOW)
-            m = 'Found and deleted existing window > {}'.format()
+            m = '>> Found and deleted existing window > {}'.format()
             self.logger.info(m)
         except Exception:
             pass
@@ -301,57 +303,65 @@ class RenderMedia(HookBaseClass):
             pm.windowPref(PLAYBLAST_WINDOW, remove=True)
 
     def create_window(self):
+        """Create a custom window with related modelEditor, as well as running
+        the pre- and post-window methods.
+
+        Returns:
+            bool: success of the window, modelEditor, and pre- and post-
+            window methods
+        """
         w_success = False
 
-        try:
-            # call various pre-window methods
-            self.set_camera()
+        # call various pre-window methods
+        cam_check = self.set_camera()
+        if cam_check:
             self.set_imageplanes_colorspace()
             self.set_vp2_globals()
 
-            # create window (clean up first)
-            self.destroy_window()
+            try:
+                # create window (clean up first)
+                self.destroy_window()
 
-            window = pm.window(
-                PLAYBLAST_WINDOW,
-                titleBar=True,
-                iconify=True,
-                leftEdge=100,
-                topEdge=100,
-                width=DEFAULT_WIDTH,
-                height=DEFAULT_HEIGHT,
-                sizeable=False
-            )
-
-            # create window model editor
-            layout = pm.formLayout()
-            editor = pm.modelEditor(**MODEL_EDITOR_PARAMS)
-            pm.setFocus(editor)
-
-            pm.formLayout(
-                layout,
-                edit=True,
-                attachForm=(
-                    (editor, "left", 0),
-                    (editor, "top", 0),
-                    (editor, "right", 0),
-                    (editor, "bottom", 0)
+                window = pm.window(
+                    PLAYBLAST_WINDOW,
+                    titleBar=True,
+                    iconify=True,
+                    leftEdge=100,
+                    topEdge=100,
+                    width=DEFAULT_WIDTH,
+                    height=DEFAULT_HEIGHT,
+                    sizeable=False
                 )
-            )
 
-            # show window
-            pm.setFocus(editor)
-            pm.showWindow(window)
-            pm.refresh()
+                # create window model editor
+                layout = pm.formLayout()
+                editor = pm.modelEditor(**MODEL_EDITOR_PARAMS)
+                pm.setFocus(editor)
 
-            # call various post-window methods
-            self.generate_all_uv_tile_previews()
+                pm.formLayout(
+                    layout,
+                    edit=True,
+                    attachForm=(
+                        (editor, "left", 0),
+                        (editor, "top", 0),
+                        (editor, "right", 0),
+                        (editor, "bottom", 0)
+                    )
+                )
 
-            # success!
-            w_success = True
-        except Exception as e:
-            m = 'Failed to create playblast window > {}'.format(str(e))
-            self.logger.info(m)
+                # show window
+                pm.setFocus(editor)
+                pm.showWindow(window)
+                pm.refresh()
+
+                # call various post-window methods
+                self.generate_all_uv_tile_previews()
+
+                # success!
+                w_success = True
+            except Exception as e:
+                m = '>> Failed to create playblast window > {}'.format(str(e))
+                self.logger.info(m)
 
         return w_success
 
@@ -454,20 +464,69 @@ class RenderMedia(HookBaseClass):
                     v_huds
             )
 
+    def restore_overscan(self):
+        # if hasattr(self, 'orig_cam') and hasattr(self, 'orig_cam_overscan'):
+        try:
+            cmds.camera(
+                self.orig_cam,
+                e=True,
+                overscan=self.orig_cam_overscan
+            )
+        except Exception as e:
+            m = '>> Failed to restore {0} overscan > {1}'.format(
+                self.orig_cam,
+                str(e)
+            )
+            self.logger.info(m)
+
     def set_camera(self):
-        """Find first camera matching pattern and set as active camera, if not
-        use default current active camera. Also set the overscan.
-        """
-        camera_list = [
+        '''Find first camera matching pattern and set as active camera, also
+        record the original overscan then set the required overscan.
+        '''
+        success = False
+
+        valid_cam_list = [
             c.name() for c in pm.ls(type='camera', r=True)
             if re.match(CAMERA_NAME_PATTERN, c.name())
         ]
-        self.logger.info('>> camera_list >> {}'.format(camera_list))
+        self.logger.info('>> camera_list >> {}'.format(valid_cam_list))
 
-        if 'cam' not in MODEL_EDITOR_PARAMS.keys() and camera_list:
-            MODEL_EDITOR_PARAMS['cam'] = camera_list[0]
+        if valid_cam_list:
+            w_cam = valid_cam_list[0]
 
-        cmds.camera(camera_list[0], e=True, overscan=1.0)
+            self.orig_cam = w_cam
+            self.orig_cam_overscan = cmds.camera(
+                w_cam,
+                q=True,
+                overscan=True
+            )
+
+            # overscan required for playblast
+            cmds.camera(w_cam, e=True, overscan=1.0)
+
+            # playblast params
+            if 'cam' not in MODEL_EDITOR_PARAMS.keys():
+                MODEL_EDITOR_PARAMS['cam'] = w_cam
+
+            # success!
+            success = True
+        else:
+            qmb_title = 'Cannot Playblast to Create'
+            m = 'A referenced TRACKCAM is required for Shotgun playblasts.'
+
+            QtGui.QMessageBox(
+                QtGui.QMessageBox.Warning,
+                qmb_title,
+                m,
+                flags=QtCore.Qt.Dialog
+                | QtCore.Qt.MSWindowsFixedSizeDialogHint
+                | QtCore.Qt.WindowStaysOnTopHint
+                | QtCore.Qt.X11BypassWindowManagerHint,
+            ).exec_()
+
+            success = False
+
+        return success
 
     def set_vp2_globals(self):
         """Sets various Viewport2.0 attribute values, e.g. if a Maya
@@ -593,7 +652,7 @@ class RenderMedia(HookBaseClass):
 
         # --- Problem where this seems to be returning 'None' if people have
         # --- multiple SG Desktops open, will grab the OS user if that's the
-        # --- case... (~DW 2019-09-03)
+        # --- case (DW 2019-09-03)
         if not tank_login:
             m = '>> Failed to get SG authenticated user, using OS user...'
             self.logger.info(m)
