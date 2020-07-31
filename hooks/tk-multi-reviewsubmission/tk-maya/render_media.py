@@ -265,7 +265,9 @@ class RenderMedia(HookBaseClass):
 
         # frame range
         playblast_args['startTime'] = float(1)
-        playblast_args['endTime'] = float(50)     # TODO
+
+        end_frame = self.get_shot_endframe()
+        playblast_args['endTime'] = float(end_frame)
 
         # include audio if available
         audio_list = pm.ls(type='audio')
@@ -273,6 +275,40 @@ class RenderMedia(HookBaseClass):
             playblast_args['sound'] = audio_list[0]
 
         return playblast_args
+
+    def get_shot_endframe(self):
+        """Queries Shotgun for the end frame value of the Shot, if you're in a
+        Shot context in Maya, and if there's a value to be had. Otherwise,
+        returns an int value of 1.
+
+        Returns:
+            int: end frame in Shotgun
+        """
+        end_frame = 1
+        primary_dir = 'N:'
+
+        maya_file = cmds.file(q=True, sn=True)
+        if os.path.exists(maya_file) and maya_file.startswith(primary_dir):
+            tk = sgtk.sgtk_from_path(maya_file)
+            ctx = tk.context_from_path(maya_file)
+
+            shot_ent = ctx.entity
+            shot_name = shot_ent['name']
+
+            sg_filters = [['id', 'is', shot_ent['id']]]
+            sg_fields = ['sg_cut_out']
+
+            sg_shot = tk.shotgun.find_one('Shot', sg_filters, sg_fields)
+            if sg_shot:
+                end_frame = sg_shot['sg_cut_out']
+                if isinstance(end_frame, int):
+                    m = '>> End frame for {0} > {1}'.format(
+                        shot_name,
+                        end_frame
+                    )
+                self.logger.info(m)
+
+        return end_frame
 
     def destroy_window(self):
         """If the PLAYBLAST_WINDOW exists, destroy it (window and its prefs).
