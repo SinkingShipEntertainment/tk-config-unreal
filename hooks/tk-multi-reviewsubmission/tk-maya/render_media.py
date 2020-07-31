@@ -174,6 +174,7 @@ class RenderMedia(HookBaseClass):
                 # clean up
                 self.set_ctrls_visibility(switch_val=1)
                 self.set_huds(action='unset', v_huds=v_huds)
+                self.restore_overscan()
                 self.destroy_window()
                 m = '>> Post-playblast-attempt cleanup finished'
                 self.logger.info(m)
@@ -223,33 +224,20 @@ class RenderMedia(HookBaseClass):
             raise RuntimeError(m)
 
     def _get_temp_media_path(self, name, version, extension):
-        '''
-        Build a temporary path to put the rendered media.
+        """Build a temporary path to put the rendered media.
 
-        :param str name:            Name of the media being rendered
-        :param str version:         Version number of the media being rendered
-        :param str extension:       Extension of the media being rendered
+        Args:
+            name (str): Name of the media being rendered
+            version (str): Version number of the media being rendered
+            extension (str): Extension of the media being rendered
 
-        :returns:               Temporary path to put the rendered version
-        :rtype:                 str
-        '''
+        Returns:
+            str: Temporary path to output the rendered version
+        """
+        temp_dir = tempfile.gettempdir()
+        temp_media_path = '{0}\\{1}'.format(temp_dir, name)
 
-        name = name or ''
-
-        if version:
-            suffix = '.v{0}.{1}'.format(version, extension)
-        else:
-            suffix = extension
-
-        # sanity check
-        self.logger.info('>> name > {}'.format(name))
-        self.logger.info('>> version > {}'.format(version))
-        self.logger.info('>> extension > {}'.format(extension))
-        self.logger.info('>> suffix > {}'.format(suffix))
-
-        ntp = tempfile.NamedTemporaryFile(prefix=name, suffix=suffix)
-        with ntp as temp_file:
-            return temp_file.name
+        return temp_media_path
 
     def get_default_playblastlast_args(self, output_path):
         """Returns a dictionary of playblast arguments key/value pairs, using
@@ -285,9 +273,6 @@ class RenderMedia(HookBaseClass):
             playblast_args['sound'] = audio_list[0]
 
         return playblast_args
-
-    def get_cam_overscan_pre(self):
-        pass
 
     def destroy_window(self):
         """If the PLAYBLAST_WINDOW exists, destroy it (window and its prefs).
@@ -366,6 +351,19 @@ class RenderMedia(HookBaseClass):
         return w_success
 
     def set_huds(self, action='set', v_huds=[]):
+        """Depending on the requested action, either creates and sets new HUDs
+        for playblast display, or returns all HUDs to their orignal settings
+        pre-playblast.
+
+        Args:
+            action (str, optional): Set or unset the HUDs. Defaults to 'set'.
+            v_huds (list, optional): Empty if action is 'set'; a list of
+            originally-visible HUDs if action is 'unset'. Defaults to [].
+
+        Returns:
+            list: If action is 'set', returns a list of the originally-visible
+            HUDs
+        """
         huds = pm.headsUpDisplay(listHeadsUpDisplays=True)
 
         if action == 'set':
@@ -465,7 +463,6 @@ class RenderMedia(HookBaseClass):
             )
 
     def restore_overscan(self):
-        # if hasattr(self, 'orig_cam') and hasattr(self, 'orig_cam_overscan'):
         try:
             cmds.camera(
                 self.orig_cam,
@@ -480,9 +477,13 @@ class RenderMedia(HookBaseClass):
             self.logger.info(m)
 
     def set_camera(self):
-        '''Find first camera matching pattern and set as active camera, also
+        """Find first camera matching pattern and set as active camera, also
         record the original overscan then set the required overscan.
-        '''
+
+        Returns:
+            bool: success at finding the TRACKCAM and recording its original
+            overscan value
+        """
         success = False
 
         valid_cam_list = [
@@ -501,8 +502,15 @@ class RenderMedia(HookBaseClass):
                 overscan=True
             )
 
-            # overscan required for playblast
-            cmds.camera(w_cam, e=True, overscan=1.0)
+            # camera overscan, etcetera settings required for playblast
+            cmds.camera(
+                w_cam,
+                e=True,
+                overscan=1.0,
+                displayFieldChart=False,
+                displaySafeAction=False,
+                displaySafeTitle=False
+            )
 
             # playblast params
             if 'cam' not in MODEL_EDITOR_PARAMS.keys():
