@@ -3,13 +3,9 @@
 # our requirements (DW 2020-07-30)
 
 import sgtk
-import tank
 import os
-# import sys
 import re
-# import json
 import heapq
-# import traceback
 import tempfile
 
 import maya.cmds as cmds
@@ -91,6 +87,10 @@ class RenderMedia(HookBaseClass):
     """
     RenderMedia hook implementation for the tk-maya engine.
     """
+    def __init__(self, *args, **kwargs):
+        super(RenderMedia, self).__init__(*args, **kwargs)
+
+        self.__app = self.parent
 
     def render(
         self,
@@ -143,7 +143,7 @@ class RenderMedia(HookBaseClass):
 
         playblast_args = self.get_default_playblastlast_args(output_path)
 
-        m = '>> Playblast arguments: {0} using ({1})'.format(
+        m = '>> Playblast arguments > {0} using ({1})'.format(
             output_path,
             playblast_args
         )
@@ -289,8 +289,7 @@ class RenderMedia(HookBaseClass):
 
         maya_file = cmds.file(q=True, sn=True)
         if os.path.exists(maya_file) and maya_file.startswith(primary_dir):
-            tk = sgtk.sgtk_from_path(maya_file)
-            ctx = tk.context_from_path(maya_file)
+            ctx = self.__app.context
 
             shot_ent = ctx.entity
             shot_name = shot_ent['name']
@@ -298,15 +297,21 @@ class RenderMedia(HookBaseClass):
             sg_filters = [['id', 'is', shot_ent['id']]]
             sg_fields = ['sg_cut_out']
 
-            sg_shot = tk.shotgun.find_one('Shot', sg_filters, sg_fields)
+            sg_shot = self.__app.shotgun.find_one(
+                'Shot',
+                sg_filters,
+                sg_fields
+            )
             if sg_shot:
-                end_frame = sg_shot['sg_cut_out']
-                if isinstance(end_frame, int):
-                    m = '>> End frame for {0} > {1}'.format(
+                end_frame_chk = sg_shot['sg_cut_out']
+                if isinstance(end_frame_chk, int):
+                    end_frame = end_frame_chk
+
+                    m = '>> Shotgun end frame for {0} > {1}'.format(
                         shot_name,
                         end_frame
                     )
-                self.logger.info(m)
+                    self.logger.info(m)
 
         return end_frame
 
@@ -414,7 +419,10 @@ class RenderMedia(HookBaseClass):
             # add required HUD
             # user name
             edit_existing_hud = 'HUDUserName' in huds
-            user_name = self.return_tank_login()
+
+            user_data = sgtk.util.get_current_user(self.__app.sgtk)
+            user_name = user_data['login']
+            self.logger.info('>> user_name > {}'.format(user_name))
 
             pm.headsUpDisplay(
                 'HUDUserName',
@@ -499,12 +507,20 @@ class RenderMedia(HookBaseClass):
             )
 
     def restore_overscan(self):
+        """Restore the original overscan value for the TRACKCAM camera (both
+        the camera and its original overscan value have been stored).
+        """
         try:
             cmds.camera(
                 self.orig_cam,
                 e=True,
                 overscan=self.orig_cam_overscan
             )
+            m = '>> Restored {0} overscan > {1}'.format(
+                self.orig_cam,
+                self.orig_cam_overscan
+            )
+            self.logger.info(m)
         except Exception as e:
             m = '>> Failed to restore {0} overscan > {1}'.format(
                 self.orig_cam,
@@ -526,7 +542,7 @@ class RenderMedia(HookBaseClass):
             c.name() for c in pm.ls(type='camera', r=True)
             if re.match(CAMERA_NAME_PATTERN, c.name())
         ]
-        self.logger.info('>> camera_list >> {}'.format(valid_cam_list))
+        self.logger.info('>> camera_list > {}'.format(valid_cam_list))
 
         if valid_cam_list:
             w_cam = valid_cam_list[0]
@@ -598,9 +614,9 @@ class RenderMedia(HookBaseClass):
             im_attr = '{}.colorSpace'.format(im_plane)
             try:
                 cmds.setAttr(im_attr, c_type, type='string')
-                self.logger.info('>> Set {0} >> {1}'.format(im_attr, c_type))
+                self.logger.info('>> Set {0} > {1}'.format(im_attr, c_type))
             except Exception as e:
-                m = '>> Could not set {0} >> {1}'.format(im_attr, str(e))
+                m = '>> Could not set {0} > {1}'.format(im_attr, str(e))
                 self.logger.info(m)
 
     def generate_all_uv_tile_previews(self, res_max=1024):
@@ -678,34 +694,4 @@ class RenderMedia(HookBaseClass):
             for _nr in nr_ncurves:
                 _nr_attr = '{}.visibility'.format(_nr)
                 cmds.setAttr(_nr_attr, switch_val)
-
-    def return_tank_login(self):
-        """Method to rely on the sgtk login for user name in playblasts, *not*
-        the system user (e.g. you're logged in as another user in Shotgun, but
-        you're logged in as yourself in the operating system). If we can't get
-        anything from sgtk, we'll get the system user as a fallback.
-
-        Returns:
-            str: the sgtk session user
-        """
-        tank_login = 'unknown.user'
-
-        tank_session_user = tank.get_authenticated_user()
-        if tank_session_user:
-            tank_login = tank_session_user.login
-
-        # --- Problem where this seems to be returning 'None' if people have
-        # --- multiple SG Desktops open, will grab the OS user if that's the
-        # --- case (DW 2019-09-03)
-        if not tank_login:
-            m = '>> Failed to get SG authenticated user, using OS user...'
-            self.logger.info(m)
-
-            import getpass
-            tank_login = getpass.getuser()
-
-        m = '>> tank authenticated user >> {}'.format(tank_login)
-        self.logger.info(m)
-
-        return tank_login
 # --- eof
