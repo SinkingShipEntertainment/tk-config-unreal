@@ -36,7 +36,7 @@ settings.tk-multi-reviewsubmission.maya:
   # render_media_hook: '{self}/render_media.py:{self}/{engine_name}/render_media.py'
   # submitter_hook: '{self}/submitter_create.py'
   render_media_hook: '{self}/render_media.py:{config}/tk-multi-reviewsubmission/{engine_name}/render_media.py'
-  submitter_hook: '{self}/submitter_create.py:{config}/tk-multi-reviewsubmission/submitter_sgtk.py'
+  submitter_hook: '{self}/submitter_sgtk.py:{config}/tk-multi-reviewsubmission/submitter_sgtk.py'
   location: "@apps.tk-multi-reviewsubmission.location"
 
 # Photoshop Submit for review

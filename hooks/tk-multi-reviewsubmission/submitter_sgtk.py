@@ -3,12 +3,14 @@
 # our requirements (DW 2020-08-05)
 
 import sgtk
-from sgtk.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtCore
+from sgtk.platform.qt import QtGui
 
 import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
+INITIAL_PB_STATUS = 'arev'
 TIME_STR_FMT = '%Y-%m-%d (%A) %H.%M %p'
 
 
@@ -24,6 +26,15 @@ class SubmitterSGTK(HookBaseClass):
 
         self._upload_to_shotgun = self.__app.get_setting('upload_to_shotgun')
         self._store_on_disk = self.__app.get_setting('store_on_disk')
+
+        # playblast_submit_dialog test
+        try:
+            self.playblast_submit_dialog()
+            m = '>> playblast_submit_dialog > {}'.format(self.dialog)
+            self.logger.info(m)
+        except Exception as e:
+            m = '>> playblast_submit_dialog failed > {}'.format(str(e))
+            self.logger.info(m)
 
     def can_submit(self):
         """
@@ -135,7 +146,7 @@ class SubmitterSGTK(HookBaseClass):
         current_engine = sgtk.platform.current_engine()
         if current_engine.name == 'tk-maya':
             data['sg_movie_has_slate'] = False
-            data['sg_status_list'] = 'arev'
+            data['sg_status_list'] = INITIAL_PB_STATUS
 
             if not description:
                 description = ''
@@ -149,19 +160,23 @@ class SubmitterSGTK(HookBaseClass):
                 data['description'] = n_data['desc']
                 data['sg_path_to_movie'] = n_data['path']
 
-        sg_version = self.__app.sgtk.shotgun.create('Version', data)
-        msg = '>> Created version in shotgun > {}'.format(str(data))
-        msg += '\n>> sg_version > {}'.format(sg_version)
-        self.__app.log_debug(msg)
+        # TEMP COMMENTED OUT (works fine, just don't want to keep
+        # making new versions while testing other stuff)...
+        # sg_version = self.__app.sgtk.shotgun.create('Version', data)
+        # msg = '>> Created version in shotgun > {}'.format(str(data))
+        # msg += '\n>> sg_version > {}'.format(sg_version)
+        # # self.__app.log_debug(msg)
+        # self.logger.info(msg)
 
-        # upload files:
-        self._upload_files(sg_version, path_to_movie, thumbnail_path)
+        # # upload files:
+        # self._upload_files(sg_version, path_to_movie, thumbnail_path)
 
-        # Remove from filesystem if required
-        if not self._store_on_disk and os.path.exists(path_to_movie):
-            os.unlink(path_to_movie)
+        # # Remove from filesystem if required
+        # if not self._store_on_disk and os.path.exists(path_to_movie):
+        #     os.unlink(path_to_movie)
 
-        return sg_version
+        # return sg_version
+        # TEMP COMMENTED OUT ^^^
 
     def _upload_files(self, sg_version, output_path, thumbnail_path):
         """
@@ -225,6 +240,80 @@ class SubmitterSGTK(HookBaseClass):
         self.logger.info('>> new_data > {}'.format(new_data))
 
         return new_data
+
+    def playblast_submit_dialog(self):
+        # self.dialog = QtGui.QWidget()
+        self.dialog = QtGui.QDialog()
+        self.dialog.setObjectName('PlayblastDialog')
+        self.dialog.resize(440, 240)
+        self.dialog.setMinimumSize(QtCore.QSize(440, 240))
+        self.dialog.setMaximumSize(QtCore.QSize(440, 240))
+
+        self.dialog.setWindowFlags(
+            self.dialog.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
+        )
+
+        # self.dialog.gridLayoutWidget = QtGui.QWidget(self.dialog)
+        # self.dialog.gridLayoutWidget.setGeometry(QtCore.QRect(9, 9, 421, 221))
+        # self.dialog.gridLayoutWidget.setObjectName('gridLayoutWidget')
+
+        # self.dialog.gridLayout_main = QtGui.QGridLayout(
+        #     self.dialog.gridLayoutWidget
+        # )
+
+        # self.dialog.gridLayout_main.setContentsMargins(0, 0, 0, 0)
+        # self.dialog.gridLayout_main.setObjectName('gridLayout_main')
+
+        # self.dialog.pushButton_playblast = QtGui.QPushButton(
+        #     self.dialog.gridLayoutWidget
+        # )
+        # self.dialog.pushButton_playblast.setObjectName('pushButton_playblast')
+
+        # self.dialog.gridLayout_main.addWidget(
+        #     self.dialog.pushButton_playblast,
+        #     2,
+        #     0,
+        #     1,
+        #     1
+        # )
+
+        # self.dialog.checkBox_upload = QtGui.QCheckBox(
+        #     self.dialog.gridLayoutWidget
+        # )
+        # self.dialog.checkBox_upload.setObjectName('checkBox_upload')
+
+        # self.dialog.gridLayout_main.addWidget(
+        #     self.dialog.checkBox_upload,
+        #     0,
+        #     0,
+        #     1,
+        #     1
+        # )
+
+        # self.dialog.groupBox_comments = QtGui.QGroupBox(
+        #     self.dialog.gridLayoutWidget
+        # )
+
+        # self.dialog.groupBox_comments.setAlignment(QtCore.Qt.AlignCenter)
+        # self.dialog.groupBox_comments.setFlat(False)
+        # self.dialog.groupBox_comments.setObjectName('groupBox_comments')
+
+        # self.dialog.textEdit = QtGui.QTextEdit(self.dialog.groupBox_comments)
+        # self.dialog.textEdit.setGeometry(QtCore.QRect(12, 20, 395, 131))
+        # self.dialog.textEdit.setMinimumSize(QtCore.QSize(395, 131))
+        # self.dialog.textEdit.setMaximumSize(QtCore.QSize(395, 131))
+        # self.dialog.textEdit.setObjectName('textEdit_comments')
+
+        # self.dialog.gridLayout_main.addWidget(
+        #     self.dialog.groupBox_comments,
+        #     1,
+        #     0,
+        #     1,
+        #     1
+        # )
+
+        # self.dialog.show()
+        self.dialog.exec_()
 
 
 class UploaderThread(QtCore.QThread):
