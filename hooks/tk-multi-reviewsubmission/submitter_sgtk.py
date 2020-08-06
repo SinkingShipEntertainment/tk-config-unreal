@@ -242,6 +242,7 @@ class SubmitterSGTK(HookBaseClass):
         """
         self.maya_shot_playblast_publish_data()
         self.create_sg_version()
+        self.copy_local_files_to_server()
         self.dialog.done(0)
 
     def maya_shot_playblast_publish_data(self):
@@ -284,11 +285,48 @@ class SubmitterSGTK(HookBaseClass):
         self.data['description'] = new_desc
 
         # 'path' modification for template output fields addition
+        # TODO: make all the template query stuff its own method, probably
         scene_name = cmds.file(q=True, sn=True)
         wk_template = self.__app.sgtk.templates.get('maya_shot_work')
         pb_template = self.__app.sgtk.templates.get('maya_shot_playblast')
         wk_fields = wk_template.get_fields(scene_name)
         self.data['sg_path_to_movie'] = pb_template.apply_fields(wk_fields)
+
+        # add an attribute for use with later copying of local file to
+        # versionless editorial destination
+        sq_template = self.__app.sgtk.templates.get('maya_sequence_playblast')
+        self.editorial_path_to_movie = sq_template.apply_fields(wk_fields)
+
+    def copy_local_files_to_server(self):
+        """
+        Copy the local playblast file to targets defined by templates.yml,
+        stored previously as attributes.
+        """
+        import shutil
+
+        lcl = self.local_path_to_movie
+        dsts = [
+            self.data['sg_path_to_movie'],
+            self.editorial_path_to_movie
+        ]
+
+        for dst in dsts:
+            try:
+                # make sure that destination folders exist
+                dst_dirname = os.path.dirname(dst)
+                if not os.path.exists(dst_dirname):
+                    os.makedirs(dst_dirname)
+
+                shutil.copy(lcl, dst)
+                m = '>> Copied {0} > {1}'.format(lcl, dst)
+                self.logger.info(m)
+            except Exception as e:
+                m = '>> Copy failed {0} > {1} > {2}'.format(
+                    lcl,
+                    dst,
+                    str(e)
+                )
+                self.logger.info(m)
 
     def playblast_submit_dialog(self):
         """
