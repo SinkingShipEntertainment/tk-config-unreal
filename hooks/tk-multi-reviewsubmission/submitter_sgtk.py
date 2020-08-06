@@ -18,7 +18,6 @@ class SubmitterSGTK(HookBaseClass):
     """
     This hook allows submitting a Version to Shotgun using Shotgun Toolkit.
     """
-
     def __init__(self, *args, **kwargs):
         super(SubmitterSGTK, self).__init__(*args, **kwargs)
 
@@ -26,15 +25,6 @@ class SubmitterSGTK(HookBaseClass):
 
         self._upload_to_shotgun = self.__app.get_setting('upload_to_shotgun')
         self._store_on_disk = self.__app.get_setting('store_on_disk')
-
-        # playblast_submit_dialog test
-        try:
-            self.playblast_submit_dialog()
-            m = '>> playblast_submit_dialog > {}'.format(self.dialog)
-            self.logger.info(m)
-        except Exception as e:
-            m = '>> playblast_submit_dialog failed > {}'.format(str(e))
-            self.logger.info(m)
 
     def can_submit(self):
         """
@@ -91,7 +81,6 @@ class SubmitterSGTK(HookBaseClass):
         :returns:   The Version Shotgun entity dictionary that was created.
         :rtype:     dict
         """
-
         # get current shotgun user
         current_user = sgtk.util.get_current_user(self.__app.sgtk)
 
@@ -127,7 +116,7 @@ class SubmitterSGTK(HookBaseClass):
 
         _ft = 'PublishedFile'
         if sgtk.util.get_published_file_entity_type(self.__app.sgtk) == _ft:
-            data["published_files"] = sg_publishes
+            data['published_files'] = sg_publishes
         else:
             # for type 'TankPublishedFile'
             len_pub = len(sg_publishes)
@@ -141,8 +130,8 @@ class SubmitterSGTK(HookBaseClass):
         if self._store_on_disk:
             data['sg_path_to_movie'] = path_to_movie
 
-        # SSE: Check that we're in a tk-maya engine, then modify values
-        # accordingly (DW 2020-08-05)
+        # SSE: Check if we're in a tk-maya engine, act accordingly
+        # (DW 2020-08-05)
         current_engine = sgtk.platform.current_engine()
         if current_engine.name == 'tk-maya':
             data['sg_movie_has_slate'] = False
@@ -159,6 +148,15 @@ class SubmitterSGTK(HookBaseClass):
                 data['code'] = n_data['code']
                 data['description'] = n_data['desc']
                 data['sg_path_to_movie'] = n_data['path']
+
+            # playblast submit dialog in maya
+            try:
+                self.playblast_submit_dialog()
+                m = '>> playblast_submit_dialog > {}'.format(self.dialog)
+                self.logger.info(m)
+            except Exception as e:
+                m = '>> playblast_submit_dialog failed > {}'.format(str(e))
+                self.logger.info(m)
 
         # TEMP COMMENTED OUT (works fine, just don't want to keep
         # making new versions while testing other stuff)...
@@ -205,6 +203,9 @@ class SubmitterSGTK(HookBaseClass):
         for e in thread.get_errors():
             self.__app.log_error(e)
 
+    def maya_shot_playblast_version(self):
+        self.logger.info('>> maya_shot_playblast_version')
+
     def maya_shot_playblast_publish_data(self, o_path, o_desc):
         """Modify some of the playblast media publish value prior to publish
         for SSE requirements.
@@ -242,7 +243,7 @@ class SubmitterSGTK(HookBaseClass):
         return new_data
 
     def playblast_submit_dialog(self):
-        # self.dialog = QtGui.QWidget()
+        # main dialog
         self.dialog = QtGui.QDialog()
         self.dialog.setObjectName('PlayblastDialog')
         self.dialog.resize(440, 240)
@@ -253,66 +254,89 @@ class SubmitterSGTK(HookBaseClass):
             self.dialog.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
         )
 
-        # self.dialog.gridLayoutWidget = QtGui.QWidget(self.dialog)
-        # self.dialog.gridLayoutWidget.setGeometry(QtCore.QRect(9, 9, 421, 221))
-        # self.dialog.gridLayoutWidget.setObjectName('gridLayoutWidget')
+        self.dialog.setWindowTitle(
+            QtGui.QApplication.translate(
+                "PlayblastDialog",
+                "Playblast to Shotgun",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
 
-        # self.dialog.gridLayout_main = QtGui.QGridLayout(
-        #     self.dialog.gridLayoutWidget
-        # )
+        # main layout & grid
+        self.dialog.gridLayoutWidget = QtGui.QWidget(self.dialog)
+        self.dialog.gridLayoutWidget.setGeometry(QtCore.QRect(9, 9, 421, 221))
+        self.dialog.gridLayoutWidget.setObjectName('gridLayoutWidget')
 
-        # self.dialog.gridLayout_main.setContentsMargins(0, 0, 0, 0)
-        # self.dialog.gridLayout_main.setObjectName('gridLayout_main')
+        self.dialog.gridLayout_main = QtGui.QGridLayout(
+            self.dialog.gridLayoutWidget
+        )
 
-        # self.dialog.pushButton_playblast = QtGui.QPushButton(
-        #     self.dialog.gridLayoutWidget
-        # )
-        # self.dialog.pushButton_playblast.setObjectName('pushButton_playblast')
+        self.dialog.gridLayout_main.setContentsMargins(0, 0, 0, 0)
+        self.dialog.gridLayout_main.setObjectName('gridLayout_main')
 
-        # self.dialog.gridLayout_main.addWidget(
-        #     self.dialog.pushButton_playblast,
-        #     2,
-        #     0,
-        #     1,
-        #     1
-        # )
+        # upload button
+        self.dialog.pushButton_upload = QtGui.QPushButton(
+            self.dialog.gridLayoutWidget
+        )
+        self.dialog.pushButton_upload.setObjectName('pushButton_upload')
 
-        # self.dialog.checkBox_upload = QtGui.QCheckBox(
-        #     self.dialog.gridLayoutWidget
-        # )
-        # self.dialog.checkBox_upload.setObjectName('checkBox_upload')
+        self.dialog.gridLayout_main.addWidget(
+            self.dialog.pushButton_upload,
+            2,
+            0,
+            1,
+            1
+        )
 
-        # self.dialog.gridLayout_main.addWidget(
-        #     self.dialog.checkBox_upload,
-        #     0,
-        #     0,
-        #     1,
-        #     1
-        # )
+        # comments groupbox
+        self.dialog.groupBox_comments = QtGui.QGroupBox(
+            self.dialog.gridLayoutWidget
+        )
 
-        # self.dialog.groupBox_comments = QtGui.QGroupBox(
-        #     self.dialog.gridLayoutWidget
-        # )
+        self.dialog.groupBox_comments.setAlignment(QtCore.Qt.AlignCenter)
+        self.dialog.groupBox_comments.setFlat(False)
+        self.dialog.groupBox_comments.setObjectName('groupBox_comments')
 
-        # self.dialog.groupBox_comments.setAlignment(QtCore.Qt.AlignCenter)
-        # self.dialog.groupBox_comments.setFlat(False)
-        # self.dialog.groupBox_comments.setObjectName('groupBox_comments')
+        self.dialog.groupBox_comments.setTitle(
+            QtGui.QApplication.translate(
+                "PlayblastDialog",
+                "Artist Comments",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
 
-        # self.dialog.textEdit = QtGui.QTextEdit(self.dialog.groupBox_comments)
-        # self.dialog.textEdit.setGeometry(QtCore.QRect(12, 20, 395, 131))
-        # self.dialog.textEdit.setMinimumSize(QtCore.QSize(395, 131))
-        # self.dialog.textEdit.setMaximumSize(QtCore.QSize(395, 131))
-        # self.dialog.textEdit.setObjectName('textEdit_comments')
+        # comments textedit
+        self.dialog.textEdit = QtGui.QTextEdit(self.dialog.groupBox_comments)
+        self.dialog.textEdit.setGeometry(QtCore.QRect(12, 20, 395, 131))
+        self.dialog.textEdit.setMinimumSize(QtCore.QSize(395, 131))
+        self.dialog.textEdit.setMaximumSize(QtCore.QSize(395, 131))
+        self.dialog.textEdit.setObjectName('textEdit_comments')
 
-        # self.dialog.gridLayout_main.addWidget(
-        #     self.dialog.groupBox_comments,
-        #     1,
-        #     0,
-        #     1,
-        #     1
-        # )
+        self.dialog.gridLayout_main.addWidget(
+            self.dialog.groupBox_comments,
+            1,
+            0,
+            1,
+            1
+        )
 
-        # self.dialog.show()
+        self.dialog.pushButton_upload.setText(
+            QtGui.QApplication.translate(
+                "PlayblastDialog",
+                "Upload as Version to Shotgun",
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
+
+        # signals and slots
+        self.dialog.pushButton_upload.clicked.connect(
+            self.maya_shot_playblast_version
+        )
+
+        # launch dialog
         self.dialog.exec_()
 
 
@@ -322,8 +346,14 @@ class UploaderThread(QtCore.QThread):
     Broken out of the main loop so that the UI can remain responsive
     even though an upload is happening.
     """
-
-    def __init__(self, app, version, path_to_movie, thumbnail_path, upload_to_shotgun):
+    def __init__(
+        self,
+        app,
+        version,
+        path_to_movie,
+        thumbnail_path,
+        upload_to_shotgun
+    ):
         QtCore.QThread.__init__(self)
         self._app = app
         self._version = version
@@ -350,19 +380,21 @@ class UploaderThread(QtCore.QThread):
         if self._upload_to_shotgun:
             try:
                 self._app.sgtk.shotgun.upload(
-                    "Version",
-                    self._version["id"],
+                    'Version',
+                    self._version['id'],
                     self._path_to_movie,
-                    "sg_uploaded_movie",
+                    'sg_uploaded_movie',
                 )
             except Exception as e:
-                self._errors.append("Movie upload to Shotgun failed: %s" % e)
+                m = '>> Movie upload to Shotgun failed > {}'.format(str(e))
+                self._errors.append(m)
                 upload_error = True
 
         if not self._upload_to_shotgun or upload_error:
             try:
                 self._app.sgtk.shotgun.upload_thumbnail(
-                    "Version", self._version["id"], self._thumbnail_path
+                    'Version', self._version['id'], self._thumbnail_path
                 )
             except Exception as e:
-                self._errors.append("Thumbnail upload to Shotgun failed: %s" % e)
+                m = ">> Thumbnail upload to Shotgun failed > {}".format(str(e))
+                self._errors.append(m)
