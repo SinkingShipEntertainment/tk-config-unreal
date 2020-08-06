@@ -94,7 +94,7 @@ class SubmitterSGTK(HookBaseClass):
         name = name.replace('_', ' ')
         name = name.capitalize()
 
-        # Create the version in Shotgun
+        # create the version in Shotgun
         ctx = self.__app.context
 
         # data defaults
@@ -144,8 +144,7 @@ class SubmitterSGTK(HookBaseClass):
             self.local_path_to_movie = path_to_movie
             self.data['sg_path_to_movie'] = path_to_movie
 
-        # SSE: Check if we're in a tk-maya engine, act accordingly
-        # (DW 2020-08-05)
+        # check if we're in a tk-maya engine, act accordingly
         current_engine = sgtk.platform.current_engine()
         if current_engine.name == 'tk-maya':
             # playblast submit dialog in maya
@@ -167,19 +166,45 @@ class SubmitterSGTK(HookBaseClass):
         Create a Version in Shotgun for a given path, and upload the
         specified movie + thumbnail.
         """
-        self.sg_version = self.__app.sgtk.shotgun.create('Version', self.data)
-        msg = '>> Created version in shotgun > {}'.format(str(self.data))
-        msg += '\n>> sg_version > {}'.format(self.sg_version)
-        self.logger.info(msg)
+        # check if a version entity with same code already exists in Shotgun,
+        # if not, create a new version
+        sg_filters = [
+            ['code', 'is', self.data['code']]
+        ]
+
+        found_vers = self.__app.sgtk.shotgun.find_one('Version', sg_filters)
+        if found_vers:
+            # updating, remove keys that can't be updated
+            pop_keys = [
+                'created_by'
+            ]
+            for pop_key in pop_keys:
+                self.data.pop(pop_key, None)
+
+            # update
+            self.sg_version = self.__app.sgtk.shotgun.update(
+                'Version',
+                found_vers['id'],
+                self.data
+            )
+
+            msg = '>> Found & updated existing version > {}'.format(found_vers)
+            self.logger.info(msg)
+        else:
+            # create
+            self.sg_version = self.__app.sgtk.shotgun.create(
+                'Version',
+                self.data
+            )
+
+            msg = '>> Created version in shotgun > {}'.format(str(self.data))
+            msg += '\n>> sg_version > {}'.format(self.sg_version)
+            self.logger.info(msg)
 
         # upload files:
-        self._upload_files(
-            self.sg_version,
-            self.local_path_to_movie,
-            self.thumbnail_path
-        )
+        self._upload_files()
 
-        # Remove from filesystem if required
+        # remove from filesystem if required
         if not self._store_on_disk and os.path.exists(
             self.local_path_to_movie
         ):
@@ -187,23 +212,18 @@ class SubmitterSGTK(HookBaseClass):
 
         return self.sg_version
 
-    def _upload_files(self, sg_version, output_path, thumbnail_path):
+    def _upload_files(self):
         """
         Upload the required files to Shotgun.
-
-        :param dict sg_version:     Version to which uploaded files should be
-            linked.
-        :param str output_path:     Media to upload to Shotgun.
-        :param str thumbnail_path:  Thumbnail to upload to Shotgun.
         """
-        # Upload in a new thread and make our own event loop to wait for the
+        # upload in a new thread and make our own event loop to wait for the
         # thread to finish.
         event_loop = QtCore.QEventLoop()
         thread = UploaderThread(
             self.__app,
-            sg_version,
-            output_path,
-            thumbnail_path,
+            self.sg_version,
+            self.local_path_to_movie,
+            self.thumbnail_path,
             self._upload_to_shotgun
         )
         thread.finished.connect(event_loop.quit)
@@ -215,53 +235,40 @@ class SubmitterSGTK(HookBaseClass):
             self.__app.log_error(e)
 
     def maya_shot_playblast_version(self):
-        # TODO: this and maya_shot_playblast_publish_data method should be
-        # merged somehow
-        self.logger.info('>> maya_shot_playblast_version')
-
-        self.data['sg_movie_has_slate'] = False
-        self.data['sg_status_list'] = INITIAL_PB_STATUS
-
-        artist_comments = self.dialog.textEdit_comments.toPlainText()
-        self.data['description'] = artist_comments
-
-        # change the version entry's path to the template-defined playblast
-        # path, and insert the upload date into its description
-        n_data = self.maya_shot_playblast_publish_data(
-            self.data['sg_path_to_movie'],
-            self.data['description']
-        )
-        if n_data:
-            self.data['code'] = n_data['code']
-            self.data['description'] = n_data['desc']
-            self.data['sg_path_to_movie'] = n_data['path']
-
-        # TODO: still testing
+        """
+        Wrapper for playblast to Shotgun Version methods (customize the
+        Version publish data, create a Version in Shotgun, close the 'Playblast
+        to Shotgun' dialog).
+        """
+        self.maya_shot_playblast_publish_data()
         self.create_sg_version()
         self.dialog.done(0)
 
-    def maya_shot_playblast_publish_data(self, o_path, o_desc):
-        """Modify some of the playblast media publish value prior to publish
-        for SSE requirements.
-
-        Args:
-            o_path (str): the original path to the media (local)
-            o_desc (str): the original decription from the artist ('' if none)
-
-        Returns:
-            dict: key/value pairs of modified data.
+    def maya_shot_playblast_publish_data(self):
+        """
+        Modify some of the playblast media publish values prior to publish
+        for SSE requirements, for the following keys:
+        - sg_movie_has_slate
+        - sg_status_list
+        - code
+        - description
+        - sg_path_to_movie
         """
         import maya.cmds as cmds
         from datetime import datetime
 
-        new_data = {}
+        # simple key values
+        self.data['sg_movie_has_slate'] = False
+        self.data['sg_status_list'] = INITIAL_PB_STATUS
 
-        # 'code' modification for version add
-        new_code = os.path.basename(o_path)
-        new_data['code'] = new_code
+        # 'code' modification for version addition
+        new_code = os.path.basename(self.data['sg_path_to_movie'])
+        self.data['code'] = new_code
 
-        # 'description' modification for user, host, datetime add
-        o_desc = o_desc.strip()
+        # 'description' modification for comments, user, host, and
+        # datetime additions
+        artist_comments = self.dialog.textEdit_comments.toPlainText()
+        o_desc = artist_comments.strip()
 
         current_time = datetime.now().strftime(TIME_STR_FMT)
         user_name = os.environ.get('USERNAME', 'unknown')
@@ -274,27 +281,29 @@ class SubmitterSGTK(HookBaseClass):
         )
 
         new_desc = '{0}\n\n{1}'.format(o_desc, desc_mod)
-        new_data['desc'] = new_desc
+        self.data['description'] = new_desc
 
-        # 'path' modification for template output fields add
+        # 'path' modification for template output fields addition
         scene_name = cmds.file(q=True, sn=True)
         wk_template = self.__app.sgtk.templates.get('maya_shot_work')
         pb_template = self.__app.sgtk.templates.get('maya_shot_playblast')
         wk_fields = wk_template.get_fields(scene_name)
-        new_data['path'] = pb_template.apply_fields(wk_fields)
-
-        self.logger.info('>> new_data > {}'.format(new_data))
-
-        return new_data
+        self.data['sg_path_to_movie'] = pb_template.apply_fields(wk_fields)
 
     def playblast_submit_dialog(self):
         """
         A dialog UI widget that allows the user to enter comments and then
         initiate the upload to Shotgun as a Version if they choose, by entering
         text + clicking the button. Intercepts before the standard upload.
+        NOTE: sgtk's implementation of Qt doesn't have libraries available for
+        using .ui files directly, so we have to program it explicitly.
         """
         # main dialog
-        self.dialog = QtGui.QDialog()
+        self.dialog = QtGui.QDialog(
+            None,
+            QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint
+        )
+
         self.dialog.setObjectName('PlayblastDialog')
         self.dialog.resize(440, 240)
         self.dialog.setMinimumSize(QtCore.QSize(440, 240))
@@ -307,7 +316,7 @@ class SubmitterSGTK(HookBaseClass):
         self.dialog.setWindowTitle(
             QtGui.QApplication.translate(
                 'PlayblastDialog',
-                'Playblast to Shotgun',
+                'Playblast to Shotgun - Sinking Ship',
                 None,
                 QtGui.QApplication.UnicodeUTF8
             )
@@ -330,6 +339,15 @@ class SubmitterSGTK(HookBaseClass):
             self.dialog.gridLayoutWidget
         )
         self.dialog.pushButton_upload.setObjectName('pushButton_upload')
+
+        self.dialog.pushButton_upload.setText(
+            QtGui.QApplication.translate(
+                'PlayblastDialog',
+                'Upload as Version to Shotgun',
+                None,
+                QtGui.QApplication.UnicodeUTF8
+            )
+        )
 
         self.dialog.gridLayout_main.addWidget(
             self.dialog.pushButton_upload,
@@ -376,15 +394,6 @@ class SubmitterSGTK(HookBaseClass):
             0,
             1,
             1
-        )
-
-        self.dialog.pushButton_upload.setText(
-            QtGui.QApplication.translate(
-                'PlayblastDialog',
-                'Upload as Version to Shotgun',
-                None,
-                QtGui.QApplication.UnicodeUTF8
-            )
         )
 
         # signals and slots
