@@ -1,6 +1,9 @@
 # SSE: Modified to encompass the outside-vendor-provided
 # tk-maya-playblast app functionailty, which we had also customized to fit
-# our requirements (DW 2020-08-05)
+# our requirements.
+# linter: flake8
+# docstring style: Google
+# (DW 2020-08-05)
 
 import sgtk
 from sgtk.platform.qt import QtCore
@@ -27,14 +30,12 @@ class SubmitterSGTK(HookBaseClass):
         self._store_on_disk = self.__app.get_setting('store_on_disk')
 
     def can_submit(self):
-        """
-        Checks if it's possible to submit versions given the current
+        """Check if it's possible to submit versions given the current
         context/environment.
 
-        :returns:   Flag telling if the hook can submit a version.
-        :rtype:     bool
+        Returns:
+            bool: Flag telling if the hook can submit a version.
         """
-
         msg = 'Application is not configured to store images on disk or '
         msg += 'upload to shotgun!'
         if not self._upload_to_shotgun and not self._store_on_disk:
@@ -63,23 +64,22 @@ class SubmitterSGTK(HookBaseClass):
         first_frame,
         last_frame,
     ):
-        """
-        Create a version in Shotgun for a given path and linked to the
+        """Create a version in Shotgun for a given path and linked to the
         specified publishes.
 
-        :param str path_to_frames: Path to the frames.
-        :param str path_to_movie: Path to the movie.
-        :param str thumbnail_path: Path to the thumbnail representing the
-            version.
-        :param list(dict) sg_publishes: Published files that have to be linked
-            to the version.
-        :param dict sg_task: Task that have to be linked to the version.
-        :param str description: Description of the version.
-        :param int first_frame: Version first frame.
-        :param int last_frame: Version last frame.
+        Args:
+            path_to_frames (str): Path to the frames.
+            path_to_movie (str): Path to the movie.
+            thumbnail_path (str): Path to the thumbnail representing the
+                version.
+            sg_publishes (list): Published files to be linked to the version.
+            sg_task (dict): Task to be linked to the version.
+            description (str): Description of the version.
+            first_frame (int): Version first frame.
+            last_frame (int): Version last frame.
 
-        :returns:   The Version Shotgun entity dictionary that was created.
-        :rtype:     dict
+        Returns:
+            dict: The Version Shotgun entity dictionary that was created.
         """
         self.sg_version = None
         self.thumbnail_path = thumbnail_path
@@ -162,8 +162,7 @@ class SubmitterSGTK(HookBaseClass):
         return self.sg_version
 
     def create_sg_version(self):
-        """
-        Create a Version in Shotgun for a given path, and upload the
+        """Create a Version in Shotgun for a given path, and upload the
         specified movie + thumbnail.
         """
         # check if a version entity with same code already exists in Shotgun,
@@ -213,8 +212,7 @@ class SubmitterSGTK(HookBaseClass):
         return self.sg_version
 
     def _upload_files(self):
-        """
-        Upload the required files to Shotgun.
+        """Upload the required files to Shotgun.
         """
         # upload in a new thread and make our own event loop to wait for the
         # thread to finish.
@@ -235,8 +233,7 @@ class SubmitterSGTK(HookBaseClass):
             self.__app.log_error(e)
 
     def maya_shot_playblast_version(self):
-        """
-        Wrapper for playblast to Shotgun Version methods (customize the
+        """Wrapper for playblast to Shotgun Version methods (customize the
         Version publish data, create a Version in Shotgun, close the 'Playblast
         to Shotgun' dialog).
         """
@@ -246,8 +243,7 @@ class SubmitterSGTK(HookBaseClass):
         self.dialog.done(0)
 
     def maya_shot_playblast_publish_data(self):
-        """
-        Modify some of the playblast media publish values prior to publish
+        """Modify some of the playblast media publish values prior to publish
         for SSE requirements, for the following keys:
         - sg_movie_has_slate
         - sg_status_list
@@ -298,8 +294,7 @@ class SubmitterSGTK(HookBaseClass):
         self.editorial_path_to_movie = sq_template.apply_fields(wk_fields)
 
     def copy_local_files_to_server(self):
-        """
-        Copy the local playblast file to targets defined by templates.yml,
+        """Copy the local playblast file to targets defined by templates.yml,
         stored previously as attributes.
         """
         import shutil
@@ -329,8 +324,7 @@ class SubmitterSGTK(HookBaseClass):
                 self.logger.info(m)
 
     def playblast_submit_dialog(self):
-        """
-        A dialog UI widget that allows the user to enter comments and then
+        """A dialog UI widget that allows the user to enter comments and then
         initiate the upload to Shotgun as a Version if they choose, by entering
         text + clicking the button. Intercepts before the standard upload.
         NOTE: sgtk's implementation of Qt doesn't have libraries available for
@@ -466,17 +460,15 @@ class UploaderThread(QtCore.QThread):
         self._errors = []
 
     def get_errors(self):
-        """
-        Returns the errors collected while uploading files to Shotgun.
+        """Returns the errors collected while uploading files to Shotgun.
 
-        :returns:   List of errors
-        :rtype:     [str]
+        Returns:
+            list: List of errors.
         """
         return self._errors
 
     def run(self):
-        """
-        This function implements what get executed in the UploaderThread.
+        """This function implements what get executed in the UploaderThread.
         """
         upload_error = False
 

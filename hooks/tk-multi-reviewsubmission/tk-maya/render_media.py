@@ -1,6 +1,9 @@
 # SSE: Modified to encompass the outside-vendor-provided
 # tk-maya-playblast app functionailty, which we had also customized to fit
-# our requirements (DW 2020-07-30)
+# our requirements.
+# linter: flake8
+# docstring style: Google
+# (DW 2020-07-30)
 
 import sgtk
 import os
@@ -17,16 +20,14 @@ from sgtk.platform.qt import QtGui
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
-# Play with the regex here: https://regex101.com/r/S1ei8H/1
-PLAYBLAST_ARG_RE = re.compile(r"^doPlayblastArgList.*(\{.*\});$")
-
-# SSE: migrating the tk-maya-playblast global variables in here
-# (DW 2020-07-29)
-PLAYBLAST_WINDOW = 'Playblast_Window'
+# global variables
 CAMERA_NAME_PATTERN = r'\w+:TRACKCAMShape'
-DEFAULT_WIDTH = 1280
+CURR_PROJECT = os.environ['CURR_PROJECT']
 DEFAULT_HEIGHT = 720
+DEFAULT_WIDTH = 1280
+PLAYBLAST_WINDOW = 'Playblast_Window'
 TIME_STR_FMT = '%Y-%m-%d (%A) %H.%M %p'
+
 
 MODEL_EDITOR_PARAMS = {
     'activeView': True,
@@ -104,144 +105,173 @@ class RenderMedia(HookBaseClass):
         name,
         color_space,
     ):
+        """Render the media using the Maya Playblast API.
+
+        Args:
+            input_path (str): Path to the input frames for the movie. (Unused)
+            output_path (str): Path to the output movie that will be rendered.
+            width (int): Width of the output movie. (Unused)
+            height (int): Height of the output movie. (Unused)
+            first_frame (int): The first frame of the sequence of frames.
+                (Unused)
+            last_frame (int): The last frame of the sequence of frames.
+                (Unused)
+            version (int): Version number to use for the output movie slate and
+                burn-in.
+            name (str): Name to use in the slate for the output movie.
+            color_space (str): Colorspace of the input frames. (Unused)
+
+        Raises:
+            RuntimeError: Unable to find playblast file on disk.
+            RuntimeError: Custom playblast window creation failed.
+            RuntimeError: Not a valid Shotgun Shot in current Project.
+
+        Returns:
+            str: Location of the rendered media.
         """
-        Render the media using the Maya Playblast API
+        fail_head = '>> Failed to create a playblast'
 
-        :param str input_path:      Path to the input frames for the movie
-                                    (Unused)
-        :param str output_path:     Path to the output movie that will be
-                                    rendered
-        :param int width:           Width of the output movie
-                                    (Unused)
-        :param int height:          Height of the output movie
-                                    (Unused)
-        :param int first_frame:     The first frame of the sequence of frames
-                                    (Unused)
-        :param int last_frame:      The last frame of the sequence of frames
-                                    (Unused)
-        :param int version:         Version number to use for the output movie
-                                    slate and burn-in
-        :param str name:            Name to use in the slate for the output
-                                    movie
-        :param str color_space:     Colorspace of the input frames
-                                    (Unused)
+        if self.is_valid_shot():
+            # name of the playblast file
+            if name == 'Unnamed':
+                current_file_path = cmds.file(query=True, sn=True)
 
-        :returns:               Location of the rendered media
-        :rtype:                 str
-        """
+                if current_file_path:
+                    # just the file without the maya extension
+                    name = os.path.basename(current_file_path)
+                    name = os.path.splitext(name)[0]
+                    name = '{}.mov'.format(name)
 
-        # name of the playblast file
-        if name == 'Unnamed':
-            current_file_path = cmds.file(query=True, sn=True)
+            if not output_path:
+                output_path = self._get_temp_media_path(name, version, '')
 
-            if current_file_path:
-                # just the file without the maya extension
-                name = os.path.basename(current_file_path)
-                name = os.path.splitext(name)[0]
-                name = '{}.mov'.format(name)
+            playblast_args = self.get_default_playblast_args(output_path)
 
-        if not output_path:
-            output_path = self._get_temp_media_path(name, version, '')
+            m = '>> Playblast arguments > {0} using ({1})'.format(
+                output_path,
+                playblast_args
+            )
+            self.logger.info(m)
 
-        playblast_args = self.get_default_playblastlast_args(output_path)
+            # custom playblast window
+            create_window = self.create_window()
+            if create_window:
+                pb_success = False
 
-        m = '>> Playblast arguments > {0} using ({1})'.format(
-            output_path,
-            playblast_args
-        )
-        self.logger.info(m)
+                # set required visible HUDs
+                v_huds = self.set_huds(action='set')
 
-        # custom playblast window
-        create_window = self.create_window()
-        if create_window:
-            pb_success = False
+                # hide all controls groups
+                self.set_ctrls_visibility(switch_val=0)
 
-            # set required visible HUDs
-            v_huds = self.set_huds(action='set')
-
-            # hide all controls groups
-            self.set_ctrls_visibility(switch_val=0)
-
-            # playblast
-            output_path = ''
-            try:
-                output_path = pm.playblast(**playblast_args)
-                m = '>> Playblast succeeded > {}'.format(output_path)
-                self.logger.info(m)
-                pb_success = True
-            except Exception as e:
-                m = '>> Playblast failed > {}'.format(str(e))
-                self.logger.info(m)
-            finally:
-                # clean up
-                self.set_ctrls_visibility(switch_val=1)
-                self.set_huds(action='unset', v_huds=v_huds)
-                self.restore_overscan()
-                self.destroy_window()
-                m = '>> Post-playblast-attempt cleanup finished'
-                self.logger.info(m)
-
-            if pb_success:
-                # find the file on disk, return output_path
-                # TODO: make this its own method
-                o_split = os.path.split(playblast_args['filename'])
-                o_folder = o_split[0]
-                o_file = o_split[1]
-
-                files = []
-                for f in os.listdir(o_folder):
-                    f_path = os.path.join(o_folder, f)
-
-                    if not f.startswith(o_file) or not os.path.isfile(f_path):
-                        continue
-
-                    try:
-                        # the following call raises an OSError if the file
-                        # does not exist or is somehow inaccessible
-                        m_time = os.path.getmtime(f_path)
-                    except OSError:
-                        continue
-                    else:
-                        # insert with a negative access time so the first
-                        # element in the list is the most recent file
-                        heapq.heappush(
-                            files,
-                            (-m_time, f)
-                        )
-
-                if files:
-                    f = heapq.heappop(files)[1]
-                    output_path = os.path.join(o_folder, f)
-
-                    m = '>> Playblast written to > {}'.format(output_path)
+                # playblast
+                output_path = ''
+                try:
+                    output_path = pm.playblast(**playblast_args)
+                    m = '>> Playblast succeeded > {}'.format(output_path)
+                    self.logger.info(m)
+                    pb_success = True
+                except Exception as e:
+                    m = '>> Playblast failed > {}'.format(str(e))
+                    self.logger.info(m)
+                finally:
+                    # clean up
+                    self.set_ctrls_visibility(switch_val=1)
+                    self.set_huds(action='unset', v_huds=v_huds)
+                    self.restore_overscan()
+                    self.destroy_window()
+                    m = '>> Post-playblast-attempt cleanup finished'
                     self.logger.info(m)
 
-                    return output_path
+                if pb_success:
+                    # find the file on disk, return output_path
+                    # TODO: make this its own method, probably
+                    o_split = os.path.split(playblast_args['filename'])
+                    o_folder = o_split[0]
+                    o_file = o_split[1]
 
-                # not found
-                m = '>> Failed to create playblast. Unable to find it on disk.'
+                    files = []
+                    for f in os.listdir(o_folder):
+                        f_path = os.path.join(o_folder, f)
+
+                        if not f.startswith(o_file) or \
+                                not os.path.isfile(f_path):
+                            continue
+
+                        try:
+                            # the following call raises an OSError if the file
+                            # does not exist or is somehow inaccessible
+                            m_time = os.path.getmtime(f_path)
+                        except OSError:
+                            continue
+                        else:
+                            # insert with a negative access time so the first
+                            # element in the list is the most recent file
+                            heapq.heappush(
+                                files,
+                                (-m_time, f)
+                            )
+
+                    if files:
+                        f = heapq.heappop(files)[1]
+                        output_path = os.path.join(o_folder, f)
+
+                        m = '>> Playblast written to > {}'.format(output_path)
+                        self.logger.info(m)
+
+                        return output_path
+
+                    # not found
+                    m = '{}. Unable to find it on disk.'.format(fail_head)
+                    raise RuntimeError(m)
+            else:
+                m = '{}. Custom window creation failed.'.format(fail_head)
                 raise RuntimeError(m)
         else:
-            m = '>> Failed to create playblast. Custom window creation failed.'
+            m = '{}. Not a valid Shot in Project {}.'.format(
+                fail_head,
+                CURR_PROJECT
+            )
             raise RuntimeError(m)
 
     def _get_temp_media_path(self, name, version, extension):
         """Build a temporary path to put the rendered media.
 
         Args:
-            name (str): Name of the media being rendered
-            version (str): Version number of the media being rendered
-            extension (str): Extension of the media being rendered
+            name (str): Name of the media being rendered.
+            version (str): Version number of the media being rendered.
+            extension (str): Extension of the media being rendered.
 
         Returns:
-            str: Temporary path to output the rendered version
+            str: Temporary path to output the rendered version.
         """
         temp_dir = tempfile.gettempdir()
         temp_media_path = '{0}\\{1}'.format(temp_dir, name)
 
         return temp_media_path
 
-    def get_default_playblastlast_args(self, output_path):
+    def is_valid_shot(self):
+        """Check to see if the open Maya file is from a valid Shot file.
+
+        Returns:
+            bool: True if the open Maya file is from a Shotgun Toolkit Primary
+                storage location, otherwise False.
+        """
+        valid_shot = False
+        primary_dir = 'N:/projects/{}/sequences'.format(CURR_PROJECT)
+
+        maya_file = cmds.file(q=True, sn=True)
+        file_parts = maya_file.split('/')
+        if os.path.exists(maya_file) and len(file_parts) == 11:
+            sub_dirs = '/'.join(file_parts[4:9])
+            chk_dir = '{0}/{1}'.format(primary_dir, sub_dirs)
+
+            if maya_file.startswith(chk_dir):
+                valid_shot = True
+
+        return valid_shot
+
+    def get_default_playblast_args(self, output_path):
         """Returns a dictionary of playblast arguments key/value pairs, using
         values that are specific to SSE's requirements, e.g. H.264, never use
         '.iff' sequences, etcetera.
@@ -255,10 +285,10 @@ class RenderMedia(HookBaseClass):
 
         Args:
             output_path (str): Path to the output movie that will be
-            rendered
+            rendered.
 
         Returns:
-            dict: Playblast arguments
+            dict: Playblast arguments.
         """
         playblast_args = PLAYBLAST_PARAMS
         playblast_args['filename'] = output_path
@@ -284,13 +314,11 @@ class RenderMedia(HookBaseClass):
         returns an int value of 1.
 
         Returns:
-            int: end frame in Shotgun
+            int: End frame in Shotgun.
         """
         end_frame = 1
-        primary_dir = 'N:'
 
-        maya_file = cmds.file(q=True, sn=True)
-        if os.path.exists(maya_file) and maya_file.startswith(primary_dir):
+        if self.is_valid_shot():
             ctx = self.__app.context
 
             shot_ent = ctx.entity
@@ -335,8 +363,8 @@ class RenderMedia(HookBaseClass):
         the pre- and post-window methods.
 
         Returns:
-            bool: success of the window, modelEditor, and pre- and post-
-            window methods
+            bool: Success of the window, modelEditor, and pre- and post-
+                window methods.
         """
         w_success = False
 
@@ -405,7 +433,7 @@ class RenderMedia(HookBaseClass):
 
         Returns:
             list: If action is 'set', returns a list of the originally-visible
-            HUDs
+                HUDs.
         """
         huds = pm.headsUpDisplay(listHeadsUpDisplays=True)
 
@@ -535,8 +563,8 @@ class RenderMedia(HookBaseClass):
         record the original overscan then set the required overscan.
 
         Returns:
-            bool: success at finding the TRACKCAM and recording its original
-            overscan value
+            bool: Success at finding the TRACKCAM and recording its original
+                overscan value.
         """
         success = False
 
@@ -573,22 +601,30 @@ class RenderMedia(HookBaseClass):
             # success!
             success = True
         else:
-            qmb_title = 'Cannot Playblast to Create'
+            mb_title = 'Cannot Playblast to Shotgun'
             m = 'A referenced TRACKCAM is required for Shotgun playblasts.'
-
-            QtGui.QMessageBox(
-                QtGui.QMessageBox.Warning,
-                qmb_title,
-                m,
-                flags=QtCore.Qt.Dialog
-                | QtCore.Qt.MSWindowsFixedSizeDialogHint
-                | QtCore.Qt.WindowStaysOnTopHint
-                | QtCore.Qt.X11BypassWindowManagerHint,
-            ).exec_()
+            self.messagebox_alert(mb_title, m)
 
             success = False
 
         return success
+
+    def messagebox_alert(self, mb_title, mb_message):
+        """Pop up a message box alert when needed.
+
+        Args:
+            mb_title (str): A title for the message box.
+            mb_message (str): The message for the message box.
+        """
+        QtGui.QMessageBox(
+            QtGui.QMessageBox.Warning,
+            mb_title,
+            mb_message,
+            flags=QtCore.Qt.Dialog
+            | QtCore.Qt.MSWindowsFixedSizeDialogHint
+            | QtCore.Qt.WindowStaysOnTopHint
+            | QtCore.Qt.X11BypassWindowManagerHint,
+        ).exec_()
 
     def set_vp2_globals(self):
         """Sets various Viewport2.0 attribute values, e.g. if a Maya
@@ -627,7 +663,7 @@ class RenderMedia(HookBaseClass):
         Args:
             res_max (int, optional): Maximum resolution. Defaults to 1024.
         """
-        # --- Set the resolution...
+        # set the resolution...
         try:
             hrg_texmax_attr = 'hardwareRenderingGlobals.textureMaxResolution'
             cmds.setAttr(hrg_texmax_attr, res_max)
@@ -637,7 +673,7 @@ class RenderMedia(HookBaseClass):
             m = '>> Failed to set {0} > {1}'.format(hrg_texmax_attr, str(e))
             self.logger.info(m)
 
-        # --- Generate for all file nodes in *_RIG shaders...
+        # generate for all file nodes in *RIG shaders...
         f_nodes = cmds.ls(typ='file')
         if f_nodes:
             for f_node in f_nodes:
@@ -659,14 +695,13 @@ class RenderMedia(HookBaseClass):
                         self.logger.info(m)
 
     def set_ctrls_visibility(self, switch_val=1):
-        """
-        Need to see NURBS curves in playblast for END2 character 'sparky',
+        """Need to see NURBS curves in playblast for END2 character 'sparky',
         so leave them on in the viewport & hide/show any controls group in
         the active Maya scene file as a workaround.
         """
-        # --- Inconsitent naming in RIG controls group root nodes,
-        # --- unfortunately (get Assets dept. to standardize in
-        # --- future)...
+        # inconsitent naming in RIG controls group root nodes,
+        # unfortunately (get Assets dept. to standardize in
+        # future)...
         grp_root_nodes = [
             '*:controls',           # --- is this what should be standard?
             '*:controls_gr',        # --- ...or is this correct?
@@ -685,9 +720,9 @@ class RenderMedia(HookBaseClass):
             except Exception as e:
                 self.logger.info(str(e))
 
-        # --- Compensating for nurbsCurves that fall outside of references
-        # --- (e.g. in-scene duplicates of RIG control curves, animator
-        # --- created curves, etc.)...
+        # compensating for nurbsCurves that fall outside of references
+        # (e.g. in-scene duplicates of RIG control curves, animator
+        # created curves, etc.)...
         all_ncurves = cmds.ls(type='nurbsCurve')
         nr_ncurves = [
             _n for _n in all_ncurves if not cmds.referenceQuery(_n, inr=True)
