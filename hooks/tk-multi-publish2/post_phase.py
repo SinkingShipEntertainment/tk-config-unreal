@@ -4,9 +4,13 @@
 # docstring style: Google
 # (DW 2020-08-11)
 
+import os
 import sgtk
+import shutil
 
 HookBaseClass = sgtk.get_hook_baseclass()
+
+SSE_HEADER = '>> Executing Sinking Ship'
 
 
 class PostPhaseHook(HookBaseClass):
@@ -23,9 +27,8 @@ class PostPhaseHook(HookBaseClass):
     # defined here: https://developer.shotgunsoftware.com/tk-multi-publish2/
 
     def post_publish(self, publish_tree):
-        """
-        This method is executed after the publish pass has completed for each
-        item in the tree, before the finalize pass.
+        """This method is executed after the publish pass has completed for
+        each item in the tree, before the finalize pass.
 
         A :ref:`publish-api-tree` instance representing the items that were
         published is supplied as an argument. The tree can be traversed in this
@@ -33,19 +36,20 @@ class PostPhaseHook(HookBaseClass):
 
         To glean information about the publish state of particular items, you
         can iterate over the items in the tree and introspect their
-        :py:attr:`~.api.PublishItem.properties` dictionary. This requires
-        customizing your publish plugins to populate any specific publish
-        information that you want to process collectively here.
+            :py:attr:`~.api.PublishItem.properties` dictionary.
+        This requires customizing your publish plugins to populate any specific
+        publish information that you want to process collectively here.
 
-        .. warning:: You will not be able to use the item's
+        NOTE: You will not be able to use the item's
             :py:attr:`~.api.PublishItem.local_properties` in this hook since
             :py:attr:`~.api.PublishItem.local_properties` are only accessible
-            during the execution of a publish plugin.
+        during the execution of a publish plugin.
 
-        :param publish_tree: The :ref:`publish-api-tree` instance representing
-            the items to be published.
+        Args:
+            publish_tree (obj): The :ref:`publish-api-tree` instance
+                representing the items to be published.
         """
-        m = '>> Executing Sinking Ship post publish hook method...'
+        m = '{} post_publish'.format(SSE_HEADER)
         self.logger.debug(m)
 
         ctx = self.__app.context
@@ -64,6 +68,16 @@ class PostPhaseHook(HookBaseClass):
             pass
 
     def post_publish_maya(self, ctx):
+        """Calls the appropriate method to run after a publish depending on
+        the Pipeline Step in a session running the Maya engine.
+
+        Args:
+            ctx (obj): A Shotgun Context instance for the DCC session provided
+                by the Shotgun Toolkit of the current Project.
+        """
+        m = '{} post_publish_maya'.format(SSE_HEADER)
+        self.logger.debug(m)
+
         import maya.cmds as cmds
         scene_name = cmds.file(q=True, sn=True)
 
@@ -103,4 +117,58 @@ class PostPhaseHook(HookBaseClass):
                 pass
 
     def post_publish_maya_tlo(self, scene_name, wk_fields):
-        pass
+        """Copies the TLO file to a matching ANIM file, in the current Shotgun
+        user's work directory for the destination Pipeline Step.
+        NOTE: we could potentially have it Publish the ANIM file (an 'initial
+        anim file'), but for the short term we'll just mimic the legacy+
+        behaviour of a simple file copy.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
+        m = '{} post_publish_maya_tlo'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # get current shotgun user
+        current_user = sgtk.util.get_current_user(self.__app.sgtk)
+
+        # data for the target ANIM Shot
+        shot_data = {}
+        shot_data['Step'] = u'ANIM'
+        shot_data['Sequence'] = wk_fields['Sequence']
+        shot_data['Shot'] = wk_fields['Shot']
+        shot_data['current_user_name'] = current_user
+        shot_data['version'] = 1
+
+        wk_template = self.__app.sgtk.templates.get('maya_shot_work')
+        anim_file = wk_template.apply_fields(shot_data)
+        anim_file_dir = os.path.dirname(anim_file)
+
+        # make the destination ANIM user work directory
+        if not os.path.exists(anim_file_dir):
+            os.makedirs(anim_file_dir)
+
+        # copy!
+        self._copy_file(scene_name, anim_file)
+
+    def _copy_file(self, src, dst):
+        """Copy a source file to a destination file.
+
+        Args:
+            src (str): The full source filepath.
+            dst (str): The full destination filepath.
+        """
+        try:
+            shutil.copy2(src, dst)
+            m = '{0} copied file {1} -> {2}'.format(SSE_HEADER, src, dst)
+            self.logger.debug(m)
+        except Exception as e:
+            m = '{0} file copy failed {1} > {2}'.format(
+                SSE_HEADER,
+                dst,
+                str(e)
+            )
+            self.logger.debug(m)
+# --- eof
