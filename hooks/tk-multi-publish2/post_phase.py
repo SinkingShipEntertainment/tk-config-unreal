@@ -10,7 +10,7 @@ import shutil
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
-SSE_HEADER = '>> Executing Sinking Ship'
+SSE_HEADER = '>> Sinking Ship'
 
 
 class PostPhaseHook(HookBaseClass):
@@ -52,8 +52,6 @@ class PostPhaseHook(HookBaseClass):
         m = '{} post_publish'.format(SSE_HEADER)
         self.logger.debug(m)
 
-        ctx = self.__app.context
-
         # engine
         current_engine = sgtk.platform.current_engine()
         if current_engine.name == 'tk-aftereffects':
@@ -63,17 +61,13 @@ class PostPhaseHook(HookBaseClass):
         if current_engine.name == 'tk-mari':
             pass
         if current_engine.name == 'tk-maya':
-            self.post_publish_maya(ctx)
+            self.post_publish_maya()
         if current_engine.name == 'tk-nuke':
             pass
 
-    def post_publish_maya(self, ctx):
+    def post_publish_maya(self):
         """Calls the appropriate method to run after a publish depending on
         the Pipeline Step in a session running the Maya engine.
-
-        Args:
-            ctx (obj): A Shotgun Context instance for the DCC session provided
-                by the Shotgun Toolkit of the current Project.
         """
         m = '{} post_publish_maya'.format(SSE_HEADER)
         self.logger.debug(m)
@@ -81,10 +75,10 @@ class PostPhaseHook(HookBaseClass):
         import maya.cmds as cmds
         scene_name = cmds.file(q=True, sn=True)
 
-        e_type = ctx.entity['type']
-        p_step = ctx.step['name']
+        e_type = self.parent.context.entity['type']
+        p_step = self.parent.context.step['name']
 
-        wk_template = self.__app.sgtk.templates.get('maya_shot_work')
+        wk_template = self.parent.sgtk.templates.get('maya_shot_work')
         wk_fields = wk_template.get_fields(scene_name)
 
         # method calls based on Shotgun pipeline steps as defined at SSE
@@ -131,18 +125,23 @@ class PostPhaseHook(HookBaseClass):
         m = '{} post_publish_maya_tlo'.format(SSE_HEADER)
         self.logger.debug(m)
 
-        # get current shotgun user
-        current_user = sgtk.util.get_current_user(self.__app.sgtk)
+        # incoming fields/values for debug
+        m = '{0} wk_fields > {1}'.format(SSE_HEADER, wk_fields)
+        self.logger.debug(m)
 
         # data for the target ANIM Shot
         shot_data = {}
         shot_data['Step'] = u'ANIM'
         shot_data['Sequence'] = wk_fields['Sequence']
         shot_data['Shot'] = wk_fields['Shot']
-        shot_data['current_user_name'] = current_user
+        shot_data['current_user_name'] = wk_fields['current_user_name']
         shot_data['version'] = 1
 
-        wk_template = self.__app.sgtk.templates.get('maya_shot_work')
+        if 'name' in wk_fields.keys():
+            shot_data['name'] = wk_fields['name']
+
+        # templates
+        wk_template = self.parent.sgtk.templates.get('maya_shot_work')
         anim_file = wk_template.apply_fields(shot_data)
         anim_file_dir = os.path.dirname(anim_file)
 
@@ -152,6 +151,42 @@ class PostPhaseHook(HookBaseClass):
 
         # copy!
         self._copy_file(scene_name, anim_file)
+
+    # EXPERIMENT - may never be needed here but keeping it around until
+    #              I'm sure
+    # def _get_project_delimiter(self):
+    #     """Gets the Entity delimiter for the Shotgun Project as defined in
+    #     the Shotgun database ('Projects' page).
+
+    #     Returns:
+    #         str: The Entity delimiter for the Project.
+    #     """
+    #     proj_dlim = None
+    #     proj_name = self.parent.context.project['name']
+
+    #     sg_filters = [
+    #         ['name', 'is', proj_name],
+    #         ['sg_status', 'is', 'Active']
+    #     ]
+    #     sg_fields = sorted(
+    #         self.parent.sgtk.shotgun.schema_read()['Project'].keys()
+    #     )
+
+    #     found_proj = self.parent.sgtk.shotgun.find_one(
+    #         'Project',
+    #         sg_filters,
+    #         sg_fields
+    #     )
+    #     if found_proj:
+    #         proj_dlim = found_proj['sg_entity_name_delimiter']
+    #         m = '{0} Project {1} Entity delimiter > {2}'.format(
+    #             SSE_HEADER,
+    #             proj_name,
+    #             proj_dlim
+    #         )
+    #         self.logger.debug(m)
+
+    #     return proj_dlim
 
     def _copy_file(self, src, dst):
         """Copy a source file to a destination file.
