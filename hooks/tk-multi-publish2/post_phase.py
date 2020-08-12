@@ -72,7 +72,10 @@ class PostPhaseHook(HookBaseClass):
         m = '{} post_publish_maya'.format(SSE_HEADER)
         self.logger.debug(m)
 
+        import utils_api3
         import maya.cmds as cmds
+
+        self.utils_api3 = utils_api3.ShotgunApi3()
         scene_name = cmds.file(q=True, sn=True)
 
         e_type = self.parent.context.entity['type']
@@ -87,7 +90,7 @@ class PostPhaseHook(HookBaseClass):
         if e_type == 'Asset':
             # pipeline steps for Asset, in order
             if p_step == 'Modeling':
-                pass
+                self.post_publish_maya_mod(scene_name, wk_fields)
             if p_step == 'Rigging':
                 pass
             if p_step == 'Texturing':
@@ -110,6 +113,61 @@ class PostPhaseHook(HookBaseClass):
             if p_step == 'Lighting':
                 pass
 
+    # asset methods
+    def post_publish_maya_mod(self, scene_name, wk_fields):
+        """For the 'Model'/MOD Asset Publishes, based on what Asset Type they
+        are, generate a simple autorig via a Deadline process on the render
+        farm.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
+        m = '{} post_publish_maya_mod'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # check the entity type against valid types for simple autorigging
+        ent_type = wk_fields['sg_asset_type']
+
+        v_types = [
+            'Prop',
+            'Vehicle'
+        ]
+
+        if ent_type in v_types:
+            # check for any existing RIG publishes, use our convenience
+            # api3 wrapper method (by this point it's in the path)
+            prj_name = self.parent.context.project['name']
+            ent_name = self.parent.context.entity['name']
+
+            pub_chk = self.utils_api3.get_latest_publish_asset_in_proj_by_step(
+                prj_name,
+                ent_name,
+                e_step='RIG'
+            )
+
+            # farm submission for simple autorig job
+            if pub_chk:
+                # skip
+                m = '{0} Skipping simple rig auto-publish, found > {1}'.format(
+                    SSE_HEADER,
+                    pub_chk
+                )
+                self.logger.debug(m)
+            else:
+                # submit
+                from python import publish_asset
+                publish_asset.run_autorig_publish(
+                    submit=True,
+                    fields=wk_fields
+                )
+                m = '{} Submitted simple rig auto-publish to Deadline'.format(
+                    SSE_HEADER
+                )
+                self.logger.debug(m)
+
+    # shot methods
     def post_publish_maya_tlo(self, scene_name, wk_fields):
         """Copies the TLO file to a matching ANIM file, in the current Shotgun
         user's work directory for the destination Pipeline Step.
@@ -152,42 +210,7 @@ class PostPhaseHook(HookBaseClass):
         # copy!
         self._copy_file(scene_name, anim_file)
 
-    # EXPERIMENT - may never be needed here but keeping it around until
-    #              I'm sure
-    # def _get_project_delimiter(self):
-    #     """Gets the Entity delimiter for the Shotgun Project as defined in
-    #     the Shotgun database ('Projects' page).
-
-    #     Returns:
-    #         str: The Entity delimiter for the Project.
-    #     """
-    #     proj_dlim = None
-    #     proj_name = self.parent.context.project['name']
-
-    #     sg_filters = [
-    #         ['name', 'is', proj_name],
-    #         ['sg_status', 'is', 'Active']
-    #     ]
-    #     sg_fields = sorted(
-    #         self.parent.sgtk.shotgun.schema_read()['Project'].keys()
-    #     )
-
-    #     found_proj = self.parent.sgtk.shotgun.find_one(
-    #         'Project',
-    #         sg_filters,
-    #         sg_fields
-    #     )
-    #     if found_proj:
-    #         proj_dlim = found_proj['sg_entity_name_delimiter']
-    #         m = '{0} Project {1} Entity delimiter > {2}'.format(
-    #             SSE_HEADER,
-    #             proj_name,
-    #             proj_dlim
-    #         )
-    #         self.logger.debug(m)
-
-    #     return proj_dlim
-
+    # generic methods
     def _copy_file(self, src, dst):
         """Copy a source file to a destination file.
 
