@@ -81,7 +81,9 @@ class PostPhaseHook(HookBaseClass):
         e_type = self.parent.context.entity['type']
         p_step = self.parent.context.step['name']
 
-        wk_template = self.parent.sgtk.templates.get('maya_shot_work')
+        wk_template = self.parent.sgtk.templates.get('maya_asset_work')
+        if e_type == 'Shot':
+            wk_template = self.parent.sgtk.templates.get('maya_shot_work')
         wk_fields = wk_template.get_fields(scene_name)
 
         # method calls based on Shotgun pipeline steps as defined at SSE
@@ -127,6 +129,10 @@ class PostPhaseHook(HookBaseClass):
         m = '{} post_publish_maya_mod'.format(SSE_HEADER)
         self.logger.debug(m)
 
+        # incoming fields/values for debug
+        m = '{0} wk_fields > {1}'.format(SSE_HEADER, wk_fields)
+        self.logger.debug(m)
+
         # check the entity type against valid types for simple autorigging
         ent_type = wk_fields['sg_asset_type']
 
@@ -141,7 +147,7 @@ class PostPhaseHook(HookBaseClass):
             prj_name = self.parent.context.project['name']
             ent_name = self.parent.context.entity['name']
 
-            pub_chk = self.utils_api3.get_latest_publish_asset_in_proj_by_step(
+            pub_chk = self.utils_api3.get_latest_asset_pub_in_proj_by_step(
                 prj_name,
                 ent_name,
                 e_step='RIG'
