@@ -4,6 +4,7 @@
 # docstring style: Google
 # (DW 2020-08-11)
 
+import json
 import os
 import sgtk
 import shutil
@@ -65,6 +66,9 @@ class PostPhaseHook(HookBaseClass):
         if current_engine.name == 'tk-nuke':
             pass
 
+    ###########################################################################
+    # engine methods
+    ###########################################################################
     def post_publish_maya(self):
         """Calls the appropriate method to run after a publish depending on
         the Pipeline Step in a session running the Maya engine.
@@ -91,31 +95,35 @@ class PostPhaseHook(HookBaseClass):
         # future use
         if e_type == 'Asset':
             # pipeline steps for Asset, in order
+            # (see 'asset methods', below)
             if p_step == 'Modeling':
                 self.post_publish_maya_mod(scene_name, wk_fields)
             if p_step == 'Rigging':
-                pass
+                self.post_publish_maya_rig(scene_name, wk_fields)
             if p_step == 'Texturing':
                 pass
             if p_step == 'Surfacing':
-                pass
+                self.post_publish_maya_surf(scene_name, wk_fields)
             if p_step == 'FX':
-                pass
+                self.post_publish_maya_fx_asset(scene_name, wk_fields)
 
         if e_type == 'Shot':
             # pipeline steps - Shot, in order
+            # (see 'shot methods', below)
             if p_step == 'Tracking & Layout':
                 self.post_publish_maya_tlo(scene_name, wk_fields)
             if p_step == 'Animation':
-                pass
+                self.post_publish_maya_anim(scene_name, wk_fields)
             if p_step == 'Character Finaling':
                 pass
             if p_step == 'FX':
-                pass
+                self.post_publish_maya_fx_shot(scene_name, wk_fields)
             if p_step == 'Lighting':
                 pass
 
-    # asset methods
+    ###########################################################################
+    # asset methods - maya
+    ###########################################################################
     def post_publish_maya_mod(self, scene_name, wk_fields):
         """For the 'Model'/MOD Asset Publishes, based on what Asset Type they
         are, generate a simple autorig via a Deadline process on the render
@@ -130,8 +138,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
-        m = '{0} wk_fields > {1}'.format(SSE_HEADER, wk_fields)
-        self.logger.debug(m)
+        self._log_fields(wk_fields)
 
         # check the entity type against valid types for simple autorigging
         ent_type = wk_fields['sg_asset_type']
@@ -173,7 +180,30 @@ class PostPhaseHook(HookBaseClass):
                 )
                 self.logger.debug(m)
 
-    # shot methods
+    def post_publish_maya_rig(self, scene_name, wk_fields):
+        m = '{} post_publish_maya_rig'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # incoming fields/values for debug
+        self._log_fields(wk_fields)
+
+    def post_publish_maya_surf(self, scene_name, wk_fields):
+        m = '{} post_publish_maya_surf'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # incoming fields/values for debug
+        self._log_fields(wk_fields)
+
+    def post_publish_maya_fx_asset(self, scene_name, wk_fields):
+        m = '{} post_publish_maya_fx_asset'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # incoming fields/values for debug
+        self._log_fields(wk_fields)
+
+    ###########################################################################
+    # shot methods - maya
+    ###########################################################################
     def post_publish_maya_tlo(self, scene_name, wk_fields):
         """Copies the TLO file to a matching ANIM file, in the current Shotgun
         user's work directory for the destination Pipeline Step.
@@ -190,8 +220,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
-        m = '{0} wk_fields > {1}'.format(SSE_HEADER, wk_fields)
-        self.logger.debug(m)
+        self._log_fields(wk_fields)
 
         # data for the target ANIM Shot
         shot_data = {}
@@ -216,7 +245,75 @@ class PostPhaseHook(HookBaseClass):
         # copy!
         self._copy_file(scene_name, anim_file)
 
+    def post_publish_maya_fx_shot(self, scene_name, wk_fields):
+        """Inspect the Maya scene file for an 'FX' node and related
+        'RenderSetup', and export both to the relevant locations if found.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
+        m = '{} post_publish_maya_fx_shot'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # module imports
+        import maya.cmds as cmds
+        import maya.app.renderSetup.model.renderSetup as renderSetup
+
+        # incoming fields/values for debug
+        self._log_fields(wk_fields)
+
+        # define export paths and filenames
+        wk_template = self.parent.sgtk.templates.get('maya_shot_work')
+        export_dir = os.path.dirname(wk_template.apply_fields(wk_fields))
+        export_dir = export_dir.replace('\\', '/')
+        export_dir = '{}/export'.format(export_dir)
+
+        export_name = 'fxgrp_{}.ma'.format(wk_fields['Shot'])
+        export_file = '{0}/{1}'.format(export_dir, export_name)
+
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+
+        if os.path.isfile(export_file):
+            os.remove(export_file)
+
+        # maya scene components
+        ex_success = False
+        try:
+            cmds.select('FX')
+            cmds.file(
+                export_file,
+                exportSelected=True,
+                type='mayaAscii',
+                shader=True
+            )
+            self.logger.debug('FX export > {}'.format(export_file))
+            ex_success = True
+        except Exception as e:
+            self.logger.debug('Failed FX export > {}'.format(str(e)))
+
+        if ex_success and cmds.mayaHasRenderSetup():
+            rs_root = export_file.split('/FX/')[0]
+            rs_dir = '{}/LIGHT/templates'.format(rs_root)
+            rs_name = 'FX_{}.json'.format(wk_fields['Shot'])
+            rs_file = '{0}/{1}'.format(rs_dir, rs_name)
+
+            if not os.path.exists(rs_dir):
+                os.makedirs(rs_dir)
+
+            with open(rs_file, 'w+') as j_file:
+                json.dump(
+                    renderSetup.instance().encode(None),
+                    fp=j_file,
+                    indent=2,
+                    sort_keys=True
+                )
+
+    ###########################################################################
     # generic methods
+    ###########################################################################
     def _copy_file(self, src, dst):
         """Copy a source file to a destination file.
 
@@ -235,4 +332,14 @@ class PostPhaseHook(HookBaseClass):
                 str(e)
             )
             self.logger.debug(m)
+
+    def _log_fields(self, wk_fields):
+        """Output passed Shotgun template fields/values for the Project to the
+        console as a sanity check.
+
+        Args:
+            wk_fields (dict): Incoming template fields/values for display.
+        """
+        m = '{0} wk_fields > {1}'.format(SSE_HEADER, wk_fields)
+        self.logger.debug(m)
 # --- eof
