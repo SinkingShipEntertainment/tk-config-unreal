@@ -67,7 +67,7 @@ class PostPhaseHook(HookBaseClass):
             pass
 
     ###########################################################################
-    # engine methods
+    # engine methods                                                          #
     ###########################################################################
     def post_publish_maya(self):
         """Calls the appropriate method to run after a publish depending on
@@ -122,7 +122,7 @@ class PostPhaseHook(HookBaseClass):
                 pass
 
     ###########################################################################
-    # asset methods - maya
+    # asset methods - maya                                                    #
     ###########################################################################
     def post_publish_maya_mod(self, scene_name, wk_fields):
         """For the 'Model'/MOD Asset Publishes, based on what Asset Type they
@@ -211,10 +211,15 @@ class PostPhaseHook(HookBaseClass):
             asset_data['name'] = wk_fields['name']
 
         pub_template = self.parent.sgtk.templates.get('maya_asset_publish')
-        pub_path = pub_template.apply_fields(asset_data)
+        v_file = pub_template.apply_fields(asset_data)
 
-        v_file = pub_path.replace('\\', '/')
+        v_name = os.path.basename(v_file)
+        f_version = v_name.split('.')[-2]
+        f_replace = '.{}.'.format(f_version)
+
+        v_file = v_file.replace('\\', '/')
         v_file = v_file.replace('/maya/', '/maya/versionless/')
+        v_file = v_file.replace(f_replace, '.')
 
         # make the destination 'versionless' publish subdirectory
         v_dir = os.path.dirname(v_file)
@@ -239,7 +244,7 @@ class PostPhaseHook(HookBaseClass):
         self._log_fields(wk_fields)
 
     ###########################################################################
-    # shot methods - maya
+    # shot methods - maya                                                     #
     ###########################################################################
     def post_publish_maya_tlo(self, scene_name, wk_fields):
         """Copies the TLO file to a matching ANIM file, in the current Shotgun
@@ -349,7 +354,7 @@ class PostPhaseHook(HookBaseClass):
                 )
 
     ###########################################################################
-    # generic methods
+    # generic methods                                                         #
     ###########################################################################
     def _copy_file(self, src, dst):
         """Copy a source file to a destination file.
