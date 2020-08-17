@@ -230,11 +230,41 @@ class PostPhaseHook(HookBaseClass):
         self._copy_file(scene_name, v_file)
 
     def post_publish_maya_surf(self, scene_name, wk_fields):
+        """For the 'Surfacing'/SURF Asset Publishes, if in a correctly named
+        SUR_AI/SUR.AI file (Maya scene with all geometry and shaders), write
+        and publish a SHD_AI/SHD.AI file (Maya scene shaders only), and
+        also write without publishing a JSON file that describes the source
+        Maya file's geometry to shader connections.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
         m = '{} post_publish_maya_surf'.format(SSE_HEADER)
         self.logger.debug(m)
 
         # incoming fields/values for debug
         self._log_fields(wk_fields)
+
+        # get the base name of the file, remove the version and extension,
+        # then normalize the delimiter to '_' to check if this is a SUR_AI/
+        # SHD.AI source file
+        base_name = os.path.basename(scene_name)
+        base_parts = base_name.split('.')
+        base_ext = base_parts[-1]
+        base_vers = base_parts[-2]
+        base_repl = '.{0}.{1}'.format(base_vers, base_ext)
+        base_no_ve = base_name.replace(base_repl, '')
+        base_no_ve_norm = base_no_ve.replace('.', '_')
+
+        sur_filt = '_SUR_AI'
+
+        if base_no_ve_norm.endswith(sur_filt):
+            from python.render_engine.arnold import utils_arnold
+
+            utils_arnold.write_geo_shd_json()
+            utils_arnold._export_shd_file_from_sur_file()
 
     def post_publish_maya_fx_asset(self, scene_name, wk_fields):
         m = '{} post_publish_maya_fx_asset'.format(SSE_HEADER)
