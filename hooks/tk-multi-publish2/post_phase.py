@@ -181,11 +181,48 @@ class PostPhaseHook(HookBaseClass):
                 self.logger.debug(m)
 
     def post_publish_maya_rig(self, scene_name, wk_fields):
+        """For the 'Rigging'/RIG Asset Publishes, create a 'versionless'
+        subdirectory under the standard RIG Publish directory, and put a
+        version-stripped copy of the most recent RIG Publish in it (overwrites
+        the target).
+        NOTE: This is in prep for the idea of a 'versionless' workflow when it
+        comes to RIGs in ANIM files, remains here but is on the backburner
+        (might suggest it for outsource ANIM).
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
         m = '{} post_publish_maya_rig'.format(SSE_HEADER)
         self.logger.debug(m)
 
         # incoming fields/values for debug
         self._log_fields(wk_fields)
+
+        # data for versionless path and file
+        asset_data = {}
+        asset_data['Step'] = wk_fields['Step']
+        asset_data['Asset'] = wk_fields['Asset']
+        asset_data['sg_asset_type'] = wk_fields['sg_asset_type']
+        asset_data['version'] = wk_fields['version']
+
+        if 'name' in wk_fields.keys():
+            asset_data['name'] = wk_fields['name']
+
+        pub_template = self.parent.sgtk.templates.get('maya_asset_publish')
+        pub_path = pub_template.apply_fields(asset_data)
+
+        v_file = pub_path.replace('\\', '/')
+        v_file = v_file.replace('/maya/', '/maya/versionless/')
+
+        # make the destination 'versionless' publish subdirectory
+        v_dir = os.path.dirname(v_file)
+        if not os.path.exists(v_dir):
+            os.makedirs(v_dir)
+
+        # copy!
+        self._copy_file(scene_name, v_file)
 
     def post_publish_maya_surf(self, scene_name, wk_fields):
         m = '{} post_publish_maya_surf'.format(SSE_HEADER)
@@ -257,12 +294,12 @@ class PostPhaseHook(HookBaseClass):
         m = '{} post_publish_maya_fx_shot'.format(SSE_HEADER)
         self.logger.debug(m)
 
+        # incoming fields/values for debug
+        self._log_fields(wk_fields)
+
         # module imports
         import maya.cmds as cmds
         import maya.app.renderSetup.model.renderSetup as renderSetup
-
-        # incoming fields/values for debug
-        self._log_fields(wk_fields)
 
         # define export paths and filenames
         wk_template = self.parent.sgtk.templates.get('maya_shot_work')
