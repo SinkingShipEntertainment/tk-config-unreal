@@ -9,10 +9,12 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import glob
+import json
 import os
 import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
+from tank import TankError
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -73,6 +75,9 @@ class MayaSessionCollector(HookBaseClass):
         :param parent_item: Root item instance
 
         """
+        # intercept before collection to run the qctool checks
+        # (DW 2020-08-19)
+        # TODO
 
         # create an item representing the current maya session
         item = self.collect_current_maya_session(settings, parent_item)
@@ -412,3 +417,126 @@ class MayaSessionCollector(HookBaseClass):
                 # the item has been created. update the display name to include
                 # the an indication of what it is and why it was collected
                 item.name = "%s (Render Layer: %s)" % (item.name, layer)
+
+    def get_qc_log_file(self):
+        """Returns the latest QC log file for the Shotgun Entity (Asset, Shot).
+
+        Returns:
+            str: Path to the latest QC log file for the Shotgun Entity if there
+                is one, otherwise returns None.
+        """
+        log_file = None
+
+        p_name = self.parent.context.project['name']
+        e_type = self.parent.context.entity['type']
+
+        # templates
+        wk_template = self.parent.sgtk.templates.get('maya_asset_work')
+        if e_type == 'Shot':
+            wk_template = self.parent.sgtk.templates.get('maya_shot_work')
+
+        scene_name = cmds.file(q=True, sn=True)
+        wk_fields = wk_template.get_fields(scene_name)
+
+        #  log path munging
+        log_root = 'N:/projects/{}'.format(p_name)
+        log_tail = 'logs/QCTool'
+
+        if e_type == 'Asset':
+            log_parts = [
+                log_root,
+                'assets',
+                wk_fields['sg_asset_type'],
+                self.parent.context.entity['name'],
+                wk_fields['Step'],
+                log_tail
+            ]
+
+        if e_type == 'Shot':
+            log_parts = [
+                log_root,
+                'sequences',
+                wk_fields['Sequence'],
+                wk_fields['Shot'],
+                wk_fields['Step'],
+                log_tail
+            ]
+
+        log_dir = '/'.join(log_parts)
+
+        # inspect the directory
+        file_list = [
+            os.path.join(log_dir, f).replace('\\', '/')
+            for f in os.listdir(log_dir)
+            if os.path.isfile(os.path.join(log_dir, f))
+        ]
+        if file_list:
+            log_file = max(file_list, key=os.path.getctime)
+
+        return log_file
+
+    def qc_tool_check(self):
+        success = True
+        email_chk = False
+        fail_msg = 'You must run the SSE QC Tool prior to Publishing. '
+
+        # parse the log
+        try:
+            qc_log_file = self.get_qc_log_file()
+            with open(qc_log_file, 'r') as f:
+                log_data = json.load(f)
+
+            if not log_data['SkipQCTool']:
+                for checks in log_data['Checks']:
+                    if checks['Result'] == 'Fail':
+                        if checks['Mandatory']:
+                            success = False
+                            fail_msg += 'The {} check failed.'.format(
+                                checks['Name']
+                            )
+                            break
+
+                        if checks["Name"] == 'HighPolygonCount':
+                            email_chk = True
+
+                if not success:
+                    raise TankError(fail_msg)
+
+                if email_chk:
+                    self.qc_tool_check_email(log_data)
+        except Exception:
+            raise TankError(fail_msg, log_data)
+
+    def qc_tool_check_email(self, log_data):
+        from python import send_email
+        # 'user': {'type': 'HumanUser', 'id': 336, 'name': 'Dean Warren'}
+        u_name = self.parent.context.user['name']
+
+        chk_errors = ''
+        for _error in log_data['Checks']['Error']:
+            chk_errors += '{}\n'.format(_error)
+
+        to = [
+            'aravindan@sinkingship.ca',
+            'jameswallace@sinkingship.ca'
+        ]
+
+        cc = [
+            'harrison@sinkingship.ca',
+            'shervin@sinkingship.ca',
+            'dean@sinkingship.ca'
+        ]
+
+        file_name = os.path.basename(log_data['Filepath'])
+        subject = 'QC Tool Warning - High Polygon Count - {}'.format(file_name)
+
+        body_parts = [
+            'Username: {}'.format(u_name),
+            'Filepath: {}'.format(log_data['Filepath']),
+            'Polycount: {}'.format(chk_errors)
+        ]
+
+        body = '\n\n'.join(body_parts)
+
+        send_email.send_email(to, cc, subject, body)
+# --- eof

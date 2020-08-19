@@ -54,7 +54,7 @@ MODEL_EDITOR_PARAMS = {
     'locators': False,
     'manipulators': False,
     'nParticles': False,
-    'nurbsCurves': False,
+    'nurbsCurves': True,
     'nurbsSurfaces': False,
     'pivots': False,
     'planes': False,
