@@ -77,7 +77,7 @@ class MayaSessionCollector(HookBaseClass):
         """
         # intercept before collection to run the qctool checks
         # (DW 2020-08-19)
-        # TODO
+        self.run_qc_tool()
 
         # create an item representing the current maya session
         item = self.collect_current_maya_session(settings, parent_item)
@@ -418,6 +418,14 @@ class MayaSessionCollector(HookBaseClass):
                 # the an indication of what it is and why it was collected
                 item.name = "%s (Render Layer: %s)" % (item.name, layer)
 
+    def run_qc_tool(self):
+        """Run the QCTool, will be called before the Publish UI is drawn.
+        """
+        from python import QCTool
+
+        p_step = self.parent.context.step['name']
+        QCTool.main(p_step)
+
     def get_qc_log_file(self):
         """Returns the latest QC log file for the Shotgun Entity (Asset, Shot).
 
@@ -476,6 +484,14 @@ class MayaSessionCollector(HookBaseClass):
         return log_file
 
     def qc_tool_check(self):
+        """For a given Entity, look for a matching QCTool check log file, and
+        if found use the data within to trigger certain operations, all prior
+        to publishing against that Entity.
+
+        Raises:
+            TankError: If any mandatory checks failed.
+            TankError: If any of the log data collection fails for any reason.
+        """
         success = True
         email_chk = False
         fail_msg = 'You must run the SSE QC Tool prior to Publishing. '
@@ -496,7 +512,7 @@ class MayaSessionCollector(HookBaseClass):
                             )
                             break
 
-                        if checks["Name"] == 'HighPolygonCount':
+                        if checks['Name'] == 'HighPolygonCount':
                             email_chk = True
 
                 if not success:
@@ -505,11 +521,18 @@ class MayaSessionCollector(HookBaseClass):
                 if email_chk:
                     self.qc_tool_check_email(log_data)
         except Exception:
-            raise TankError(fail_msg, log_data)
+            raise TankError(fail_msg)
 
     def qc_tool_check_email(self, log_data):
+        """Sends email to the appropriate people, detailing relevant
+        notification information about the Publish using data from the
+        QCTool log for the Entity.
+
+        Args:
+            log_data (dict): Data parsed from the Entity's QCTool log.
+        """
         from python import send_email
-        # 'user': {'type': 'HumanUser', 'id': 336, 'name': 'Dean Warren'}
+
         u_name = self.parent.context.user['name']
 
         chk_errors = ''
