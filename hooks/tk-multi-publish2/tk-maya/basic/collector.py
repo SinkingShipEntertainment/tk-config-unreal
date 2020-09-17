@@ -111,6 +111,12 @@ class MayaSessionCollector(HookBaseClass):
         if cmds.ls(geometry=True, noIntermediate=True):
             self._collect_session_geometry(item)
 
+        # texture handling
+        p_step = self.parent.context.step['name']
+        if p_step == 'Texturing':
+            if cmds.ls(textures=True):
+                self._collect_session_textures(item)
+
     def collect_current_maya_session(self, settings, parent_item):
         """Creates an item that represents the current maya session.
 
@@ -310,6 +316,28 @@ class MayaSessionCollector(HookBaseClass):
         )
 
         geo_item.set_icon_from_path(icon_path)
+
+    def _collect_session_textures(self, parent_item):
+        """Creates items for session textures to be handled.
+
+        Args:
+            parent_item (obj): Parent Item instance.
+        """
+        tex_item = parent_item.create_item(
+            "maya.session.textures",
+            "Textures",
+            "All Session Textures"
+        )
+
+        # get the icon path to display for this item
+        icon_path = os.path.join(
+            self.disk_location,
+            os.pardir,
+            "icons",
+            "texture_files.png"
+        )
+
+        tex_item.set_icon_from_path(icon_path)
 
     def collect_playblasts(self, parent_item, project_root):
         """Creates items for quicktime playblasts.
