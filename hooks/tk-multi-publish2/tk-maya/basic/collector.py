@@ -70,7 +70,7 @@ class MayaSessionCollector(HookBaseClass):
         """
         # intercept before collection to run the qctool checks
         # (DW 2020-08-19)
-        self.run_qc_tool()
+        # self.run_qc_tool()
 
         # create an item representing the current maya session
         item = self.collect_current_maya_session(settings, parent_item)
@@ -108,14 +108,17 @@ class MayaSessionCollector(HookBaseClass):
                 }
             )
 
-        if cmds.ls(geometry=True, noIntermediate=True):
-            self._collect_session_geometry(item)
+        # NOTE: Anything here has to be enabled in:
+        # ../env/includes/settings/tk-multi-publish2.yml
+        # to be visible in the UI, reminder as I forgot (DW 202-09-18)
+        # if cmds.ls(geometry=True, noIntermediate=True):
+        #     self._collect_session_geometry(item)
 
         # texture handling
-        p_step = self.parent.context.step['name']
-        if p_step == 'Texturing':
-            if cmds.ls(textures=True):
-                self._collect_session_textures(item)
+        # p_step = self.parent.context.step['name']
+        # if p_step == 'Texturing':
+        #     if cmds.ls(textures=True):
+        #         self._collect_session_textures(item)
 
     def collect_current_maya_session(self, settings, parent_item):
         """Creates an item that represents the current maya session.
@@ -146,7 +149,6 @@ class MayaSessionCollector(HookBaseClass):
             display_name
         )
 
-        # get the icon path to display for this item
         icon_path = os.path.join(
             self.disk_location,
             os.pardir,
@@ -155,8 +157,11 @@ class MayaSessionCollector(HookBaseClass):
         )
         session_item.set_icon_from_path(icon_path)
 
-        # Add an ABC export item as child of the session item (DW 2020-07-28)
+        # Remove file extension from display_name to use in subsequent
+        # display names
         filename = os.path.splitext(display_name)[0]
+
+        # Add an ABC export item as child of the session item (DW 2020-07-28)
         abc_display_name = filename + ".abc"
         abc_item = session_item.create_item(
             "maya.abc",
@@ -174,7 +179,6 @@ class MayaSessionCollector(HookBaseClass):
         abc_item.set_icon_from_path(icon_path)
 
         # Add an ASS export item as child of the session item (DW 2020-07-28)
-        filename = os.path.splitext(display_name)[0]
         ass_display_name = filename + ".ass"
         ass_item = session_item.create_item(
             "maya.ass",
@@ -192,7 +196,6 @@ class MayaSessionCollector(HookBaseClass):
         ass_item.set_icon_from_path(icon_path)
 
         # Add an FBX export item as child of the session item
-        filename = os.path.splitext(display_name)[0]
         fbx_display_name = filename + ".fbx"
         fbx_item = session_item.create_item(
             "maya.fbx",
@@ -200,7 +203,6 @@ class MayaSessionCollector(HookBaseClass):
             fbx_display_name
         )
 
-        # get the icon path to display for this item
         icon_path = os.path.join(
             self.disk_location,
             os.pardir,
@@ -217,7 +219,6 @@ class MayaSessionCollector(HookBaseClass):
             "Render Asset Turntable in Unreal"
         )
 
-        # get the icon path to display for this item
         icon_path = os.path.join(
             self.disk_location,
             os.pardir,
@@ -226,6 +227,25 @@ class MayaSessionCollector(HookBaseClass):
         )
 
         turntable_item.set_icon_from_path(icon_path)
+
+        # texture handling
+        p_step = self.parent.context.step['name']
+        if p_step == 'Texturing':
+            tex_item = session_item.create_item(
+                "maya.textures",
+                "Textures",
+                "All Session Textures"
+            )
+
+            # get the icon path to display for this item
+            icon_path = os.path.join(
+                self.disk_location,
+                os.pardir,
+                "icons",
+                "texture_files.png"
+            )
+
+            tex_item.set_icon_from_path(icon_path)
 
         # discover the project root which helps in discovery of other
         # publishable items
@@ -317,27 +337,27 @@ class MayaSessionCollector(HookBaseClass):
 
         geo_item.set_icon_from_path(icon_path)
 
-    def _collect_session_textures(self, parent_item):
-        """Creates items for session textures to be handled.
+    # def _collect_session_textures(self, parent_item):
+    #     """Creates items for session textures to be handled.
 
-        Args:
-            parent_item (obj): Parent Item instance.
-        """
-        tex_item = parent_item.create_item(
-            "maya.session.textures",
-            "Textures",
-            "All Session Textures"
-        )
+    #     Args:
+    #         parent_item (obj): Parent Item instance.
+    #     """
+    #     tex_item = parent_item.create_item(
+    #         "maya.session.textures",
+    #         "Textures",
+    #         "All Session Textures"
+    #     )
 
-        # get the icon path to display for this item
-        icon_path = os.path.join(
-            self.disk_location,
-            os.pardir,
-            "icons",
-            "texture_files.png"
-        )
+    #     # get the icon path to display for this item
+    #     icon_path = os.path.join(
+    #         self.disk_location,
+    #         os.pardir,
+    #         "icons",
+    #         "texture_files.png"
+    #     )
 
-        tex_item.set_icon_from_path(icon_path)
+    #     tex_item.set_icon_from_path(icon_path)
 
     def collect_playblasts(self, parent_item, project_root):
         """Creates items for quicktime playblasts.
