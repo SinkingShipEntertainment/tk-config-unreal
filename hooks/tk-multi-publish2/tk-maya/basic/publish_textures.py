@@ -252,6 +252,9 @@ class MayaTexturesPublishPlugin(HookBaseClass):
         so I'm registering the publish using the publish_texture Asset log
         file. (DW 2020-09-21)
         """
+        # write out the tex_list_file to publish against
+
+
         # Call the pipeline repository python module
         try:
             from python import publish_texture
@@ -335,13 +338,29 @@ def _get_save_as_action():
     }
 
 
+#  more SSE (DW 2020-09-21)
 def _texture_check():
-    """Inspect the current session Maya file for textures of all sorts.
+    """Inspect the current session Maya file for textures of all sorts, return
+    whether any were discovered or not.
 
     Returns:
         bool: True if textures are discovered, otherwise False.
     """
     result = False
+    f_textures = _get_texture_list()
+    if f_textures:
+        result = True
+
+    return result
+
+
+def _get_texture_list():
+    """Inspect the current session Maya file for textures of all sorts, return
+    whatever is found (either a populated or empty list of texture filepaths).
+
+    Returns:
+        list: A list of texture paths.
+    """
     f_textures = []
 
     # Get scene textures
@@ -360,7 +379,29 @@ def _texture_check():
                 f_textures.extend(y_texs)
 
     if f_textures:
-        result = True
+        f_textures = sorted(f_textures)
 
-    return result
+    return f_textures
+
+
+def _create_texture_list_on_disk(publish_path):
+    success = False
+    f_textures = _get_texture_list()
+    if f_textures:
+        t_list_dir = os.path.dirname(publish_path)
+        t_list_name = os.path.basename(publish_path)
+        t_list_file = '{0}/{1}'.format(t_list_dir, t_list_name)
+
+        try:
+            os.makedirs(t_list_dir)
+
+            disk_file = open(t_list_file, 'w')
+            disk_file.writelines(f_textures)
+            disk_file.close()
+
+            success = True
+        except Exception as e:
+            m = 'Failed to create {0} > {1}'.format(t_list_file, str(e))
+
+    return success
 # --- eof
