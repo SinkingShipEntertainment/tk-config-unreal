@@ -791,6 +791,12 @@ paths:
         definition: '@asset_root/publish/ass/{Asset}.[{name}.]{Step}.v{version}.ass'
         root_name: 'primary'
 
+    asset_publish_texture_log:
+        # Where HF's publish_texture module writes out a JSON file (DW 2020-09-21)
+        # e.g. N:/projects/HoneyBadger/assets/Character/Scorpion/TEX/logs/PublishedTextures/textures_log.json
+        definition: '@asset_root/logs/PublishedTextures/textures_log.json'
+        root_name: 'primary'
+
     #
     # Photoshop
     #

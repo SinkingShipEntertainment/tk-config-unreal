@@ -246,21 +246,12 @@ class MayaTexturesPublishPlugin(HookBaseClass):
             the keys returned in the settings property. The values are
             `Setting` instances.
         :param item: Item to process
+
         NOTE: The publish_texture module doesn't actually *do* a SG Publish of
         the textures, it copies textures to directories in the publish Schema,
-        so I'm disabling the portions that register it as an actual Publish.
-        (DW 2020-09-21)
+        so I'm registering the publish using the publish_texture Asset log
+        file. (DW 2020-09-21)
         """
-
-        publisher = self.parent
-
-        # # get the path to create and publish
-        # publish_path = item.properties["path"]
-
-        # # ensure the publish folder exists:
-        # publish_folder = os.path.dirname(publish_path)
-        # self.parent.ensure_folder_exists(publish_folder)
-
         # Call the pipeline repository python module
         try:
             from python import publish_texture
@@ -269,8 +260,18 @@ class MayaTexturesPublishPlugin(HookBaseClass):
             self.logger.error("Failed to run publish_texture: %s" % e)
             return
 
-        # # let the base class register the publish
-        # super(MayaTexturesPublishPlugin, self).publish(settings, item)
+        # Standard Publish code
+        publisher = self.parent
+
+        # get the path to create and publish
+        publish_path = item.properties["path"]
+
+        # ensure the publish folder exists:
+        publish_folder = os.path.dirname(publish_path)
+        self.parent.ensure_folder_exists(publish_folder)
+
+        # let the base class register the publish
+        super(MayaTexturesPublishPlugin, self).publish(settings, item)
 
 
 def _session_path():

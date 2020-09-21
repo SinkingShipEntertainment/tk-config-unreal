@@ -211,7 +211,7 @@ settings.tk-multi-publish2.maya.asset_step:
   - name: Publish Session Textures
     hook: "{self}/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_textures.py"
     settings:
-        Publish Template: maya_asset_publish
+        Publish Template: asset_publish_texture_log
   # - name: Publish and Submit for Review
   #   hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_turntable.py"
   #   settings:
