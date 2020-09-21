@@ -182,8 +182,7 @@ class MayaTexturesPublishPlugin(HookBaseClass):
 
         path = _session_path()
 
-        # ---- ensure the session has been saved
-
+        # ensure the session has been saved
         if not path:
             # the session still requires saving. provide a save button.
             # validation fails.
@@ -199,8 +198,8 @@ class MayaTexturesPublishPlugin(HookBaseClass):
 
         # SSE: check that there are texture files in the Maya session
         # (DW 2020-09-18)
-        f_textures = cmds.ls(textures=True)
-        if not f_textures:
+        t_check = _texture_check()
+        if not t_check:
             error_msg = (
                 "Validation failed because there are no textures in the "
                 "scene. You can uncheck this plugin or create "
@@ -247,9 +246,13 @@ class MayaTexturesPublishPlugin(HookBaseClass):
             the keys returned in the settings property. The values are
             `Setting` instances.
         :param item: Item to process
+        NOTE: The publish_texture module doesn't actually *do* a SG Publish of
+        the textures, it copies textures to directories in the publish Schema,
+        so I'm disabling the portions that register it as an actual Publish.
+        (DW 2020-09-21)
         """
 
-        # publisher = self.parent
+        publisher = self.parent
 
         # # get the path to create and publish
         # publish_path = item.properties["path"]
@@ -258,45 +261,16 @@ class MayaTexturesPublishPlugin(HookBaseClass):
         # publish_folder = os.path.dirname(publish_path)
         # self.parent.ensure_folder_exists(publish_folder)
 
-        # # Export scene to ASS
-        # # --- Select the correct hierarchy
-        # cmds.select(cl=True)
-        # m_node = '|master|model'
-        # cmds.select(m_node)
-
-        # # --- Build the command
-        # publish_path = publish_path.replace('\\', '/')
-        # standin_args = [
-        #     # --- the output path for the standin
-        #     "-f \"%s\"" % publish_path,
-        #     # --- boundingBox
-        #     "-bb",
-        #     # --- selected
-        #     "-s",
-        #     # --- shadow links
-        #     "-sl 1",
-        #     # --- light links
-        #     "-ll 1",
-        #     # --- mask (this value was a default out of maya)
-        #     "-m 6399",
-        #     # --- camera
-        #     "-cam perspShape"
-        # ]
-
-        # standin_arg_str = " ".join(standin_args)
-        # ass_export_cmd = "arnoldExportAss %s;" % standin_arg_str
-
-        # # Run the command
-        # try:
-        #     self.parent.log_debug("Executing command: %s" % ass_export_cmd)
-        #     mel.eval(ass_export_cmd)
-        # except Exception, e:
-        #     self.logger.error("Failed to export Arnold: %s" % e)
-        #     return
+        # Call the pipeline repository python module
+        try:
+            from python import publish_texture
+            publish_texture._publish_texture()
+        except Exception, e:
+            self.logger.error("Failed to run publish_texture: %s" % e)
+            return
 
         # # let the base class register the publish
         # super(MayaTexturesPublishPlugin, self).publish(settings, item)
-        pass
 
 
 def _session_path():
@@ -358,3 +332,34 @@ def _get_save_as_action():
             "callback": callback
         }
     }
+
+
+def _texture_check():
+    """Inspect the current session Maya file for textures of all sorts.
+
+    Returns:
+        bool: True if textures are discovered, otherwise False.
+    """
+    result = False
+    f_textures = []
+
+    # Get scene textures
+    scn_texs = cmds.ls(textures=True)
+    if scn_texs:
+        f_textures.extend(scn_texs)
+
+    # Yeti has its own texture nodes that need to be considered, that the 'ls'
+    # command doesn't recognize, so...
+    ynodes = cmds.ls(type='pgYetiMaya')
+    if ynodes:
+        for ynode in ynodes:
+            mel_cmd = 'pgYetiGraph -listNodes -type "texture" {}'.format(ynode)
+            y_texs = mel.eval(mel_cmd)
+            if y_texs:
+                f_textures.extend(y_texs)
+
+    if f_textures:
+        result = True
+
+    return result
+# --- eof
