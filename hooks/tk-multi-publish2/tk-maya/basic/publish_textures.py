@@ -422,6 +422,8 @@ def _create_texture_list_on_disk(publish_path):
     success = False
     f_textures = _get_texture_list()
     if f_textures:
+        f_textures = ['{}\n'.format(_f) for _f in f_textures]
+
         t_list_dir = os.path.dirname(publish_path)
         t_list_name = os.path.basename(publish_path)
         t_list_file = '{0}/{1}'.format(t_list_dir, t_list_name)

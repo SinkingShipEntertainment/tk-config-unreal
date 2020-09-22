@@ -793,7 +793,7 @@ paths:
 
     asset_publish_tex_list:
         # Publishing against a simple text file (DW 2020-09-21)
-        definition: '@asset_root/publish/tex_list/tex_list_{Asset}.[{name}.]{Step}.v{version}.txt'
+        definition: '@asset_root/publish/tex_list/{Asset}.[{name}.]{Step}.v{version}.tex_list.txt'
         root_name: 'primary'
 
     #
