@@ -252,8 +252,17 @@ class MayaTexturesPublishPlugin(HookBaseClass):
         so I'm registering the publish using the publish_texture Asset log
         file. (DW 2020-09-21)
         """
-        # write out the tex_list_file to publish against
+        # get the path to create and publish
+        publish_path = item.properties["path"]
 
+        # write out the tex_list_file to publish against
+        publish_folder = os.path.dirname(publish_path)
+        try:
+            success = _create_texture_list_on_disk(publish_path)
+            self.logger.debug('Created > {}'.format(publish_path))
+        except Exception, e:
+            self.logger.error("Failed to run publish_texture: %s" % e)
+            return
 
         # Call the pipeline repository python module
         try:
@@ -263,15 +272,11 @@ class MayaTexturesPublishPlugin(HookBaseClass):
             self.logger.error("Failed to run publish_texture: %s" % e)
             return
 
-        # Standard Publish code
+        # standard Publish code
         publisher = self.parent
 
-        # get the path to create and publish
-        publish_path = item.properties["path"]
-
         # ensure the publish folder exists:
-        publish_folder = os.path.dirname(publish_path)
-        self.parent.ensure_folder_exists(publish_folder)
+        publisher.ensure_folder_exists(publish_folder)
 
         # let the base class register the publish
         super(MayaTexturesPublishPlugin, self).publish(settings, item)
@@ -364,9 +369,20 @@ def _get_texture_list():
     f_textures = []
 
     # Get scene textures
-    scn_texs = cmds.ls(textures=True)
-    if scn_texs:
-        f_textures.extend(scn_texs)
+    tex_nodes = cmds.ls(textures=True)
+    if tex_nodes:
+        for tex_node in tex_nodes:
+            # vanilla Maya
+            if cmds.nodeType(tex_node) == 'file':
+                tex_path = cmds.getAttr('{}.fileTextureName'.format(tex_node))
+                if tex_path:
+                    f_textures.append(tex_path)
+
+            # Arnold
+            if cmds.nodeType(tex_node) == 'aiImage':
+                tex_path = cmds.getAttr('{}.filename'.format(tex_node))
+                if tex_path:
+                    f_textures.append(tex_path)
 
     # Yeti has its own texture nodes that need to be considered, that the 'ls'
     # command doesn't recognize, so...
@@ -374,9 +390,17 @@ def _get_texture_list():
     if ynodes:
         for ynode in ynodes:
             mel_cmd = 'pgYetiGraph -listNodes -type "texture" {}'.format(ynode)
-            y_texs = mel.eval(mel_cmd)
-            if y_texs:
-                f_textures.extend(y_texs)
+            y_tex_nodes = mel.eval(mel_cmd)
+            if y_tex_nodes:
+                for y_tex_node in y_tex_nodes:
+                    mel_bits = []
+                    mel_bits.append('pgYetiGraph')
+                    mel_bits.append('-node {}'.format(y_tex_node))
+                    mel_bits.append('-param "filename"')
+                    mel_bits.append('-getParamValue {}'.format(ynode))
+                    _mel_cmd = ' '.join(mel_bits)
+                    tex_path = mel.eval(_mel_cmd)
+                    f_textures.append(tex_path)
 
     if f_textures:
         f_textures = sorted(f_textures)
@@ -385,6 +409,16 @@ def _get_texture_list():
 
 
 def _create_texture_list_on_disk(publish_path):
+    """Creates an versioned text file in a template.yml specified directory to
+    Publish against. File simply contain a list of texture paths found in the
+    Maya session.
+
+    Args:
+        publish_path (str): [description]
+
+    Returns:
+        bool: True if successful, otherwise False.
+    """
     success = False
     f_textures = _get_texture_list()
     if f_textures:
@@ -392,16 +426,14 @@ def _create_texture_list_on_disk(publish_path):
         t_list_name = os.path.basename(publish_path)
         t_list_file = '{0}/{1}'.format(t_list_dir, t_list_name)
 
-        try:
-            os.makedirs(t_list_dir)
+        os.makedirs(t_list_dir)
 
-            disk_file = open(t_list_file, 'w')
-            disk_file.writelines(f_textures)
-            disk_file.close()
+        disk_file = open(t_list_file, 'w')
+        disk_file.writelines(f_textures)
+        disk_file.close()
 
+        if os.path.isfile(t_list_file):
             success = True
-        except Exception as e:
-            m = 'Failed to create {0} > {1}'.format(t_list_file, str(e))
 
     return success
 # --- eof
