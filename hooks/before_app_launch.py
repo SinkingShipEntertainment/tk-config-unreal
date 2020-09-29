@@ -115,8 +115,19 @@ class BeforeAppLaunch(tank.Hook):
 
         shotgun_inst = sgtk.api.shotgun.connection.get_sg_connection()
         sg_filters = [['project.Project.name', 'is', project_name]]
-        sg_fields = ['id', 'code', 'project', 'sg_ss_tools_repo', 'windows_path']
-        sgtk_configs = shotgun_inst.find('PipelineConfiguration', sg_filters, sg_fields)
+        sg_fields = [
+            'id',
+            'code',
+            'project',
+            'sg_ss_tools_repo',
+            'sg_ss_tools_repo_custom_path',
+            'windows_path'
+        ]
+        sgtk_configs = shotgun_inst.find(
+            'PipelineConfiguration',
+            sg_filters,
+            sg_fields
+        )
 
         wanted_repo_key = None
 
@@ -132,26 +143,59 @@ class BeforeAppLaunch(tank.Hook):
 
         for my_config in sgtk_configs:
             my_config_repo_key = my_config['sg_ss_tools_repo']
+            my_config_repo_custom = my_config['sg_ss_tools_repo_custom_path']
             my_config_path = my_config['windows_path']
             if '\\' in my_config_path:
                 my_config_path = my_config_path.replace('\\', '/')
                 if my_config_path == sgtk_cfg_path:
                     wanted_repo_key = my_config_repo_key
-                    logger.debug('wanted_repo_key >> {}'.format(wanted_repo_key))
+                    m = 'wanted_repo_key >> {}'.format(wanted_repo_key)
+                    logger.debug(m)
                     break
 
         if wanted_repo_key:
-            if wanted_repo_key == 'dev':
-                repo_path = 'X:/dev/ss_dev_{0}/{1}_repo'.format(sgtk_core_user, project_name)
+            if wanted_repo_key == 'custom':
+                # --- For developers to point to *any* pipeline code repository
+                # --- as specified in the called Shotgun configuration...
+                repo_path = my_config_repo_custom
+                if '\\' in repo_path:
+                    repo_path = repo_path.replace('\\', '/')
+
+                if repo_path.endswith('/'):
+                    repo_path = repo_path.strip('/')
+
+                if not os.path.exists(repo_path):
+                    m = 'Custom path does not exist! >> {}'.format(repo_path)
+                    raise tank.TankError(m)
+            elif wanted_repo_key == 'dev':
+                # --- For developers to do individual tesing against clones of
+                # --- same-named repositories within their X:/dev location...
+                repo_path = 'X:/dev/ss_dev_{0}/{1}_repo'.format(
+                    sgtk_core_user,
+                    project_name
+                )
                 # --- If it's not a Project-specific repo, we have to resort to
                 # --- the generic studio repo...
                 if not os.path.exists(repo_path):
-                    repo_path = 'X:/dev/ss_dev_{0}/ss_studio_repo'.format(sgtk_core_user, project_name)
+                    repo_path = 'X:/dev/ss_dev_{0}/ss_studio_repo'.format(
+                        sgtk_core_user,
+                        project_name
+                    )
             elif wanted_repo_key == 'project':
-                repo_path = 'X:/tools/projects/{0}/{0}_repo'.format(project_name)
+                # --- For everyone to launch using a Project-specific repo...
+                repo_path = 'X:/tools/projects/{0}/{0}_repo'.format(
+                    project_name
+                )
             else:
+                # --- For everyone to launch using the generic studio repo...
                 repo_path = 'X:/tools/ss_studio_repo'
         logger.debug(my_sep)
+
+        # --- Check to make sure the resolved path, whatever it is, still
+        # --- exists at the given location...
+        if not os.path.exists(repo_path):
+            m = 'Resolved path does not exist! >> {}'.format(repo_path)
+            raise tank.TankError(m)
 
         return repo_path
 
