@@ -193,9 +193,9 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- Check to make sure the resolved path, whatever it is, still
         # --- exists at the given location...
-        if not os.path.exists(repo_path):
-            m = 'Resolved path does not exist! >> {}'.format(repo_path)
-            raise tank.TankError(m)
+        # if not os.path.exists(repo_path):
+        #     m = 'Resolved path does not exist! >> {}'.format(repo_path)
+        #     raise tank.TankError(m)
 
         return repo_path
 
