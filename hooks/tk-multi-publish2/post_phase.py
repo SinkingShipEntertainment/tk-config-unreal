@@ -233,7 +233,7 @@ class PostPhaseHook(HookBaseClass):
         """For the 'Surfacing'/SURF Asset Publishes, if in a correctly named
         SUR_AI/SUR.AI file (Maya scene with all geometry and shaders), write
         and publish a SHD_AI/SHD.AI file (Maya scene shaders only), and
-        also write without publishing a JSON file that describes the source
+        also write (without publishing) a JSON file that describes the source
         Maya file's geometry to shader connections.
 
         Args:
