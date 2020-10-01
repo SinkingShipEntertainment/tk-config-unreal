@@ -86,6 +86,11 @@ class PostPhaseHook(HookBaseClass):
         p_step = self.parent.context.step['name']
 
         wk_template = self.parent.sgtk.templates.get('maya_asset_work')
+        if e_type == 'Asset' and p_step == 'Surfacing':
+            wk_template = self.parent.sgtk.templates.get(
+                'maya_asset_work_surfacing_arnold'
+            )
+
         if e_type == 'Shot':
             wk_template = self.parent.sgtk.templates.get('maya_shot_work')
         wk_fields = wk_template.get_fields(scene_name)
