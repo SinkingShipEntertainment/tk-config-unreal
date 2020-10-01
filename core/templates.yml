@@ -893,13 +893,13 @@ paths:
 
     # --- SSE: Custom for Surfacing (-DW 2020-04-08)
     maya_asset_work_surfacing_arnold:
-        definition: '@asset_root/work/{current_user_name}/maya/{Asset}_SUR_AI.v{version}.ma'
+        definition: '@asset_root/work/{current_user_name}/maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
         root_name: 'primary'
     maya_asset_snapshot_surfacing_arnold:
-        definition: '@asset_root/work/{current_user_name}/maya/snapshots/{Asset}_SUR_AI.v{version}.{timestamp}.ma'
+        definition: '@asset_root/work/{current_user_name}/maya/snapshots/{Asset}.[{name}.]SUR.AI.v{version}.{timestamp}.ma'
         root_name: 'primary'
     maya_asset_publish_surfacing_arnold:
-        definition: '@asset_root/publish/maya/{Asset}_SUR_AI.v{version}.ma'
+        definition: '@asset_root/publish/maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
         root_name: 'primary'
 
     # The location of FBX exports for Unreal
