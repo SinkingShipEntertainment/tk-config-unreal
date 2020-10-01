@@ -227,6 +227,36 @@ settings.tk-multi-publish2.maya.asset_step:
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
 
+# asset step surfacing (SSE - DW 2020-10-01)
+settings.tk-multi-publish2.maya.asset_step_surfacing:
+  #collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-maya/basic/collector.py"
+  collector_settings:
+      Work Template: maya_asset_work_surfacing_arnold
+  publish_plugins:
+  - name: Publish to Shotgun
+    hook: "{self}/publish_file.py"
+    settings: {}
+  - name: Upload for review
+    hook: "{self}/upload_version.py"
+    settings: {}
+  - name: Begin file versioning
+    hook: "{engine}/tk-multi-publish2/basic/start_version_control.py"
+    settings: {}
+  - name: Publish to Shotgun
+    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
+    settings:
+        Publish Template: maya_asset_publish_surfacing_arnold
+  # ASS publish (DW 2020-07-28)
+  - name: Publish to Shotgun (Arnold Standin)
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_ass.py"
+    settings:
+        Publish Template: asset_arnold_standin_surfacing
+  # SSE - Using post_phase to migrate legacy+ config post_publish methods (DW 2020-08-11)
+  post_phase: "{self}/post_phase.py:{config}/tk-multi-publish2/post_phase.py"
+  help_url: *help_url
+  location: "@apps.tk-multi-publish2.location"
+
 # shot step
 settings.tk-multi-publish2.maya.shot_step:
   collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"

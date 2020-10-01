@@ -30,7 +30,7 @@ includes:
 - ./includes/settings/tk-shell.yml
 - ./includes/settings/tk-shotgun.yml
 - ./includes/settings/tk-unreal.yml
-- ./includes/settings/tk-natron.yml               # --- SSE add (-DW 2020-02-04)
+- ./includes/settings/tk-natron.yml                 # --- SSE add (-DW 2020-02-04)
 
 ################################################################################
 # configuration for all engines to load in an asset step context
@@ -41,7 +41,7 @@ engines:
   tk-3dsmax: "@settings.tk-3dsmax.asset_step"
   tk-houdini: "@settings.tk-houdini.asset_step"
   tk-mari: "@settings.tk-mari.asset_step"
-  tk-maya: "@settings.tk-maya.asset_step"
+  tk-maya: "@settings.tk-maya.asset_step_surfacing" # --- SSE add (-DW 2020-10-01)
   tk-motionbuilder: "@settings.tk-motionbuilder.asset_step"
   tk-nuke: "@settings.tk-nuke.asset_step"
   tk-nukestudio: "@settings.tk-nuke.nukestudio.asset_step"
@@ -52,7 +52,7 @@ engines:
   tk-shell: "@settings.tk-shell.asset_step"
   tk-shotgun: "@settings.tk-shotgun.asset_step"
   tk-unreal: "@settings.tk-unreal.asset_step"
-  tk-natron: "@settings.tk-natron.asset_step"     # --- SSE add (-DW 2020-02-04)
+  tk-natron: "@settings.tk-natron.asset_step"       # --- SSE add (-DW 2020-02-04)
 
 ################################################################################
 # reference all of the common frameworks
