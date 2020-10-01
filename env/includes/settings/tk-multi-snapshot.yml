@@ -73,6 +73,12 @@ settings.tk-multi-snapshot.maya.asset_step:
   template_work: maya_asset_work
   location: "@apps.tk-multi-snapshot.location"
 
+# asset step surfacing (SSE - DW 2020-10-01)
+settings.tk-multi-snapshot.maya.asset_step_surfacing:
+  template_snapshot: maya_asset_snapshot_surfacing_arnold
+  template_work: maya_asset_work_surfacing_arnold
+  location: "@apps.tk-multi-snapshot.location"
+
 # shot step
 settings.tk-multi-snapshot.maya.shot_step:
   template_snapshot: maya_shot_snapshot
