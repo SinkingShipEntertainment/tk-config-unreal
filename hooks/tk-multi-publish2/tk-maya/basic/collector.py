@@ -453,6 +453,10 @@ class MayaSessionCollector(HookBaseClass):
 
         # templates
         wk_template = self.parent.sgtk.templates.get('maya_asset_work')
+        if e_type == 'Asset' and p_name == 'Texturing':
+            wk_template = self.parent.sgtk.templates.get(
+                'maya_asset_work_surfacing_arnold'
+            )
         if e_type == 'Shot':
             wk_template = self.parent.sgtk.templates.get('maya_shot_work')
 
