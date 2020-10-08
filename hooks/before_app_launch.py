@@ -277,18 +277,27 @@ class BeforeAppLaunch(tank.Hook):
 
             # --- Arnold (experimental *NOT CALLED BY ANYTHING YET*
             # --- ~ DW 202-07-13)
-            arnold_home = 'C:/solidangle/mtoadeploy/{}'.format(self._version)
+            wpf_root = 'C:{}Program Files'.format(os.sep)
+            arnold_home = 'C:{0}solidangle{0}mtoadeploy{0}{1}'.format(
+                os.sep,
+                self._version
+            )
             if self._version == '2020':
-                arnold_home = 'C:/Program Files/Autodesk/Arnold/maya{}'.format(
+                arnold_home = '{0}{1}Autodesk{1}Arnold{1}maya{2}'.format(
+                    wpf_root,
+                    os.sep,
                     self._version
                 )
 
-            arnold_bin = '{}/bin'.format(arnold_home)
+            arnold_bin = '{0}{1}bin'.format(
+                arnold_home,
+                os.sep
+            )
+            LOGGER.debug('arnold_bin > {}'.format(arnold_bin))
+            #TODO
 
             # --- VRay (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
-            wpf_root = 'C:{}Program Files'.format(os.sep)
-
             vray_home = '{0}{1}Autodesk{1}Maya{2}{1}vray'.format(
                 wpf_root,
                 os.sep,
@@ -468,6 +477,9 @@ class BeforeAppLaunch(tank.Hook):
             os.environ['REDSHIFT_PROCEDURALSPATH'] = '{}/Procedural'.format(
                 r_core
             )
+
+            # --- Arnold PATH cleanup at the end...
+            self._maya_arnold_version_bin_fix()
         else:
             m = 'No Maya version specific environment variables required.'
             LOGGER.debug(m)
@@ -591,18 +603,19 @@ class BeforeAppLaunch(tank.Hook):
             LOGGER.debug('Please provide a title string.')
 
     def env_paths_sanity_check(self):
-        '''
+        """
         Print the lists of source paths to the Shotgun
         Desktop Console.
         @param str engine_setup: represents the DCC setup
                                  we want to check against,
                                  which may have unique
                                  path variables.
-        '''
+        """
         env_var_str = []
 
         path_list = [
-            'SYSTEM PATH',
+            'PATH',
+            'SYS.PATH',
             'PYTHONPATH',
         ]
 
@@ -640,8 +653,7 @@ class BeforeAppLaunch(tank.Hook):
             env_var_str.append(path_item)
             env_var_str.append(MY_SEP)
 
-            if path_item == 'SYSTEM PATH':
-                LOGGER.debug('path_item: {}'.format(path_item))
+            if path_item == 'SYS.PATH':
                 for item in sys.path:
                     env_var_str.append(item)
             else:
@@ -652,3 +664,21 @@ class BeforeAppLaunch(tank.Hook):
 
         for env_var_item in env_var_str:
             LOGGER.debug(env_var_item)
+
+    def _maya_arnold_version_bin_fix(self):
+        """
+        Get rid of the bad Arnold bin path from the PATH (mystery where it's
+        coming from).
+        """
+        if self._version != '2018':
+            bad_path = 'C:{0}solidangle{0}mtoadeploy{0}2018{0}bin'.format(
+                os.sep
+            )
+
+            _os_env_paths = os.environ['PATH'].split(';')
+            if bad_path in _os_env_paths:
+                _os_env_paths.remove(bad_path)
+                LOGGER.debug('Removed from PATH >> {}'.format(bad_path))
+                _os_env_path_str = os.pathsep.join(_os_env_paths)
+                os.environ['PATH'] = _os_env_path_str
+# ---eof
