@@ -329,10 +329,10 @@ class BeforeAppLaunch(tank.Hook):
             )
 
             # --- Yeti...
-            # yeti_vers = 'v3.1.10'
-            # if self._version == '2020':
-            #     yeti_vers = 'v3.6.2'
-            yeti_vers = 'v3.6.2'
+            yeti_vers = 'v3.1.10'
+            if self._version == '2020':
+                # yeti_vers = 'v3.6.2'
+                yeti_vers = 'v3.7.0'
 
             yeti_home = '{1}{0}yeti{0}{2}'.format(
                 os.sep,
