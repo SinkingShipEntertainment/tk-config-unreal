@@ -113,7 +113,7 @@ class PostPhaseHook(HookBaseClass):
                 self.post_publish_maya_fx_asset(scene_name, wk_fields)
 
         if e_type == 'Shot':
-            # pipeline steps - Shot, in order
+            # pipeline steps for Shot, in order
             # (see 'shot methods', below)
             if p_step == 'Tracking & Layout':
                 self.post_publish_maya_tlo(scene_name, wk_fields)
@@ -143,6 +143,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
+        self._log_scene(scene_name)
         self._log_fields(wk_fields)
 
         # check the entity type against valid types for simple autorigging
@@ -174,12 +175,15 @@ class PostPhaseHook(HookBaseClass):
                 )
                 self.logger.debug(m)
             else:
-                # submit
+                # submit the deadline job
+                # TODO: try/except
                 from python import publish_asset
+                reload(publish_asset)
                 publish_asset.run_autorig_publish(
                     submit=True,
                     fields=wk_fields
                 )
+
                 m = '{} Submitted simple rig auto-publish to Deadline'.format(
                     SSE_HEADER
                 )
@@ -203,6 +207,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
+        self._log_scene(scene_name)
         self._log_fields(wk_fields)
 
         # data for versionless path and file
@@ -250,6 +255,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
+        self._log_scene(scene_name)
         self._log_fields(wk_fields)
 
         # get the base name of the file, remove the version and extension,
@@ -276,6 +282,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
+        self._log_scene(scene_name)
         self._log_fields(wk_fields)
 
     ###########################################################################
@@ -297,6 +304,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
+        self._log_scene(scene_name)
         self._log_fields(wk_fields)
 
         # data for the target ANIM Shot
@@ -322,6 +330,33 @@ class PostPhaseHook(HookBaseClass):
         # copy!
         self._copy_file(scene_name, anim_file)
 
+    def post_publish_maya_anim(self, scene_name, wk_fields):
+        """For the 'Animation'/ANIM Shot Publishes, submit the initial Alembic
+        and Yeti caching process as a Deadline Job on the render farm.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
+        m = '{} post_publish_maya_anim'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # incoming fields/values for debug
+        self._log_scene(scene_name)
+        self._log_fields(wk_fields)
+
+        # submit the deadline job
+        # TODO: try/except
+        from python import publish_anim
+        reload(publish_anim)
+        publish_anim.run_publish(submit=True)
+
+        m = '{} Submitted ABC/Yeti cache Job to Deadline'.format(
+            SSE_HEADER
+        )
+        self.logger.debug(m)
+
     def post_publish_maya_fx_shot(self, scene_name, wk_fields):
         """Inspect the Maya scene file for an 'FX' node and related
         'RenderSetup', and export both to the relevant locations if found.
@@ -335,6 +370,7 @@ class PostPhaseHook(HookBaseClass):
         self.logger.debug(m)
 
         # incoming fields/values for debug
+        self._log_scene(scene_name)
         self._log_fields(wk_fields)
 
         # module imports
@@ -418,5 +454,14 @@ class PostPhaseHook(HookBaseClass):
             wk_fields (dict): Incoming template fields/values for display.
         """
         m = '{0} wk_fields > {1}'.format(SSE_HEADER, wk_fields)
+        self.logger.debug(m)
+
+    def _log_scene(self, scene_name):
+        """Output passed Maya scene filepath to the console as a sanity check.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+        """
+        m = '{0} scene_name > {1}'.format(SSE_HEADER, scene_name)
         self.logger.debug(m)
 # --- eof
