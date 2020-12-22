@@ -14,6 +14,8 @@ import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
 
+from python.utilities import utils_reference
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
@@ -112,6 +114,14 @@ class MayaSessionCollector(HookBaseClass):
 
         if cmds.ls(geometry=True, noIntermediate=True):
             self._collect_session_geometry(item)
+
+        # Add a custom collector for referenced objects (Props/Characters) in
+        # the current session. The goal here is to export the referenced
+        # objects in an ANIM shot as FBXs for use in Unreal.
+        # TODO: Test if this runs for any Maya scene in ANY step of the pipeline...
+        #   If so, should we only collect items inside of an ANIM step?
+        if cmds.ls(references=True):
+            self.collect_session_fbx(item)
 
     def collect_current_maya_session(self, settings, parent_item):
         """
@@ -312,6 +322,66 @@ class MayaSessionCollector(HookBaseClass):
         )
 
         geo_item.set_icon_from_path(icon_path)
+
+    def collect_session_fbx(self, parent_item):
+        """
+        Creates items for referenced Characters/Props in the scene
+
+        :param parent_item: Parent Item instance
+        """
+        # TODO: Still not sure why an additional .ma item is created for each
+        #   of the fbx items collected here.
+        for obj in utils_reference.get_valid_refs():
+            self.logger.debug('Parsing => {}'.format(obj))
+            obj_path = obj['file_path']
+
+            fbx_display_name = obj['namespace'] + ".fbx"
+            fbx_item = parent_item.create_item(
+                "maya.fbx",
+                "FBX Export",
+                fbx_display_name
+            )
+
+            # get the icon path to display for this item
+            icon_path = os.path.join(
+                self.disk_location,
+                os.pardir,
+                "icons",
+                "fbx.png"
+            )
+
+            fbx_item.set_icon_from_path(icon_path)
+
+            # Let's filter what kind of reference this is (whether it is a
+            # character or prop).
+            # TODO: Use SG filters to get the asset type instead
+            if 'Character' in obj_path:
+                fbx_item.properties["reference_type"] = 'Character'
+            elif 'Prop' in obj_path:
+                fbx_item.properties["reference_type"] = 'Prop'
+
+            # Add additional into to item properties for the validation process
+            # Note: The "file_path" info will be used to filter the
+            #       sub-group(s) within the referenced object
+            #       hierarchy that we want to export.
+            fbx_item.properties["file_path"] = obj_path
+            fbx_item.properties["node_name"] = obj['node_name']
+            fbx_item.properties["asset_name"] = obj['node_name'].split('_')[0]
+
+            # Feed in the the master group node of the reference obj.
+            # i.e. Character_RIG:master or Prop_RIG:master
+            obj_nodes = cmds.referenceQuery(obj['node_name'], nodes=True)
+            for node in obj_nodes:
+                # We only want to target the `master` group.
+                if "master" in node:
+                    fbx_item.properties['master_group'] = node
+                    break
+
+            # allow the base class to collect and create the item.
+            super(MayaSessionCollector, self)._collect_file(
+                fbx_item,
+                obj_path
+            )
 
     def collect_playblasts(self, parent_item, project_root):
         """
