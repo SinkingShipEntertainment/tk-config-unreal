@@ -235,75 +235,55 @@ class MayaFBXPublishPlugin(HookBaseClass):
         if "version" in work_fields:
             item.properties["publish_version"] = work_fields["version"]
 
+        search_group = {
+            'Character': ['unreal_gr'],
+            'Prop': ['model', 'rig']
+        }
         # Before publishing we need to target the actual sub-groups within the
         # hierarchy to export and add that to our selection list.
-        # We only target items that have the 'reference_type' key since these
-        # are the filtered props/characters we care about exporting.
-        if 'reference_type' in item.properties:
-            obj_type = item.properties.get("reference_type")
-            if 'Character' in obj_type:
-                # select only the 'unreal_gr' for Characters
-                char_grp = self.get_export_group(item, 'unreal_gr')
-                item.properties['export_groups'] = [char_grp]
-            elif 'Prop' in obj_type:
-                # select both the 'rig' and 'model' groups for Props
-                prop_groups = list()
-                for sub_group in ['rig', 'model']:
-                    prop_grp = self.get_export_group(item, sub_group)
-                    prop_groups.append(prop_grp)
-                item.properties['export_groups'] = prop_groups
+        sg_inst = utils_api3.ShotgunApi3()
+        self.filter_asset_type(item, sg_inst)
+        obj_type = item.properties.get("reference_type")
 
-            # If there are more than one instances of a prop/character in the
-            # scene, let's add this detail in the name of the fbx.
-            # i.e. Prop_RIG, Prop_RIG1, etc.
-            try:
-                # TODO: `_RIGRN` might not be the best search pattern to use?
-                # r"(?<=_v\d{3}RN).*"  # Previous regex
-                obj_instance = re.findall(
-                    r"(?<=_RIGRN).*",
-                    item.properties.get('node_name')
-                )
-                item.properties['obj_instance'] = "".join(obj_instance)
-            except:
-                # We don't do anything else if this isn't an instance
-                pass
+        if obj_type is not None:
+            for asset_type, groups in search_group.items():
+                if asset_type in obj_type:
+                    if len(groups) == 1:
+                        single_group = self.get_export_group(
+                            item, ''.join(groups)
+                        )
+                        item.properties['export_groups'] = [single_group]
+                    else:
+                        multi_groups = list()
+                        for sub_group in groups:
+                            prop_grp = self.get_export_group(item, sub_group)
+                            multi_groups.append(prop_grp)
+                        item.properties['export_groups'] = multi_groups
 
-            # TODO: Move this to its own method in the class
-            # Let's bake the name of the prop/character in the output fbx by
-            # inserting the name into the "publish_path" file path.
-            orig_name = os.path.basename(item.properties.get("publish_path"))
-            if 'obj_instance' in item.properties:
-                item.properties['fbx_name'] = '{}{}'.format(
-                    item.properties.get("asset_name"),
-                    item.properties.get("obj_instance")
-                )
-                # Note: The only thing this is used for is to get the current
-                # step - which is always baked into the scene file name.
-                scene_file = util_reference.get_current_shot()
-                project, sequence, shot, step = util_reference.get_shot_info(
-                    scene_file
-                )
-                sg_inst = utils_api3.ShotgunApi3()
-                delimiter = sg_inst.get_project_entity_name_delimiter(
-                    my_proj=os.environ['CURR_PROJECT']
-                )
-                formatted_name = '{0}{1}{0}{2}'.format(
-                    delimiter,
-                    item.properties.get("fbx_name"),
-                    step
-                )
-                new_name = orig_name.replace(
-                    '{0}{1}'.format(delimiter, step),
-                    formatted_name
-                )
-                new_fbx_path = os.path.join(
-                    os.path.dirname(item.properties.get("publish_path")),
-                    new_name
-                )
-                item.properties['publish_path'] = new_fbx_path
-                item.properties['path'] = new_fbx_path
-            else:
-                item.properties['fbx_name'] = item.properties.get('asset_name')
+        # If there are more than one instances of a prop/character in the
+        # scene, let's add this detail in the name of the fbx.
+        # i.e. Prop_RIG, Prop_RIG1, etc.
+        try:
+            # TODO: is `_RIGRN` the best search pattern to use here?
+            obj_instance = re.findall(
+                r"(?<=_RIGRN)\w+",
+                item.properties.get('node_name')
+            )
+            # Note: obj_instance is mainly for debugging that we have the
+            # correct information when tweaking the fbx name.
+            item.properties['obj_instance'] = "".join(obj_instance)
+            item.properties['fbx_name'] = '{}{}'.format(
+                item.properties.get("asset_name"),
+                item.properties.get("obj_instance")
+            )
+        except:
+            # We don't do anything else if this isn't an instance
+            item.properties['fbx_name'] = item.properties.get('asset_name')
+
+        # Let's bake the name of the asset in the output fbx by
+        # inserting the name into the "publish_path" file path.
+        if item.properties.get("reference_type") is not None:
+            self.tweak_publish_path(item, sg_inst)
 
         # --- For debugging contents of item ---
         self.logger.debug('== Item properties ==')
@@ -312,6 +292,57 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         # run the base class validation
         return super(MayaFBXPublishPlugin, self).validate(settings, item)
+
+    def filter_asset_type(self, item, shotgun_instance):
+        """
+        Given a list of valid asset types from Shotgun, find out what type of
+        asset the item is.
+
+        :param shotgun_instance: Shotgun instance to query data from
+        :param item: Item to process
+        """
+        # Handle default fbx item that is always present during a publish;
+        # that is the fbx representation of the maya file itself.
+        if item.properties.get("file_path") is None:
+            item.properties["reference_type"] = None
+            return
+
+        project = util_reference.get_project(util_reference.get_current_shot())
+        valid_asset_types = shotgun_instance.get_valid_asset_types(project)
+
+        # Let's add the asset type to the properties
+        for asset_type in valid_asset_types:
+            if asset_type in item.properties.get("file_path"):
+                item.properties["reference_type"] = asset_type
+
+    def tweak_publish_path(self, item, shotgun_instance):
+        """
+        Tweak the fbx file name from default (which is the name of the
+        maya file) to the name of the asset.
+
+        :param item: Item to process
+        """
+        orig_name = os.path.basename(item.properties.get("publish_path"))
+
+        step =  util_reference.get_step(util_reference.get_current_shot())
+        delimiter = shotgun_instance.get_project_entity_name_delimiter(
+            my_proj=os.environ['CURR_PROJECT']
+        )
+        formatted_name = '{0}{1}{0}{2}'.format(
+            delimiter,
+            item.properties.get("fbx_name"),
+            step
+        )
+        new_name = orig_name.replace(
+            '{0}{1}'.format(delimiter, step),
+            formatted_name
+        )
+        new_fbx_path = os.path.join(
+            os.path.dirname(item.properties.get("publish_path")),
+            new_name
+        )
+        item.properties['publish_path'] = new_fbx_path
+        item.properties['path'] = new_fbx_path
 
     def publish(self, settings, item):
         """
@@ -324,16 +355,12 @@ class MayaFBXPublishPlugin(HookBaseClass):
         """
         publisher = self.parent
 
-        # If we are dealing with a referenced Prop/Character, we need to set
+        # If we are dealing with a referenced asset, we need to set
         # the publish folder to the shot's publish directory since that exists
         # by default. From there we create the /fbx/version/ sub-directories.
-        if 'reference_type' in item.properties:
-            # Simply check if this key exists to tell us that we need to
-            # modify the publish_path
-            # TODO: Revisit this... Maybe we can add the shot publish dir in templates.yml instead
+        if item.properties.get('reference_type') is not None:
             publish_path = item.properties.get("publish_template")
             publish_folder = os.path.dirname(os.path.dirname(publish_path))
-            # sequences/{Sequence}/{Shot}/{Step}/publish/fbx/v{version}/   {Shot}.[{name}.]{Step}.v{version}.fbx>
 
             # Let's select the groups we want to export
             cmds.select(clear=True)
@@ -375,6 +402,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
             self.logger.error(e)
             return False
 
+        cmds.select(clear=True)
         # let the base class register the publish
         super(MayaFBXPublishPlugin, self).publish(settings, item)
 
