@@ -325,14 +325,12 @@ class MayaSessionCollector(HookBaseClass):
 
     def collect_session_fbx(self, parent_item):
         """
-        Creates items for referenced Characters/Props in the scene
+        Creates items for referenced assets in the scene.
 
         :param parent_item: Parent Item instance
         """
-        # TODO: Still not sure why an additional .ma item is created for each
-        #   of the fbx items collected here.
         for obj in utils_reference.get_valid_refs():
-            self.logger.debug('Parsing => {}'.format(obj))
+            self.logger.debug('collect_session_fbx: Parsing => {}'.format(obj))
             obj_path = obj['file_path']
 
             fbx_display_name = obj['namespace'] + ".fbx"
@@ -352,14 +350,6 @@ class MayaSessionCollector(HookBaseClass):
 
             fbx_item.set_icon_from_path(icon_path)
 
-            # Let's filter what kind of reference this is (whether it is a
-            # character or prop).
-            # TODO: Use SG filters to get the asset type instead
-            if 'Character' in obj_path:
-                fbx_item.properties["reference_type"] = 'Character'
-            elif 'Prop' in obj_path:
-                fbx_item.properties["reference_type"] = 'Prop'
-
             # Add additional into to item properties for the validation process
             # Note: The "file_path" info will be used to filter the
             #       sub-group(s) within the referenced object
@@ -376,12 +366,6 @@ class MayaSessionCollector(HookBaseClass):
                 if "master" in node:
                     fbx_item.properties['master_group'] = node
                     break
-
-            # allow the base class to collect and create the item.
-            super(MayaSessionCollector, self)._collect_file(
-                fbx_item,
-                obj_path
-            )
 
     def collect_playblasts(self, parent_item, project_root):
         """
