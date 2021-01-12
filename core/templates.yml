@@ -878,28 +878,31 @@ paths:
     # The location of WIP files
     maya_asset_work:
         #definition: '@asset_root/work/{current_user_name}/maya/{name}.{Step}.v{version}.{maya_extension}'
-        definition: '@asset_root/work/{current_user_name}/maya/{Asset}.[{name}.]{Step}.v{version}.{maya_extension}'
+        definition: '@asset_work_area_maya/{Asset}.[{name}.]{Step}.v{version}.{maya_extension}'
         root_name: 'primary'
     # The location of backups of WIP files
     maya_asset_snapshot:
         #definition: '@asset_root/work/{current_user_name}/maya/snapshots/{name}.{Step}.v{version}.{timestamp}.{maya_extension}'
-        definition: '@asset_root/work/{current_user_name}/maya/snapshots/{Asset}.[{name}.]{Step}.v{version}.{timestamp}.{maya_extension}'
+        definition: '@asset_work_area_maya/snapshots/{Asset}.[{name}.]{Step}.v{version}.{timestamp}.{maya_extension}'
         root_name: 'primary'
     # The location of published maya files
     maya_asset_publish:
         #definition: '@asset_root/publish/maya/{name}.v{version}.{maya_extension}'
-        definition: '@asset_root/publish/maya/{Asset}.[{name}.]{Step}.v{version}.{maya_extension}'
+        definition: '@asset_publish_area_maya/{Asset}.[{name}.]{Step}.v{version}.{maya_extension}'
         root_name: 'primary'
 
     # --- SSE: Custom for Surfacing (-DW 2020-04-08)
     maya_asset_work_surfacing_arnold:
-        definition: '@asset_root/work/{current_user_name}/maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
+        definition: '@asset_work_area_maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
         root_name: 'primary'
     maya_asset_snapshot_surfacing_arnold:
-        definition: '@asset_root/work/{current_user_name}/maya/snapshots/{Asset}.[{name}.]SUR.AI.v{version}.{timestamp}.ma'
+        definition: '@asset_work_area_maya/snapshots/{Asset}.[{name}.]SUR.AI.v{version}.{timestamp}.ma'
         root_name: 'primary'
     maya_asset_publish_surfacing_arnold:
-        definition: '@asset_root/publish/maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
+        definition: '@asset_publish_area_maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
+        root_name: 'primary'
+    maya_asset_publish_surfacing_arnold_shadernetwork:
+        definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD_AI.v{version}.ma'
         root_name: 'primary'
 
     # The location of FBX exports for Unreal
