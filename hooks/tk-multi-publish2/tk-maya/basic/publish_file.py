@@ -1057,13 +1057,11 @@ class BasicFilePublishPlugin(HookBaseClass):
                             email_chk = True
 
                 if not success:
-                    self.logger.error(fail_msg)
                     raise Exception(fail_msg)
 
                 if email_chk:
                     self.qc_tool_check_email(log_data)
         except Exception:
-            self.logger.error(fail_msg)
             raise Exception(fail_msg)
 
     def qc_tool_check_email(self, log_data):
