@@ -410,7 +410,7 @@ def _get_texture_list():
 
 def _create_texture_list_on_disk(publish_path):
     """Creates an versioned text file in a template.yml specified directory to
-    Publish against. File simply contain a list of texture paths found in the
+    Publish against. File simply contains a list of texture paths found in the
     Maya session.
 
     Args:
@@ -418,6 +418,8 @@ def _create_texture_list_on_disk(publish_path):
 
     Returns:
         bool: True if successful, otherwise False.
+
+    TODO: json instead of simple txt.
     """
     success = False
     f_textures = _get_texture_list()
