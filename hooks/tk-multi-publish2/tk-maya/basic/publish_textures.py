@@ -430,7 +430,8 @@ def _create_texture_list_on_disk(publish_path):
         t_list_name = os.path.basename(publish_path)
         t_list_file = '{0}/{1}'.format(t_list_dir, t_list_name)
 
-        os.makedirs(t_list_dir)
+        if not os.path.exists(t_list_dir):
+            os.makedirs(t_list_dir)
 
         disk_file = open(t_list_file, 'w')
         disk_file.writelines(f_textures)
