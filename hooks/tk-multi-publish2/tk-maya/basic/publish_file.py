@@ -1031,11 +1031,14 @@ class BasicFilePublishPlugin(HookBaseClass):
         to publishing against that Entity.
 
         Raises:
-            TankError: If any mandatory checks failed.
-            TankError: If any of the log data collection fails for any reason.
+            Exception: If any mandatory checks failed.
+            Exception: If any of the log data collection fails for any reason.
         """
         success = True
-        email_chk = False
+        send_checks = []
+        e_filt_checks = [
+            'HighPolygonCount'
+        ]
         fail_msg = 'You must run the Sinking Ship QCTool prior to Publishing. '
 
         # parse the log
@@ -1045,41 +1048,45 @@ class BasicFilePublishPlugin(HookBaseClass):
                 log_data = json.load(f)
 
             if not log_data['SkipQCTool']:
-                for checks in log_data['Checks']:
-                    if checks['Result'] == 'Fail':
-                        if checks['Mandatory']:
+                for check in log_data['Checks']:
+                    if check['Result'] == 'Fail':
+                        if check['Mandatory']:
                             success = False
                             fail_msg += 'The {} check failed.'.format(
-                                checks['Name']
+                                check['Name']
                             )
                             break
 
-                        if checks['Name'] == 'HighPolygonCount':
-                            email_chk = True
+                        if check['Name'] in e_filt_checks:
+                            send_checks.append(check['Name'])
 
                 if not success:
                     raise Exception(fail_msg)
 
-                if email_chk:
-                    self.qc_tool_check_email(log_data)
-        except Exception:
-            raise Exception(fail_msg)
+                if send_checks:
+                    for check_name in send_checks:
+                        self.qc_tool_check_email(log_data, check_name)
+        except Exception as e:
+            raise Exception(str(e))
 
-    def qc_tool_check_email(self, log_data):
+    def qc_tool_check_email(self, log_data, check_name):
         """Sends email to the appropriate people, detailing relevant
         notification information about the Publish using data from the
         QCTool log for the Entity.
 
         Args:
             log_data (dict): Data parsed from the Entity's QCTool log.
+            check_name (str): The name of the Check we're emailing data about.
         """
         from python import send_email
 
         u_name = self.parent.context.user['name']
 
         chk_errors = ''
-        for _error in log_data['Checks']['Error']:
-            chk_errors += '{}\n'.format(_error)
+        for chk in log_data['Checks']:
+            if chk['Name'] == check_name:
+                for _error in chk['Error']:
+                    chk_errors += '{}\n'.format(_error)
 
         to = [
             'aravindan@sinkingship.ca',
@@ -1087,13 +1094,14 @@ class BasicFilePublishPlugin(HookBaseClass):
         ]
 
         cc = [
-            'harrison@sinkingship.ca',
-            'shervin@sinkingship.ca',
-            'dean@sinkingship.ca'
+            'td@sinkingship.ca'
         ]
 
         file_name = os.path.basename(log_data['Filepath'])
-        subject = 'QC Tool Warning - High Polygon Count - {}'.format(file_name)
+        subject = 'QC Tool Warning - {0} - {1}'.format(
+            check_name,
+            file_name
+        )
 
         body_parts = [
             'Username: {}'.format(u_name),
