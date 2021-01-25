@@ -8,6 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+import json
 import os
 import maya.cmds as cmds
 import maya.mel as mel
@@ -361,10 +362,11 @@ def _texture_check():
 
 def _get_texture_list():
     """Inspect the current session Maya file for textures of all sorts, return
-    whatever is found (either a populated or empty list of texture filepaths).
+    whatever is found (either a populated or empty list of texture data path
+    dictionaries).
 
     Returns:
-        list: A list of texture paths.
+        list: A list of texture data path dictionaries.
     """
     f_textures = []
 
@@ -376,13 +378,20 @@ def _get_texture_list():
             if cmds.nodeType(tex_node) == 'file':
                 tex_path = cmds.getAttr('{}.fileTextureName'.format(tex_node))
                 if tex_path:
-                    f_textures.append(tex_path)
+                    tex_dict = {}
+                    tex_dict['node_name'] = tex_node
+                    tex_dict['node_type'] = ['Maya', 'file']
+                    tex_dict['file_path'] = tex_path
+                    f_textures.append(tex_dict)
 
             # Arnold
             if cmds.nodeType(tex_node) == 'aiImage':
                 tex_path = cmds.getAttr('{}.filename'.format(tex_node))
                 if tex_path:
-                    f_textures.append(tex_path)
+                    tex_dict['node_name'] = tex_node
+                    tex_dict['node_type'] = ['MtoA', 'aiImage']
+                    tex_dict['file_path'] = tex_path
+                    f_textures.append(tex_dict)
 
     # Yeti has its own texture nodes that need to be considered, that the 'ls'
     # command doesn't recognize, so...
@@ -400,16 +409,21 @@ def _get_texture_list():
                     mel_bits.append('-getParamValue {}'.format(ynode))
                     _mel_cmd = ' '.join(mel_bits)
                     tex_path = mel.eval(_mel_cmd)
-                    f_textures.append(tex_path)
+
+                    tex_dict = {}
+                    tex_dict['node_name'] = y_tex_node
+                    tex_dict['node_type'] = ['pgYetiMaya', 'texture']
+                    tex_dict['file_path'] = tex_path
+                    f_textures.append(tex_dict)
 
     if f_textures:
-        f_textures = sorted(f_textures)
+        f_textures = sorted(f_textures, key=lambda k: k['node_type'][0])
 
     return f_textures
 
 
 def _create_texture_list_on_disk(publish_path):
-    """Creates an versioned text file in a template.yml specified directory to
+    """Creates a versioned text file in a template.yml specified directory to
     Publish against. File simply contains a list of texture paths found in the
     Maya session.
 
@@ -422,22 +436,42 @@ def _create_texture_list_on_disk(publish_path):
     TODO: json instead of simple txt.
     """
     success = False
+
     f_textures = _get_texture_list()
     if f_textures:
-        f_textures = ['{}\n'.format(_f) for _f in f_textures]
+        json_root_dict = {}
+        json_root_dict['scene_file'] = cmds.file(q=True, sn=True)
+        json_root_dict['texture_list'] = f_textures
 
-        t_list_dir = os.path.dirname(publish_path)
-        t_list_name = os.path.basename(publish_path)
-        t_list_file = '{0}/{1}'.format(t_list_dir, t_list_name)
+        json_dir = os.path.dirname(publish_path)
+        json_name = os.path.basename(publish_path)
+        json_filepath = '{0}/{1}'.format(json_dir, json_name)
 
-        if not os.path.exists(t_list_dir):
-            os.makedirs(t_list_dir)
+        if not os.path.exists(json_dir):
+            os.makedirs(json_dir)
 
-        disk_file = open(t_list_file, 'w')
-        disk_file.writelines(f_textures)
-        disk_file.close()
+        with open(json_filepath, 'w') as write_json:
+            json.dump(
+                json_root_dict,
+                write_json,
+                sort_keys=True,
+                indent=4,
+                separators=(',', ': ')
+            )
+        # f_textures = ['{}\n'.format(_f) for _f in f_textures]
 
-        if os.path.isfile(t_list_file):
+        # t_list_dir = os.path.dirname(publish_path)
+        # t_list_name = os.path.basename(publish_path)
+        # t_list_file = '{0}/{1}'.format(t_list_dir, t_list_name)
+
+        # if not os.path.exists(t_list_dir):
+        #     os.makedirs(t_list_dir)
+
+        # disk_file = open(t_list_file, 'w')
+        # disk_file.writelines(f_textures)
+        # disk_file.close()
+
+        if os.path.isfile(json_filepath):
             success = True
 
     return success

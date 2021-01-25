@@ -796,8 +796,8 @@ paths:
         root_name: 'primary'
 
     asset_publish_tex_list:
-        # Publishing against a simple text file (DW 2020-09-21)
-        definition: '@asset_root/publish/tex_list/{Asset}.[{name}.]{Step}.v{version}.tex_list.txt'
+        # Publishing against a simple json file (DW 2020-09-21)
+        definition: '@asset_root/publish/json/{Asset}.[{name}.]{Step}.v{version}.textures.json'
         root_name: 'primary'
 
     #
