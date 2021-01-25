@@ -973,11 +973,12 @@ class BasicFilePublishPlugin(HookBaseClass):
         log_file = None
 
         p_name = self.parent.context.project['name']
+        p_step = self.parent.context.step['name']
         e_type = self.parent.context.entity['type']
 
         # templates
         wk_template = self.parent.sgtk.templates.get('maya_asset_work')
-        if e_type == 'Asset' and p_name == 'Surfacing':
+        if e_type == 'Asset' and p_step == 'Surfacing':
             wk_template = self.parent.sgtk.templates.get(
                 'maya_asset_work_surfacing_arnold'
             )
