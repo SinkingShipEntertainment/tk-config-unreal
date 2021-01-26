@@ -125,7 +125,7 @@ class MayaASSPublishPlugin(HookBaseClass):
         publisher = self.parent
         template_name = settings["Publish Template"].value
 
-        # SSE: we want this off by defult when the UI starts, see also return
+        # SSE: we want this off by default when the UI starts, see also return
         # below (DW 2020-07-28)
         checked = False
 

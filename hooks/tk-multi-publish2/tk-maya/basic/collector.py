@@ -1,18 +1,15 @@
-﻿# Copyright (c) 2017 Shotgun Software Inc.
-#
-# CONFIDENTIAL AND PROPRIETARY
-#
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
-# Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
+﻿# SSE: Modified to fit our requirements.
+# linter: flake8
+# docstring style: Google
+# (DW 2020-08-17)
 
 import glob
+# import json
 import os
 import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
+# from tank import TankError
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -25,10 +22,9 @@ class MayaSessionCollector(HookBaseClass):
 
     @property
     def settings(self):
-        """
-        Dictionary defining the settings that this collector expects to receive
-        through the settings parameter in the process_current_session and
-        process_file methods.
+        """Dictionary defining the settings that this collector expects to
+        receive through the settings parameter in the process_current_session
+        and process_file methods.
 
         A dictionary on the following form::
 
@@ -53,9 +49,9 @@ class MayaSessionCollector(HookBaseClass):
                 "default": None,
                 "description": "Template path for artist work files. Should "
                                "correspond to a template defined in "
-                               "templates.yml. If configured, is made available"
-                               "to publish plugins via the collected item's "
-                               "properties. ",
+                               "templates.yml. If configured, is made "
+                               "available to publish plugins via the "
+                               "collected item's properties. ",
             },
         }
 
@@ -65,14 +61,16 @@ class MayaSessionCollector(HookBaseClass):
         return collector_settings
 
     def process_current_session(self, settings, parent_item):
-        """
-        Analyzes the current session open in Maya and parents a subtree of
+        """Analyzes the current session open in Maya and parents a subtree of
         items under the parent_item passed in.
 
-        :param dict settings: Configured settings for this collector
-        :param parent_item: Root item instance
-
+        Args:
+            settings (dict): Configured settings for this collector.
+            parent_item (obj): Root item instance.
         """
+        # intercept before collection to run the qctool checks
+        # (DW 2020-08-19)
+        self.run_qc_tool()
 
         # create an item representing the current maya session
         item = self.collect_current_maya_session(settings, parent_item)
@@ -110,18 +108,22 @@ class MayaSessionCollector(HookBaseClass):
                 }
             )
 
-        if cmds.ls(geometry=True, noIntermediate=True):
-            self._collect_session_geometry(item)
+        # NOTE: Anything here has to be enabled in:
+        # ../env/includes/settings/tk-multi-publish2.yml
+        # to be visible in the UI (DW 202-09-18)
+        # if cmds.ls(geometry=True, noIntermediate=True):
+        #     self._collect_session_geometry(item)
 
     def collect_current_maya_session(self, settings, parent_item):
+        """Creates an item that represents the current maya session.
+
+        Args:
+            settings (dict): Configured settings for this item.
+            parent_item (obj): Parent Item instance.
+
+        Returns:
+            obj: Item of type maya.session.
         """
-        Creates an item that represents the current maya session.
-
-        :param parent_item: Parent Item instance
-
-        :returns: Item of type maya.session
-        """
-
         publisher = self.parent
 
         # get the path to the current file
@@ -141,7 +143,6 @@ class MayaSessionCollector(HookBaseClass):
             display_name
         )
 
-        # get the icon path to display for this item
         icon_path = os.path.join(
             self.disk_location,
             os.pardir,
@@ -150,8 +151,11 @@ class MayaSessionCollector(HookBaseClass):
         )
         session_item.set_icon_from_path(icon_path)
 
-        # Add an ABC export item as child of the session item (DW 2020-07-28)
+        # Remove file extension from display_name to use in subsequent
+        # display names
         filename = os.path.splitext(display_name)[0]
+
+        # Add an ABC export item as child of the session item (DW 2020-07-28)
         abc_display_name = filename + ".abc"
         abc_item = session_item.create_item(
             "maya.abc",
@@ -169,7 +173,6 @@ class MayaSessionCollector(HookBaseClass):
         abc_item.set_icon_from_path(icon_path)
 
         # Add an ASS export item as child of the session item (DW 2020-07-28)
-        filename = os.path.splitext(display_name)[0]
         ass_display_name = filename + ".ass"
         ass_item = session_item.create_item(
             "maya.ass",
@@ -187,7 +190,6 @@ class MayaSessionCollector(HookBaseClass):
         ass_item.set_icon_from_path(icon_path)
 
         # Add an FBX export item as child of the session item
-        filename = os.path.splitext(display_name)[0]
         fbx_display_name = filename + ".fbx"
         fbx_item = session_item.create_item(
             "maya.fbx",
@@ -195,7 +197,6 @@ class MayaSessionCollector(HookBaseClass):
             fbx_display_name
         )
 
-        # get the icon path to display for this item
         icon_path = os.path.join(
             self.disk_location,
             os.pardir,
@@ -212,7 +213,6 @@ class MayaSessionCollector(HookBaseClass):
             "Render Asset Turntable in Unreal"
         )
 
-        # get the icon path to display for this item
         icon_path = os.path.join(
             self.disk_location,
             os.pardir,
@@ -221,6 +221,25 @@ class MayaSessionCollector(HookBaseClass):
         )
 
         turntable_item.set_icon_from_path(icon_path)
+
+        # texture handling
+        p_step = self.parent.context.step['name']
+        if p_step == 'Texturing':
+            tex_item = session_item.create_item(
+                "maya.textures",
+                "Textures",
+                "All Session Textures"
+            )
+
+            # get the icon path to display for this item
+            icon_path = os.path.join(
+                self.disk_location,
+                os.pardir,
+                "icons",
+                "texture_files.png"
+            )
+
+            tex_item.set_icon_from_path(icon_path)
 
         # discover the project root which helps in discovery of other
         # publishable items
@@ -248,16 +267,16 @@ class MayaSessionCollector(HookBaseClass):
         return session_item
 
     def collect_alembic_caches(self, parent_item, project_root):
-        """
-        Creates items for alembic caches
+        """Creates items for alembic caches.
 
         Looks for a 'project_root' property on the parent item, and if such
         exists, look for alembic caches in a 'cache/alembic' subfolder.
 
-        :param parent_item: Parent Item instance
-        :param str project_root: The maya project root to search for alembics
+        Args:
+            parent_item (obj): Parent Item instance.
+            project_root (str): The maya project root to search for
+                alembics.
         """
-
         # ensure the alembic cache dir exists
         cache_dir = os.path.join(project_root, "cache", "alembic")
         if not os.path.exists(cache_dir):
@@ -291,12 +310,11 @@ class MayaSessionCollector(HookBaseClass):
             )
 
     def _collect_session_geometry(self, parent_item):
-        """
-        Creates items for session geometry to be exported.
+        """Creates items for session geometry to be exported.
 
-        :param parent_item: Parent Item instance
+        Args:
+            parent_item (obj): Parent Item instance.
         """
-
         geo_item = parent_item.create_item(
             "maya.session.geometry",
             "Geometry",
@@ -314,16 +332,18 @@ class MayaSessionCollector(HookBaseClass):
         geo_item.set_icon_from_path(icon_path)
 
     def collect_playblasts(self, parent_item, project_root):
-        """
-        Creates items for quicktime playblasts.
+        """Creates items for quicktime playblasts.
 
         Looks for a 'project_root' property on the parent item, and if such
         exists, look for movie files in a 'movies' subfolder.
 
-        :param parent_item: Parent Item instance
-        :param str project_root: The maya project root to search for playblasts
-        """
+        Args:
+            parent_item (obj): Parent Item instance.
+            project_root (str): The maya project root to search for playblasts.
 
+        Returns:
+            NoneType: If the 'movies' subfolder does not exist.
+        """
         movie_dir_name = None
 
         # try to query the file rule folder name for movies. This will give
@@ -375,14 +395,12 @@ class MayaSessionCollector(HookBaseClass):
             item.name = "%s (%s)" % (item.name, "playblast")
 
     def collect_rendered_images(self, parent_item):
-        """
-        Creates items for any rendered images that can be identified by
+        """Creates items for any rendered images that can be identified by
         render layers in the file.
 
-        :param parent_item: Parent Item instance
-        :return:
+        Args:
+            parent_item (obj): Parent Item instance.
         """
-
         # iterate over defined render layers and query the render settings for
         # information about a potential render
         for layer in cmds.ls(type="renderLayer"):
@@ -412,3 +430,12 @@ class MayaSessionCollector(HookBaseClass):
                 # the item has been created. update the display name to include
                 # the an indication of what it is and why it was collected
                 item.name = "%s (Render Layer: %s)" % (item.name, layer)
+
+    def run_qc_tool(self):
+        """Run the QCTool, will be called before the Publish UI is drawn.
+        """
+        from python import QCTool
+
+        p_step = self.parent.context.step['name']
+        QCTool.main(p_step)
+# --- eof

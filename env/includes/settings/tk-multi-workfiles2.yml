@@ -253,6 +253,33 @@ settings.tk-multi-workfiles2.maya.asset_step:
       hierarchy: [step]
   location: "@apps.tk-multi-workfiles2.location"
 
+# asset_step_surfacing (SSE - DW 2020-10-01)
+settings.tk-multi-workfiles2.maya.asset_step_surfacing:
+  template_publish: maya_asset_publish_surfacing_arnold
+  template_publish_area: asset_publish_area_maya
+  template_work: maya_asset_work_surfacing_arnold
+  template_work_area: asset_work_area_maya
+  entities:
+  - caption: Assets
+    entity_type: Asset
+    hierarchy: [sg_asset_type, code]
+    filters:
+    sub_hierarchy:
+      entity_type: Task
+      filters:
+      link_field: entity
+      hierarchy: [step]
+  - caption: Shots
+    entity_type: Shot
+    filters:
+    hierarchy: [sg_sequence, code]
+    sub_hierarchy:
+      entity_type: Task
+      filters:
+      link_field: entity
+      hierarchy: [step]
+  location: "@apps.tk-multi-workfiles2.location"
+
 # shot_step
 settings.tk-multi-workfiles2.maya.shot_step:
   template_publish: maya_shot_publish

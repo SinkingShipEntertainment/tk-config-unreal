@@ -21,8 +21,9 @@ import tank
 
 # --- get Shotgun Desktop Console logging going...
 import sgtk
-logger = sgtk.platform.get_logger(__name__)
-my_sep = ('=' * 10)
+LOGGER = sgtk.platform.get_logger(__name__)
+MY_SEP = ('=' * 10)
+
 
 class BeforeAppLaunch(tank.Hook):
     """
@@ -31,12 +32,13 @@ class BeforeAppLaunch(tank.Hook):
 
     def execute(self, app_path, app_args, version, engine_name, **kwargs):
         """
-        The execute functon of the hook will be called prior to starting the required application
+        The execute functon of the hook will be called prior to starting the
+        required application
 
         :param app_path: (str) The path of the application executable
         :param app_args: (str) Any arguments the application may require
-        :param version: (str) version of the application being run if set in the
-            "versions" settings of the Launcher instance, otherwise None
+        :param version: (str) version of the application being run if set in
+            the "versions" settings of the Launcher instance, otherwise None
         :param engine_name (str) The name of the engine associated with the
             software about to be launched.
 
@@ -51,11 +53,11 @@ class BeforeAppLaunch(tank.Hook):
         # os.environ["MY_SETTING"] = "foo bar"
 
         # Log args
-        logger.debug('app_path    > {}'.format(app_path))
-        logger.debug('app_args    > {}'.format(app_args))
-        logger.debug('version     > {}'.format(version))
-        logger.debug('engine_name > {}'.format(engine_name))
-        logger.debug('kwargs      > {}'.format(kwargs))
+        LOGGER.debug('app_path    > {}'.format(app_path))
+        LOGGER.debug('app_args    > {}'.format(app_args))
+        LOGGER.debug('version     > {}'.format(version))
+        LOGGER.debug('engine_name > {}'.format(engine_name))
+        LOGGER.debug('kwargs      > {}'.format(kwargs))
 
         os.environ["XBMLANGPATH"] = "X:\\tools\\release\\icons"
 
@@ -63,14 +65,17 @@ class BeforeAppLaunch(tank.Hook):
         os.environ['SG_APP_VERSION'] = '{}'.format(version)
 
         multi_launchapp = self.parent
-        os.environ['SG_CURR_ENTITY'] = '{}'.format(multi_launchapp.context.entity)
-        os.environ['SG_CURR_STEP'] = '{}'.format(multi_launchapp.context.step)
-        os.environ['SG_CURR_TASK'] = '{}'.format(multi_launchapp.context.task)
-        os.environ['SG_CURR_PROJECT'] = '{}'.format(multi_launchapp.context.project)
-        os.environ['SG_CURR_LOCATIONS'] = '{}'.format(multi_launchapp.context.filesystem_locations)
+        ml_context = multi_launchapp.context
+        os.environ['SG_CURR_ENTITY'] = '{}'.format(ml_context.entity)
+        os.environ['SG_CURR_STEP'] = '{}'.format(ml_context.step)
+        os.environ['SG_CURR_TASK'] = '{}'.format(ml_context.task)
+        os.environ['SG_CURR_PROJECT'] = '{}'.format(ml_context.project)
+        os.environ['SG_CURR_LOCATIONS'] = '{}'.format(
+            ml_context.filesystem_locations
+        )
 
         # --- get the correct studio tools in the paths (SYS & PYTHONPATH)...
-        os.environ['CURR_PROJECT'] = '{}'.format(multi_launchapp.context.project['name'])
+        os.environ['CURR_PROJECT'] = '{}'.format(ml_context.project['name'])
         project_name = os.environ['CURR_PROJECT']
 
         # --- Set instance variables...
@@ -111,7 +116,7 @@ class BeforeAppLaunch(tank.Hook):
         """
         repo_path = None
 
-        logger.debug(my_sep)
+        LOGGER.debug(MY_SEP)
 
         shotgun_inst = sgtk.api.shotgun.connection.get_sg_connection()
         sg_filters = [['project.Project.name', 'is', project_name]]
@@ -138,8 +143,8 @@ class BeforeAppLaunch(tank.Hook):
         if '\\' in sgtk_module_path:
             sgtk_module_path = sgtk_module_path.replace('\\', '/')
         sgtk_cfg_path = '/'.join(sgtk_module_path.split('/')[:5])
-        logger.debug('sgtk_module_path >> {}'.format(sgtk_module_path))
-        logger.debug('sgtk_cfg_path >> {}'.format(sgtk_cfg_path))
+        LOGGER.debug('sgtk_module_path >> {}'.format(sgtk_module_path))
+        LOGGER.debug('sgtk_cfg_path >> {}'.format(sgtk_cfg_path))
 
         for my_config in sgtk_configs:
             my_config_repo_key = my_config['sg_ss_tools_repo']
@@ -150,7 +155,7 @@ class BeforeAppLaunch(tank.Hook):
                 if my_config_path == sgtk_cfg_path:
                     wanted_repo_key = my_config_repo_key
                     m = 'wanted_repo_key >> {}'.format(wanted_repo_key)
-                    logger.debug(m)
+                    LOGGER.debug(m)
                     break
 
         if wanted_repo_key:
@@ -174,8 +179,8 @@ class BeforeAppLaunch(tank.Hook):
                     sgtk_core_user,
                     project_name
                 )
-                # --- If it's not a Project-specific repo, we have to resort to
-                # --- the generic studio repo...
+                # --- If it's not a Project-specific repo, we have to resort
+                # --- to the generic studio repo...
                 if not os.path.exists(repo_path):
                     repo_path = 'X:/dev/ss_dev_{0}/ss_studio_repo'.format(
                         sgtk_core_user,
@@ -189,7 +194,7 @@ class BeforeAppLaunch(tank.Hook):
             else:
                 # --- For everyone to launch using the generic studio repo...
                 repo_path = 'X:/tools/ss_studio_repo'
-        logger.debug(my_sep)
+        LOGGER.debug(MY_SEP)
 
         # --- Check to make sure the resolved path, whatever it is, still
         # --- exists at the given location...
@@ -208,12 +213,24 @@ class BeforeAppLaunch(tank.Hook):
         self._headers(_setup)
 
         maya_script_paths = []
-        maya_script_paths.append('{}/maya/scripts/mel'.format(self._repo_path))
-        maya_script_paths.append('{}/maya/scripts/vtool'.format(self._repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/anim'.format(self._repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/light'.format(self._repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/modeling'.format(self._repo_path))
-        maya_script_paths.append('{}/maya/scripts/mel/rigging'.format(self._repo_path))
+        maya_script_paths.append(
+            '{}/maya/scripts/mel'.format(self._repo_path)
+        )
+        maya_script_paths.append(
+            '{}/maya/scripts/vtool'.format(self._repo_path)
+        )
+        maya_script_paths.append(
+            '{}/maya/scripts/mel/anim'.format(self._repo_path)
+        )
+        maya_script_paths.append(
+            '{}/maya/scripts/mel/light'.format(self._repo_path)
+        )
+        maya_script_paths.append(
+            '{}/maya/scripts/mel/modeling'.format(self._repo_path)
+        )
+        maya_script_paths.append(
+            '{}/maya/scripts/mel/rigging'.format(self._repo_path)
+        )
         os.environ['MAYA_SCRIPT_PATH'] = ';'.join(maya_script_paths)
 
         maya_tool_path = '{}/maya/scripts'.format(self._repo_path)
@@ -229,72 +246,142 @@ class BeforeAppLaunch(tank.Hook):
         for script_path in script_paths:
             old_py_path = os.environ['PYTHONPATH']
             if script_path in old_py_path:
-                logger.debug('Found {} in PYTHONPATH, no need to add it.'.format(script_path))
+                m = 'Found {} in PYTHONPATH, no need to add it.'.format(
+                    script_path
+                )
+                LOGGER.debug(m)
             else:
-                logger.debug('old_py_path > {}'.format(old_py_path))
+                LOGGER.debug('old_py_path > {}'.format(old_py_path))
                 old_py_path_bits = old_py_path.split(';')
 
                 old_py_path_bits.insert(0, script_path)
                 new_py_path = ';'.join(old_py_path_bits)
 
-                logger.debug('new_py_path > {}'.format(new_py_path))
+                LOGGER.debug('new_py_path > {}'.format(new_py_path))
                 os.environ['PYTHONPATH'] = new_py_path
 
         import python
-        reload (python)
+        reload(python)
 
         # --- specific related to Maya versions...
         module_path = '{0}{1}{2}'.format(module_path, os.sep, self._version)
-        logger.debug('module_path > {}'.format(module_path))
+        LOGGER.debug('module_path > {}'.format(module_path))
 
         if self._version in ['2018', '2020']:
             # --- General plugins...
-            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(plugin_path, os.sep, self._version)
+            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(
+                plugin_path,
+                os.sep,
+                self._version
+            )
 
             # --- Arnold (experimental *NOT CALLED BY ANYTHING YET*
             # --- ~ DW 202-07-13)
-            arnold_home = 'C:/solidangle/mtoadeploy/{}'.format(self._version)
+            wpf_root = 'C:{}Program Files'.format(os.sep)
+            arnold_home = 'C:{0}solidangle{0}mtoadeploy{0}{1}'.format(
+                os.sep,
+                self._version
+            )
             if self._version == '2020':
-                arnold_home = 'C:/Program Files/Autodesk/Arnold/maya{}'.format(self._version)
+                arnold_home = '{0}{1}Autodesk{1}Arnold{1}maya{2}'.format(
+                    wpf_root,
+                    os.sep,
+                    self._version
+                )
 
-            arnold_bin = '{}/bin'.format(arnold_home)
+            arnold_bin = '{0}{1}bin'.format(
+                arnold_home,
+                os.sep
+            )
+            LOGGER.debug('arnold_bin > {}'.format(arnold_bin))
+            #TODO
 
             # --- VRay (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
-            vray_home = 'C:{0}Program Files{0}Autodesk{0}Maya{1}{0}vray'.format(os.sep, self._version)
+            vray_home = '{0}{1}Autodesk{1}Maya{2}{1}vray'.format(
+                wpf_root,
+                os.sep,
+                self._version
+            )
             v_main_key = 'VRAY_FOR_MAYA{}_MAIN_x64'.format(self._version)
             os.environ[v_main_key] = vray_home
             v_plug_key =  'VRAY_FOR_MAYA{}_PLUGINS_x64'.format(self._version)
-            os.environ[v_plug_key] = '{0}{1}{2}'.format(vray_home, os.sep, 'vrayplugins')
+            os.environ[v_plug_key] = '{0}{1}{2}'.format(
+                vray_home,
+                os.sep,
+                'vrayplugins'
+            )
 
-            vray_chaos_root = 'C:{0}Program Files{0}Chaos Group{0}V-Ray{0}Maya {1} for x64'.format(os.sep, self._version)
+            v_root = '{0}{1}Chaos Group{1}V-Ray{1}Maya {2} for x64'.format(
+                wpf_root,
+                os.sep,
+                self._version
+            )
             v_tools_key = 'VRAY_TOOLS_MAYA{}_x64'.format(self._version)
-            os.environ[v_tools_key] = '{0}{1}bin'.format(vray_chaos_root, os.sep)
+            os.environ[v_tools_key] = '{0}{1}bin'.format(
+                v_root,
+                os.sep
+            )
             v_osl_key = 'VRAY_OSL_PATH_MAYA{}_x64'.format(self._version)
-            os.environ[v_osl_key] = '{0}{1}opensl'.format(vray_chaos_root, os.sep)
+            os.environ[v_osl_key] = '{0}{1}opensl'.format(
+                v_root,
+                os.sep
+            )
 
             # --- Yeti...
-            # yeti_vers = 'v3.1.10'
-            # if self._version == '2020':
-            #     yeti_vers = 'v3.6.2'
-            yeti_vers = 'v3.6.2'
+            yeti_vers = 'v3.1.10'
+            if self._version == '2020':
+                # yeti_vers = 'v3.6.2'
+                yeti_vers = 'v3.7.0'
 
-            yeti_home = '{1}{0}yeti{0}{2}'.format(os.sep, module_path, yeti_vers)
-            logger.debug('yeti_home > {}'.format(yeti_home))
+            yeti_home = '{1}{0}yeti{0}{2}'.format(
+                os.sep,
+                module_path,
+                yeti_vers
+            )
+            LOGGER.debug('yeti_home > {}'.format(yeti_home))
 
             os.environ['YETI_HOME'] = yeti_home
-            os.environ['PATH'] = '{0}{1}{2}{3}bin'.format(os.environ['PATH'], os.pathsep, yeti_home, os.sep)
-            os.environ['XBMLANGPATH'] = '{0}{1}{2}{3}icons'.format(os.environ['XBMLANGPATH'], os.pathsep, yeti_home, os.sep)
-            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}{3}plug-ins'.format(os.environ['MAYA_PLUG_IN_PATH'], os.pathsep, yeti_home, os.sep)
-            os.environ['MAYA_SCRIPT_PATH'] = '{0}{1}{2}{3}scripts'.format(os.environ['MAYA_SCRIPT_PATH'], os.pathsep, yeti_home, os.sep)
+            os.environ['PATH'] = '{0}{1}{2}{3}bin'.format(
+                os.environ['PATH'],
+                os.pathsep,
+                yeti_home,
+                os.sep
+            )
+            os.environ['XBMLANGPATH'] = '{0}{1}{2}{3}icons'.format(
+                os.environ['XBMLANGPATH'],
+                os.pathsep,
+                yeti_home,
+                os.sep
+            )
+            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}{3}plug-ins'.format(
+                os.environ['MAYA_PLUG_IN_PATH'],
+                os.pathsep,
+                yeti_home,
+                os.sep
+            )
+            os.environ['MAYA_SCRIPT_PATH'] = '{0}{1}{2}{3}scripts'.format(
+                os.environ['MAYA_SCRIPT_PATH'],
+                os.pathsep,
+                yeti_home,
+                os.sep
+            )
 
             if 'VRAY_PLUGINS_x64' in os.environ.keys():
-                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}{2}{3}bin'.format(os.environ['VRAY_PLUGINS_x64'], os.pathsep, yeti_home, os.sep)
+                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}{2}{3}bin'.format(
+                    os.environ['VRAY_PLUGINS_x64'],
+                    os.pathsep,
+                    yeti_home,
+                    os.sep
+                )
             else:
-                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}bin'.format(yeti_home, os.sep)
+                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}bin'.format(
+                    yeti_home,
+                    os.sep
+                )
 
-            # --- Needed to get the module path in, as earlier just defines the
-            # --- local Vray install path initially (DW 2020-07-09)
+            # --- Needed to get the module path in, as earlier just defines
+            # --- the local Vray install path initially (DW 2020-07-09)
             if v_plug_key in os.environ.keys():
                 os.environ[v_plug_key] = '{0}{1}{2}{3}bin'.format(
                     os.environ[v_plug_key],
@@ -349,16 +436,20 @@ class BeforeAppLaunch(tank.Hook):
             for add_module in add_modules:
                 _home = '{0}{1}{2}'.format(module_path, os.sep, add_module)
                 main_module_list.append(_home)
-                logger.debug('Added Maya module > {}'.format(_home))
+                LOGGER.debug('Added Maya module > {}'.format(_home))
 
             maya_module_path = (os.pathsep).join(main_module_list)
-            logger.debug('maya_module_path > {}'.format(maya_module_path))
+            LOGGER.debug('maya_module_path > {}'.format(maya_module_path))
 
             os.environ['MAYA_MODULE_PATH'] = maya_module_path
 
             # --- Legacy vtool stuff, need to revisit/update/remove possibly...
             vtool_legacy_path = 'X:/tools/sinking_ship/maya/scripts/vtool'
-            os.environ['PATH'] = '{0}{1}{2}'.format(os.environ['PATH'], os.pathsep, vtool_legacy_path)
+            os.environ['PATH'] = '{0}{1}{2}'.format(
+                os.environ['PATH'],
+                os.pathsep,
+                vtool_legacy_path
+            )
 
             # --- Redshift (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
@@ -366,17 +457,32 @@ class BeforeAppLaunch(tank.Hook):
             r_plug_maya = '{}/Plugins/Maya'.format(r_core)
             r_common = '{}/Common'.format(r_plug_maya)
 
-            os.environ['REDSHIFT_COREDATAPATH'] =  r_core
-            os.environ['REDSHIFT_PLUG_IN_PATH'] = '{0}/{1}/nt-x86-64'.format(r_plug_maya, self._version)
-            os.environ['REDSHIFT_SCRIPT_PATH'] =  '{}/scripts'.format(r_common)
-            os.environ['REDSHIFT_XBMLANGPATH'] =  '{}/icons'.format(r_common)
-            os.environ['REDSHIFT_RENDER_DESC_PATH'] =  '{}/rendererDesc'.format(r_common)
-            os.environ['REDSHIFT_CUSTOM_TEMPLATE_PATH'] =  '{}/scripts/NETemplate'.format(r_common)
-            os.environ['REDSHIFT_MAYAEXTENSIONSPATH'] =  '{0}/{1}/nt-x86-64/extensions'.format(r_plug_maya, self._version)
-            os.environ['REDSHIFT_PROCEDURALSPATH'] =  '{}/Procedural'.format(r_core)
+            os.environ['REDSHIFT_COREDATAPATH'] = r_core
+            os.environ['REDSHIFT_PLUG_IN_PATH'] = '{0}/{1}/nt-x86-64'.format(
+                r_plug_maya,
+                self._version
+            )
+            os.environ['REDSHIFT_SCRIPT_PATH'] = '{}/scripts'.format(r_common)
+            os.environ['REDSHIFT_XBMLANGPATH'] = '{}/icons'.format(r_common)
+            os.environ['REDSHIFT_RENDER_DESC_PATH'] = '{}/rendererDesc'.format(
+                r_common
+            )
+            _rctp = 'REDSHIFT_CUSTOM_TEMPLATE_PATH'
+            os.environ[_rctp] = '{}/scripts/NETemplate'.format(r_common)
+            _rmep = 'REDSHIFT_MAYAEXTENSIONSPATH'
+            os.environ[_rmep] = '{0}/{1}/nt-x86-64/extensions'.format(
+                r_plug_maya,
+                self._version
+            )
+            os.environ['REDSHIFT_PROCEDURALSPATH'] = '{}/Procedural'.format(
+                r_core
+            )
 
+            # --- Arnold PATH cleanup at the end...
+            self._maya_arnold_version_bin_fix()
         else:
-            logger.debug('No Maya product/version specific environment variables required.')
+            m = 'No Maya version specific environment variables required.'
+            LOGGER.debug(m)
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -395,13 +501,19 @@ class BeforeAppLaunch(tank.Hook):
             sys.path.insert(0, script_path)
 
         # Check if NUKE_PATH exists.
-        # TODO - After NUKE_PATH is purged from boxes, remove condition so we find out-of-sync boxes
+        # TODO - After NUKE_PATH is purged from boxes, remove condition so we
+        # find out-of-sync boxes
         nuke_plugin_path = '{}/nuke'.format(self._repo_path).replace('/', '\\')
         if 'NUKE_PATH' in os.environ:
-            logger.debug('Found existing NUKE_PATH in os.environ...')
-            os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+            LOGGER.debug('Found existing NUKE_PATH in os.environ...')
+            os.environ['NUKE_PATH'] = os.pathsep.join(
+                [
+                    nuke_plugin_path,
+                    os.environ['NUKE_PATH']
+                ]
+            )
         else:
-            logger.debug('No existing NUKE_PATH in os.environ, creating...')
+            LOGGER.debug('No existing NUKE_PATH in os.environ, creating...')
             os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
         #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
 
@@ -452,7 +564,7 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- NOTE: switch to the commented out line in the near future,
         # ---       'X:/tools/natron' is temporary...
-        #studio_na_root = '{}/natron'.format(self._repo_path).replace('/', '\\')
+        # studio_na_root='{}/natron'.format(self._repo_path).replace('/','\\')
         studio_na_root = 'X:/tools/natron'
         script_paths.append(studio_na_root)
         script_paths.append('{}/tools_sse'.format(studio_na_root))
@@ -461,11 +573,16 @@ class BeforeAppLaunch(tank.Hook):
         studio_na_paths = os.pathsep.join(script_paths)
 
         if 'NATRON_PLUGIN_PATH' in os.environ:
-            logger.debug('Found existing NATRON_PLUGIN_PATH in os.environ...')
-            os.environ['NATRON_PLUGIN_PATH'] = os.pathsep.join([studio_na_paths,
-                os.environ['NATRON_PLUGIN_PATH']])
+            LOGGER.debug('Found existing NATRON_PLUGIN_PATH in os.environ...')
+            os.environ['NATRON_PLUGIN_PATH'] = os.pathsep.join(
+                [
+                    studio_na_paths,
+                    os.environ['NATRON_PLUGIN_PATH']
+                ]
+            )
         else:
-            logger.debug('No existing NATRON_PLUGIN_PATH in os.environ, creating...')
+            m = 'No existing NATRON_PLUGIN_PATH in os.environ, creating...'
+            LOGGER.debug(m)
             os.environ['NATRON_PLUGIN_PATH'] = '{}'.format(studio_na_paths)
 
         # --- Tell the user what's up...
@@ -480,25 +597,27 @@ class BeforeAppLaunch(tank.Hook):
                                header.
         """
         if user_title:
-            logger.debug(my_sep)
-            logger.debug(user_title)
-            logger.debug(my_sep)
+            LOGGER.debug(MY_SEP)
+            LOGGER.debug(user_title)
+            LOGGER.debug(MY_SEP)
         else:
-            logger.debug('Please provide a title string.')
+            LOGGER.debug('Please provide a title string.')
 
     def env_paths_sanity_check(self):
-        '''
+        """
         Print the lists of source paths to the Shotgun
         Desktop Console.
         @param str engine_setup: represents the DCC setup
                                  we want to check against,
                                  which may have unique
                                  path variables.
-        '''
+        """
         env_var_str = []
 
-        path_list = ['SYSTEM PATH',
-                    'PYTHONPATH',
+        path_list = [
+            'PATH',
+            'SYS.PATH',
+            'PYTHONPATH',
         ]
 
         # --- Per engine checks if required...
@@ -531,19 +650,36 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- Iterate over the paths...
         for path_item in path_list:
-            env_var_str.append(my_sep)
+            env_var_str.append(MY_SEP)
             env_var_str.append(path_item)
-            env_var_str.append(my_sep)
+            env_var_str.append(MY_SEP)
 
-            if path_item == 'SYSTEM PATH':
-                logger.debug('path_item: {}'.format(path_item))
+            if path_item == 'SYS.PATH':
                 for item in sys.path:
                     env_var_str.append(item)
             else:
                 for item in os.environ[path_item].split(';'):
                     env_var_str.append(item)
 
-        env_var_str.append(my_sep)
+        env_var_str.append(MY_SEP)
 
         for env_var_item in env_var_str:
-            logger.debug(env_var_item)
+            LOGGER.debug(env_var_item)
+
+    def _maya_arnold_version_bin_fix(self):
+        """
+        Get rid of the bad Arnold bin path from the PATH (mystery where it's
+        coming from).
+        """
+        if self._version != '2018':
+            bad_path = 'C:{0}solidangle{0}mtoadeploy{0}2018{0}bin'.format(
+                os.sep
+            )
+
+            _os_env_paths = os.environ['PATH'].split(';')
+            if bad_path in _os_env_paths:
+                _os_env_paths.remove(bad_path)
+                LOGGER.debug('Removed from PATH >> {}'.format(bad_path))
+                _os_env_path_str = os.pathsep.join(_os_env_paths)
+                os.environ['PATH'] = _os_env_path_str
+# ---eof
