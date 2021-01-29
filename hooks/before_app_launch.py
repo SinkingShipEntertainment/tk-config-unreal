@@ -294,7 +294,7 @@ class BeforeAppLaunch(tank.Hook):
                 os.sep
             )
             LOGGER.debug('arnold_bin > {}'.format(arnold_bin))
-            #TODO
+            # TODO
 
             # --- VRay (legacy, we don't actually use it,
             # --- but maybe for retrieving old Assets?)...
@@ -419,8 +419,39 @@ class BeforeAppLaunch(tank.Hook):
                         sub_dir
                     )
 
+            # --- SOUP OpenVDB...
+            soup_openvdb_home = '{0}{1}{2}'.format(
+                module_path,
+                os.sep,
+                'SOUPopenVDB'
+            )
+            LOGGER.debug('soup_openvdb_home >> {}'.format(soup_openvdb_home))
+            s_arn_keys = [
+                'ARNOLD_PLUGIN_PATH',
+                'MTOA_EXTENSIONS_PATH'
+            ]
+            for s_arn_key in s_arn_keys:
+                sub_dir = ''
+                if s_arn_key == s_arn_keys[0]:
+                    sub_dir = '{0}arnold{0}shaders'.format(os.sep)
+                if s_arn_key == s_arn_keys[1]:
+                    sub_dir = '{0}arnold{0}extensions'.format(os.sep)
+
+                if s_arn_key in os.environ.keys():
+                    os.environ[s_arn_key] = '{0}{1}{2}{3}'.format(
+                        os.environ[s_arn_key],
+                        os.pathsep,
+                        soup_openvdb_home,
+                        sub_dir
+                    )
+                else:
+                    os.environ[y_arn_key] = '{0}{1}{2}'.format(
+                        soup_openvdb_home,
+                        sub_dir
+                    )
+
             # --- Module path wrap-up (additions should be placed in
-            # --- the 'add_modules' *NOT* 'main_module_list')...
+            # --- 'add_modules' *NOT* 'main_module_list')...
             main_module_list = [
                 module_path,
                 yeti_home
@@ -430,7 +461,8 @@ class BeforeAppLaunch(tank.Hook):
                 'brSmoothWeights',
                 'iDeform',
                 'AtomsMaya',
-                'ziva'
+                'ziva',
+                'SOUPopenVDB'
             ]
 
             for add_module in add_modules:
