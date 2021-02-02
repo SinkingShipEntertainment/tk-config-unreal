@@ -222,7 +222,9 @@ settings.tk-multi-publish2.maya.asset_step:
 
 # shot step
 settings.tk-multi-publish2.maya.shot_step:
-  collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+  # collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+  # Comment out entry by Unreal config until we know why config doesn't load
+  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-maya/basic/collector.py"
   collector_settings:
       Work Template: maya_shot_work
   publish_plugins:
@@ -239,6 +241,10 @@ settings.tk-multi-publish2.maya.shot_step:
     hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
     settings:
         Publish Template: maya_shot_publish
+  - name: Publish to Shotgun (FBX)
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_fbx.py"
+    settings:
+      Publish Template: maya_shot_fbx_publish
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
 

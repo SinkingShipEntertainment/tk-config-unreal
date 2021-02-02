@@ -1,20 +1,28 @@
 # Copyright (c) 2017 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
+import re
+import sgtk
+import utils_api3
+
 import maya.cmds as cmds
 import maya.mel as mel
-import sgtk
+
+from python import util_reference
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
+# Define the fbx version of the export to use
+# Note: Two extra zeros are required at the end of the fbx version number..
+FBX_EXPORT_VERSION = 'FBX201100'
 
 class MayaFBXPublishPlugin(HookBaseClass):
     """
@@ -38,10 +46,10 @@ class MayaFBXPublishPlugin(HookBaseClass):
         """
 
         return """
-        <p>This plugin exports the Asset for the current session as an FBX file.
-        The scene will be exported to the path defined by this plugin's configured 
-        "Publish Template" setting.  The resulting FBX file can then be imported
-        into Unreal Engine via the Loader.</p>
+        <p>This plugin exports referenced Assets for the current session as an
+        FBX file. The scene will be exported to the path defined  by this 
+        plugin's configured "Publish Template" setting. The resulting FBX file 
+        can then be imported into Unreal Engine via the Loader.</p>
         """
 
     @property
@@ -88,8 +96,8 @@ class MayaFBXPublishPlugin(HookBaseClass):
         List of item types that this plugin is interested in.
 
         Only items matching entries in this list will be presented to the
-        accept() method. Strings can contain glob patters such as *, for example
-        ["maya.*", "file.maya"]
+        accept() method. Strings can contain glob patterns such as *,
+        for example ["maya.*", "file.maya"]
         """
         return ["maya.fbx"]
 
@@ -150,9 +158,16 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # natively.
         item.context_change_allowed = False
 
+        checked_value = True
+        # Let's uncheck the default fbx export item for the entire scene.
+        # We want to export individual assets instead.
+        if item.properties.get("file_path") is None:
+            checked_value = False
+            # TODO: Disable it from user interaction as well?
+
         return {
             "accepted": accepted,
-            "checked": True
+            "checked": checked_value
         }
 
     def validate(self, settings, item):
@@ -211,8 +226,139 @@ class MayaFBXPublishPlugin(HookBaseClass):
         if "version" in work_fields:
             item.properties["publish_version"] = work_fields["version"]
 
+        # Before publishing we need to target the actual sub-groups within the
+        # hierarchy to export and add that to our selection list.
+        sg_inst = utils_api3.ShotgunApi3()
+        self.filter_asset_type(item, sg_inst)
+        obj_type = item.properties.get("reference_type")
+        search_group = ['model', 'rig']
+
+        if obj_type is not None:
+            if "Pipeline" in obj_type:
+                for cam_shape in cmds.ls(type="camera"):
+                    if "TRACKCAM" in cam_shape:
+                        self.logger.debug('Referenced camera detected!')
+                        item.properties["export_groups"] = [cam_shape]
+            else:
+                export_grps = [
+                    self.get_export_group(item, group) for group in search_group
+                ]
+                # Sanity check that the list does not contain any None values.
+                # If there is, this means that the asset doesn't have the
+                # proper naming convention/hierarchy...
+                if not None in export_grps:
+                    item.properties['export_groups'] = export_grps
+                else:
+                    msg = 'Please check that the asset contains a "model"'
+                    msg += 'and "rig" group underneath the master group!'
+                    self.logger.debug('Could not find all groups to export!')
+                    self.logger.debug(msg)
+                    cmds.warning(msg)
+                    return False
+
+        # If there are instances of an asset in the scene, let's add this
+        # detail in the name of the fbx. i.e. Prop_RIG, Prop_RIG1, etc.
+        try:
+            obj_instance = re.findall(
+                r"(?<=_RIGRN)\w+",
+                item.properties.get('node_name')
+            )
+            # Note: obj_instance is mainly for debugging that we have the
+            # correct information when tweaking the fbx name.
+            item.properties['obj_instance'] = "".join(obj_instance)
+            item.properties['fbx_name'] = '{}{}'.format(
+                item.properties.get("asset_name"),
+                item.properties.get("obj_instance")
+            )
+        except:
+            # We don't do anything else if this isn't an instance
+            item.properties['fbx_name'] = item.properties.get('asset_name')
+
+        # Let's bake the name of the asset in the output fbx by
+        # inserting the name into the "publish_path" file path.
+        if item.properties.get("reference_type") is not None:
+            self.tweak_fbx_base_name(item, sg_inst)
+
+        # --- For debugging contents of item ---
+        self.logger.debug('== Item properties ==')
+        for key, val in item.properties.items():
+            self.logger.debug('{} => {}'.format(key, val))
+
         # run the base class validation
         return super(MayaFBXPublishPlugin, self).validate(settings, item)
+
+    def get_export_group(self, item, group_to_search):
+        """
+        Convenience function to grab the 'root' group - that is
+        the group we care about exporting within the hierarchy.
+
+        :param item: Item to process.
+        :param group_to_search: The search string for the group we want.
+        :returns: The full string name of the group. None otherwise.
+        """
+        group_to_select = None
+        sub_groups = cmds.listRelatives(item.properties.get('master_group'))
+
+        for group in sub_groups:
+            if group_to_search in group:
+                group_to_select = group
+                break
+
+        return group_to_select
+
+    def filter_asset_type(self, item, shotgun_instance):
+        """
+        Given a list of valid asset types, find out what type the item is.
+
+        :param shotgun_instance: Shotgun instance to query data from
+        :param item: Item to process
+        """
+        # Set an initial value first
+        item.properties["reference_type"] = None
+
+        # Handle default fbx item that is always present during a publish;
+        # that is the fbx representation of the maya file itself.
+        if item.properties.get("file_path") is None:
+            return
+
+        project = util_reference.get_project(util_reference.get_current_shot())
+        valid_asset_types = shotgun_instance.get_valid_asset_types(project)
+
+        # Let's add the asset type to the properties
+        for asset_type in valid_asset_types:
+            if asset_type in item.properties.get("file_path"):
+                item.properties["reference_type"] = asset_type
+                break
+
+    def tweak_fbx_base_name(self, item, shotgun_instance):
+        """
+        Tweak the fbx file name from default (which is the name of the
+        maya file) to the name of the asset.
+
+        :param shotgun_instance: Shotgun instance to query data from
+        :param item: Item to process
+        """
+        orig_name = os.path.basename(item.properties.get("publish_path"))
+
+        step =  util_reference.get_step(util_reference.get_current_shot())
+        delimiter = shotgun_instance.get_project_entity_name_delimiter(
+            my_proj=os.environ['CURR_PROJECT']
+        )
+        formatted_name = '{0}{1}{0}{2}'.format(
+            delimiter,
+            item.properties.get("fbx_name"),
+            step
+        )
+        new_name = orig_name.replace(
+            '{0}{1}'.format(delimiter, step),
+            formatted_name
+        )
+        new_fbx_path = os.path.join(
+            os.path.dirname(item.properties.get("publish_path")),
+            new_name
+        )
+        item.properties['publish_path'] = new_fbx_path
+        item.properties['path'] = new_fbx_path
 
     def publish(self, settings, item):
         """
@@ -223,7 +369,9 @@ class MayaFBXPublishPlugin(HookBaseClass):
             instances.
         :param item: Item to process
         """
-
+        self.logger.debug('publish: Attempting to publish => {}'.format(
+            item.properties.get('path'))
+        )
         publisher = self.parent
 
         # get the path to create and publish
@@ -232,23 +380,66 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # ensure the publish folder exists:
         publish_folder = os.path.dirname(publish_path)
         self.parent.ensure_folder_exists(publish_folder)
-        
-        # Export scene to FBX
+
+        # Let's select the groups we want to export
+        cmds.select(clear=True)
+        if item.properties.get('export_groups'):
+            for group in item.properties.get('export_groups'):
+                cmds.select(group, add=True)
+            select_flag = '-s'
+            additional_options = ';'.join([
+                "fbx",
+                "groups=1",
+                "ptgroups=1",
+                "materials=1",
+            ])
+        else:
+            select_flag = ''
+            additional_options = ''
+
+        # Run the export
+        self.export_fbx([
+            publish_path,
+            select_flag,
+            additional_options,
+            FBX_EXPORT_VERSION
+        ])
+
+        cmds.select(clear=True)
+
+        self.logger.debug('Publishing FBX to Shotgun')
+        # Publish the fbx to Shotgun
+        super(MayaFBXPublishPlugin, self).publish(settings, item)
+
+    def export_fbx(self, fbx_args):
+        """
+        Export to FBX given a list of arguments.
+
+        :param fbx_args: The list of arguments for fbx command to execute
+        :return: True if successful, False otherwise.
+        """
+        selected_groups = cmds.ls(sl=True)
+        self.logger.debug('Exporting => {}'.format(selected_groups))
+
         try:
-            self.logger.info("Exporting scene to FBX {}".format(publish_path))
             cmds.FBXResetExport()
             cmds.FBXExportSmoothingGroups('-v', True)
-            # Mel script equivalent: mel.eval('FBXExport -f "fbx_output_path"')
-            cmds.FBXExport('-f', publish_path)
-        except:
-            self.logger.error("Could not export scene to FBX")
+            # Bake animation into export
+            cmds.FBXExportBakeComplexAnimation('-v', True)
+            cmds.FBXExportGenerateLog('-v', False)
+            cmds.FBXExportFileVersion('-v', FBX_EXPORT_VERSION)
+            self.logger.debug('all fbx args => {}'.format(fbx_args))
+            cmd = "cmds.FBXExport('-f', {}, '-s')".format(fbx_args[0])
+            self.logger.debug('fbx_export_cmd: {}'.format(cmd))
+            cmds.FBXExport('-f', fbx_args[0], '-s')
+
+        except Exception as e:
+            self.logger.error(
+                "Could not export {} to FBX. {}".format(selected_groups, e)
+            )
             return False
 
-        # The file to publish is the FBX exported to the FBX output path
-        # item.properties["path"] = fbx_output_path
-            
-        # let the base class register the publish
-        super(MayaFBXPublishPlugin, self).publish(settings, item)
+        return True
 
 def _session_path():
     """
