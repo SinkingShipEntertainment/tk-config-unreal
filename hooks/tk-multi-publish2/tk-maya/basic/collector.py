@@ -115,13 +115,11 @@ class MayaSessionCollector(HookBaseClass):
         if cmds.ls(geometry=True, noIntermediate=True):
             self._collect_session_geometry(item)
 
-        # Add a custom collector for referenced objects (Props/Characters) in
-        # the current session. The goal here is to export the referenced
-        # objects in an ANIM shot as FBXs for use in Unreal.
-        # TODO: Test if this runs for any Maya scene in ANY step of the pipeline...
-        #   If so, should we only collect items inside of an ANIM step?
-        if cmds.ls(references=True):
-            self.collect_session_fbx(item)
+        # Add a custom collector for referenced assets in the current session.
+        # We want to export the referenced assets in an ANIM shot as FBXs
+        # for use in Unreal.
+        # if cmds.ls(references=True):
+        #     self.collect_session_fbx(item)
 
     def collect_current_maya_session(self, settings, parent_item):
         """
@@ -252,6 +250,12 @@ class MayaSessionCollector(HookBaseClass):
             # execution time.
             session_item.properties["work_template"] = work_template
             self.logger.debug("Work template defined for Maya collection.")
+
+        # Add a custom collector for referenced assets in the current session.
+        # We want to export the referenced assets in an ANIM shot as FBXs
+        # for use in Unreal.
+        if cmds.ls(references=True):
+            self.collect_session_fbx(session_item)
 
         self.logger.info("Collected current Maya scene")
 
