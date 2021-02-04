@@ -1,11 +1,11 @@
 # Copyright (c) 2017 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
@@ -39,7 +39,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         return """
         <p>This plugin exports the Asset for the current session as an FBX file.
-        The scene will be exported to the path defined by this plugin's configured 
+        The scene will be exported to the path defined by this plugin's configured
         "Publish Template" setting.  The resulting FBX file can then be imported
         into Unreal Engine via the Loader.</p>
         """
@@ -123,6 +123,10 @@ class MayaFBXPublishPlugin(HookBaseClass):
         publisher = self.parent
         template_name = settings["Publish Template"].value
 
+        # SSE: we want this off by default when the UI starts, see also return
+        # below (DW 2020-08-17)
+        checked = False
+
         # ensure a work file template is available on the parent item
         work_template = item.parent.properties.get("work_template")
         if not work_template:
@@ -152,7 +156,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         return {
             "accepted": accepted,
-            "checked": True
+            "checked": checked
         }
 
     def validate(self, settings, item):
@@ -232,7 +236,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # ensure the publish folder exists:
         publish_folder = os.path.dirname(publish_path)
         self.parent.ensure_folder_exists(publish_folder)
-        
+
         # Export scene to FBX
         try:
             self.logger.info("Exporting scene to FBX {}".format(publish_path))
@@ -246,7 +250,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         # The file to publish is the FBX exported to the FBX output path
         # item.properties["path"] = fbx_output_path
-            
+
         # let the base class register the publish
         super(MayaFBXPublishPlugin, self).publish(settings, item)
 

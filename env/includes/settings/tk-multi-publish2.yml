@@ -168,6 +168,7 @@ settings.tk-multi-publish2.mari.asset_step:
 # ---- Maya
 
 # asset step
+# SSE - Using collector & publish_file hooks for QCTool (DW 2021-01-21)
 settings.tk-multi-publish2.maya.asset_step:
   #collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
   # Comment out entry by Unreal config until we know why config doesn't load
@@ -176,7 +177,7 @@ settings.tk-multi-publish2.maya.asset_step:
       Work Template: maya_asset_work
   publish_plugins:
   - name: Publish to Shotgun
-    hook: "{self}/publish_file.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py"
     settings: {}
   - name: Upload for review
     hook: "{self}/upload_version.py"
@@ -185,7 +186,7 @@ settings.tk-multi-publish2.maya.asset_step:
     hook: "{engine}/tk-multi-publish2/basic/start_version_control.py"
     settings: {}
   - name: Publish to Shotgun
-    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
     settings:
         Publish Template: maya_asset_publish
 #  - name: Publish to Shotgun
@@ -194,19 +195,24 @@ settings.tk-multi-publish2.maya.asset_step:
 #        Publish Template: asset_alembic_cache
   # ABC publish (DW 2020-07-28)
   - name: Publish to Shotgun (Alembic)
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_abc.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_abc.py"
     settings:
         Publish Template: asset_alembic_cache
   # ASS publish (DW 2020-07-28)
   - name: Publish to Shotgun (Arnold Standin)
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_ass.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_ass.py"
     settings:
         Publish Template: asset_arnold_standin
-  # SSE - comment out entry by Unreal until config proves to work (Shervin)
+  # FBX publish
   - name: Publish to Shotgun (FBX)
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_fbx.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_fbx.py"
     settings:
         Publish Template: maya_asset_fbx_publish
+  # Texture "publish" (DW 2020-09-18)
+  - name: Publish Session Textures
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_textures.py"
+    settings:
+        Publish Template: asset_publish_tex_list
   # - name: Publish and Submit for Review
   #   hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_turntable.py"
   #   settings:
@@ -217,17 +223,21 @@ settings.tk-multi-publish2.maya.asset_step:
   #       Turntable Map Path: "/Game/turntable/level/turntable.umap"
   #       Sequence Path: "/Game/turntable/sequence/turntable_sequence.turntable_sequence"
   #       Turntable Assets Path: "/Game/maya_turntable_assets/"   # note the trailing '/' must be included
+  # SSE - Using post_phase to migrate legacy+ config post_publish methods (DW 2020-08-11)
+  post_phase: "{self}/post_phase.py:{config}/tk-multi-publish2/post_phase.py"
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
 
-# shot step
-settings.tk-multi-publish2.maya.shot_step:
-  collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+# asset step surfacing (SSE - DW 2020-10-01)
+# SSE - Using collector & publish_file hooks for QCTool (DW 2021-01-21)
+settings.tk-multi-publish2.maya.asset_step_surfacing:
+  #collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-maya/basic/collector.py"
   collector_settings:
-      Work Template: maya_shot_work
+      Work Template: maya_asset_work_surfacing_arnold
   publish_plugins:
   - name: Publish to Shotgun
-    hook: "{self}/publish_file.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py"
     settings: {}
   - name: Upload for review
     hook: "{self}/upload_version.py"
@@ -236,9 +246,42 @@ settings.tk-multi-publish2.maya.shot_step:
     hook: "{engine}/tk-multi-publish2/basic/start_version_control.py"
     settings: {}
   - name: Publish to Shotgun
-    hook: "{self}/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
+    settings:
+        Publish Template: maya_asset_publish_surfacing_arnold
+  # ASS publish (DW 2020-07-28)
+  - name: Publish to Shotgun (Arnold Standin)
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_ass.py"
+    settings:
+        Publish Template: asset_arnold_standin_surfacing
+  # SSE - Using post_phase to migrate legacy+ config post_publish methods (DW 2020-08-11)
+  post_phase: "{self}/post_phase.py:{config}/tk-multi-publish2/post_phase.py"
+  help_url: *help_url
+  location: "@apps.tk-multi-publish2.location"
+
+# shot step
+# SSE - Using collector & publish_file hooks for QCTool (DW 2021-01-21)
+settings.tk-multi-publish2.maya.shot_step:
+  # collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-maya/basic/collector.py"
+  collector_settings:
+      Work Template: maya_shot_work
+  publish_plugins:
+  - name: Publish to Shotgun
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py"
+    settings: {}
+  - name: Upload for review
+    hook: "{self}/upload_version.py"
+    settings: {}
+  - name: Begin file versioning
+    hook: "{engine}/tk-multi-publish2/basic/start_version_control.py"
+    settings: {}
+  - name: Publish to Shotgun
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
     settings:
         Publish Template: maya_shot_publish
+  # SSE - Using post_phase to migrate legacy+ config post_publish methods (DW 2020-08-11)
+  post_phase: "{self}/post_phase.py:{config}/tk-multi-publish2/post_phase.py"
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
 
