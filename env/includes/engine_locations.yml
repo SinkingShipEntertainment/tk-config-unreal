@@ -34,7 +34,7 @@ engines.tk-aftereffects.location:
 engines.tk-alias.location:
   type: app_store
   name: tk-alias
-  version: v2.0.6
+  version: v2.0.8
 
 # Desktop
 engines.tk-desktop.location:
@@ -106,14 +106,14 @@ engines.tk-shotgun.location:
 engines.tk-vred.location:
   type: app_store
   name: tk-vred
-  version: v2.0.6
+  version: v2.0.8
 
 # Unreal
 engines.tk-unreal.location:
   type: github_release
   organization: ue4plugins
   repository: tk-unreal
-  version: v1.0.1
+  version: v1.1.0
 
 # -------------------------------------------- #
 # --- SSE additions below (-DW 2020-02-04) --- #
