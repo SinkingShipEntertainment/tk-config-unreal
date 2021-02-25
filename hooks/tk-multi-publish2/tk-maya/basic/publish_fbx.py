@@ -22,7 +22,8 @@ HookBaseClass = sgtk.get_hook_baseclass()
 
 # Define the fbx version of the export to use
 # Note: Two extra zeros are required at the end of the fbx version number..
-FBX_EXPORT_VERSION = 'FBX201100'
+# More info here: https://docs.unrealengine.com/en-US/WorkingWithContent/Importing/FBX/index.html
+FBX_EXPORT_VERSION = 'FBX201800'
 
 class MayaFBXPublishPlugin(HookBaseClass):
     """
