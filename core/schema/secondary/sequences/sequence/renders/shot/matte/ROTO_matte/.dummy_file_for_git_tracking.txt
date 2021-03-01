@@ -1,0 +1,2 @@
+This file exists because otherwise git ignores empty folders.
+DW 2021-03-01
