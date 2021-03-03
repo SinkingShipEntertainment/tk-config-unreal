@@ -119,8 +119,8 @@ class MayaSessionCollector(HookBaseClass):
         # Add a custom collector for referenced assets in the current session.
         # We want to export the referenced assets in an ANIM shot as FBXs
         # for use in Unreal.
-        # if cmds.ls(references=True):
-        #     self.collect_session_fbx(item)
+        if cmds.ls(references=True):
+            self.collect_session_fbx(item)
 
     def collect_current_maya_session(self, settings, parent_item):
         """Creates an item that represents the current maya session.
@@ -372,7 +372,7 @@ class MayaSessionCollector(HookBaseClass):
 
             fbx_item.set_icon_from_path(icon_path)
 
-            # Add additional into to item properties for the validation process
+            # Add additional info to item properties for the validation process
             # Note: The "file_path" info will be used to filter the
             #       sub-group(s) within the referenced object
             #       hierarchy that we want to export.
