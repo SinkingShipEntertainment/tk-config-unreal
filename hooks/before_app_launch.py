@@ -547,7 +547,6 @@ class BeforeAppLaunch(tank.Hook):
         else:
             LOGGER.debug('No existing NUKE_PATH in os.environ, creating...')
             os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
-        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
