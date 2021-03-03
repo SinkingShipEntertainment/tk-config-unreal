@@ -47,10 +47,10 @@ class MayaFBXPublishPlugin(HookBaseClass):
         """
 
         return """
-        <p>This plugin exports referenced Assets for the current session as an
-        FBX file. The scene will be exported to the path defined  by this 
-        plugin's configured "Publish Template" setting. The resulting FBX file 
-        can then be imported into Unreal Engine via the Loader.</p>
+        <p>This plugin exports the Asset for the current session as an FBX file.
+        The scene will be exported to the path defined by this plugin's configured
+        "Publish Template" setting.  The resulting FBX file can then be imported
+        into Unreal Engine via the Loader.</p>
         """
 
     @property
@@ -227,19 +227,33 @@ class MayaFBXPublishPlugin(HookBaseClass):
         if "version" in work_fields:
             item.properties["publish_version"] = work_fields["version"]
 
-        # Before publishing we need to target the actual sub-groups within the
-        # hierarchy to export and add that to our selection list.
+        # --- SSE: Before publishing we need to target the actual sub-groups
+        # --- within the hierarchy to export and add that to our selection list.
+        # TODO: Determine the type of export to perform.
+        #   If these are referenced assets, we export fbx with animation
+        #   If not, we run a vanilla export (default logic)
         sg_inst = utils_api3.ShotgunApi3()
         self.filter_asset_type(item, sg_inst)
         obj_type = item.properties.get("reference_type")
         search_group = ['model', 'rig']
+        # TODO: Move the accepted types to a more suitable location
+        accepted_types = ['Character', 'Prop', 'Environment', 'Pipeline']
 
-        if obj_type is not None:
+        if obj_type:
+            # Handle cameras
             if "Pipeline" in obj_type:
                 for cam_shape in cmds.ls(type="camera"):
                     if "TRACKCAM" in cam_shape:
                         self.logger.debug('Referenced camera detected!')
                         item.properties["export_groups"] = [cam_shape]
+
+            elif "Environment" in obj_type:
+                # TODO: Should this more granular and require a "model" group
+                #   to exist in the hierarchy?
+                item.properties["export_groups"] = item.properties.get(
+                    'master_group'
+                )
+
             else:
                 export_grps = [
                     self.get_export_group(item, group) for group in search_group
@@ -319,11 +333,28 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         # Handle default fbx item that is always present during a publish;
         # that is the fbx representation of the maya file itself.
-        if item.properties.get("file_path") is None:
+        if not item.properties.get("file_path"):
             return
 
         project = util_reference.get_project(util_reference.get_current_shot())
         valid_asset_types = shotgun_instance.get_valid_asset_types(project)
+
+        # valid asset types = > [
+        #   'Add-on',
+        #   'AlienTerrain',
+        #   'AlienVegetation',
+        #   'Character',
+        #   'DigitalMP',
+        #   'Dynamic',
+        #   'Effect',
+        #   'Environment',
+        #   'Graphics',
+        #   'Pipeline',
+        #   'Prop',
+        #   'Proxy',
+        #   'Terrain',
+        #   'Vegetation',
+        #   'Vehicle']
 
         # Let's add the asset type to the properties
         for asset_type in valid_asset_types:
