@@ -35,6 +35,7 @@ settings.tk-alias.asset:
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   location: "@engines.tk-alias.location"
+
 # asset_step
 settings.tk-alias.asset_step:
   apps:
@@ -55,6 +56,7 @@ settings.tk-alias.asset_step:
   - {app_instance: tk-multi-workfiles2, name: File Save...}
   - {app_instance: tk-multi-publish2, name: Publish...}
   location: "@engines.tk-alias.location"
+
 # project
 settings.tk-alias.project:
   apps:
@@ -67,6 +69,7 @@ settings.tk-alias.project:
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   location: "@engines.tk-alias.location"
+
 frameworks:
   tk-framework-widget_v1.x.x:
     location:
