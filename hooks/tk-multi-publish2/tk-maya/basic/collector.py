@@ -116,12 +116,6 @@ class MayaSessionCollector(HookBaseClass):
         # if cmds.ls(geometry=True, noIntermediate=True):
         #     self._collect_session_geometry(item)
 
-        # Add a custom collector for referenced assets in the current session.
-        # We want to export the referenced assets in an ANIM shot as FBXs
-        # for use in Unreal.
-        if cmds.ls(references=True):
-            self.collect_session_fbx(item)
-
     def collect_current_maya_session(self, settings, parent_item):
         """Creates an item that represents the current maya session.
 
