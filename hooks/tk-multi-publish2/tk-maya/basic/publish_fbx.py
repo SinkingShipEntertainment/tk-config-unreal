@@ -250,9 +250,9 @@ class MayaFBXPublishPlugin(HookBaseClass):
             elif "Environment" in obj_type:
                 # TODO: Should this more granular and require a "model" group
                 #   to exist in the hierarchy?
-                item.properties["export_groups"] = item.properties.get(
+                item.properties["export_groups"] = [item.properties.get(
                     'master_group'
-                )
+                )]
 
             else:
                 export_grps = [
