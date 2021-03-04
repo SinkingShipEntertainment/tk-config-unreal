@@ -115,6 +115,8 @@ class PostPhaseHook(HookBaseClass):
         if e_type == 'Shot':
             # pipeline steps for Shot, in order
             # (see 'shot methods', below)
+            if p_step == 'Previz':
+                self.post_publish_maya_prvz(scene_name, wk_fields)
             if p_step == 'Tracking & Layout':
                 self.post_publish_maya_tlo(scene_name, wk_fields)
             if p_step == 'Animation':
@@ -288,12 +290,35 @@ class PostPhaseHook(HookBaseClass):
     ###########################################################################
     # shot methods - maya                                                     #
     ###########################################################################
+    def post_publish_maya_prvz(self, scene_name, wk_fields):
+        """Create the 'initial TLO' file when a Previz publish is triggered.
+        Uses the 'initial LIGHT' concept as inspiration.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
+        m = '{} post_publish_maya_prvz'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # incoming fields/values for debug
+        self._log_scene(scene_name)
+        self._log_fields(wk_fields)
+
+        # import & call method
+        # TODO: try/except
+        from python import publish_previz
+        reload(publish_previz)
+        publish_previz.create_initial_tlo_file3(scene_name, wk_fields)
+
     def post_publish_maya_tlo(self, scene_name, wk_fields):
         """Copies the TLO file to a matching ANIM file, in the current Shotgun
         user's work directory for the destination Pipeline Step.
         NOTE: we could potentially have it Publish the ANIM file (an 'initial
         anim file'), but for the short term we'll just mimic the legacy+
-        behaviour of a simple file copy.
+        behaviour of a simple file copy (see newer method
+        post_publish_maya_prvz, above).
 
         Args:
             scene_name (str): The full path to the curently open Maya file.
