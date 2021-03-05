@@ -316,9 +316,9 @@ class PostPhaseHook(HookBaseClass):
         """Copies the TLO file to a matching ANIM file, in the current Shotgun
         user's work directory for the destination Pipeline Step.
         NOTE: we could potentially have it Publish the ANIM file (an 'initial
-        anim file'), but for the short term we'll just mimic the legacy+
-        behaviour of a simple file copy (see newer method
-        post_publish_maya_prvz, above).
+        anim file' - see newer method post_publish_maya_prvz, above, for a
+        related example), but for the short term we'll just mimic the legacy+
+        behaviour of a simple file copy.
 
         Args:
             scene_name (str): The full path to the curently open Maya file.
