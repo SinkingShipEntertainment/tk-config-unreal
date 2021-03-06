@@ -105,7 +105,7 @@ class PostPhaseHook(HookBaseClass):
                 self.post_publish_maya_mod(scene_name, wk_fields)
             if p_step == 'Rigging':
                 self.post_publish_maya_rig(scene_name, wk_fields)
-            if p_step == 'Texturing':
+            if p_step == 'Texturing':  # < NOTE: this step is now deprecated
                 pass
             if p_step == 'Surfacing':
                 self.post_publish_maya_surf(scene_name, wk_fields)

@@ -225,7 +225,8 @@ class MayaSessionCollector(HookBaseClass):
 
         # texture handling
         p_step = self.parent.context.step['name']
-        if p_step == 'Texturing':
+        # if p_step == 'Texturing':
+        if p_step == 'Surfacing':
             tex_item = session_item.create_item(
                 "maya.textures",
                 "Textures",
