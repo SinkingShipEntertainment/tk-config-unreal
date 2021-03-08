@@ -78,3 +78,9 @@ frameworks:
       version: v1.1.0
       type: github_release
       repository: tk-framework-unrealqt
+
+  tk-framework-imgspc:
+    location:
+      type: dev # git
+      path: X:/dev/ss_dev_baptiste/tk-framework-imgspc
+      # version: v0.1

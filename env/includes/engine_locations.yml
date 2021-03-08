@@ -108,13 +108,6 @@ engines.tk-vred.location:
   name: tk-vred
   version: v2.0.8
 
-# Unreal
-engines.tk-unreal.location:
-  type: github_release
-  organization: ue4plugins
-  repository: tk-unreal
-  version: v1.1.0
-
 # -------------------------------------------- #
 # --- SSE additions below (-DW 2020-02-04) --- #
 # -------------------------------------------- #
@@ -124,3 +117,9 @@ engines.tk-natron.location:
   branch: master
   path: https://github.com/diegogarciahuerta/tk-natron.git
   version: v1.0.1
+
+# Unreal
+engines.tk-unreal.location:
+  type: path
+  path: X:/dev/ss_dev_baptiste/tk-unreal-imgspc
+  version: v0.1
