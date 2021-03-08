@@ -280,6 +280,10 @@ settings.tk-multi-publish2.maya.shot_step:
     hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
     settings:
         Publish Template: maya_shot_publish
+  - name: Publish to Shotgun (FBX)
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_fbx.py"
+    settings:
+      Publish Template: maya_shot_fbx_publish
   # SSE - Using post_phase to migrate legacy+ config post_publish methods (DW 2020-08-11)
   post_phase: "{self}/post_phase.py:{config}/tk-multi-publish2/post_phase.py"
   help_url: *help_url
