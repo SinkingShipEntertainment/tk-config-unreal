@@ -267,8 +267,11 @@ class MayaSessionCollector(HookBaseClass):
         # Add a custom collector for referenced assets in the current session.
         # We want to export the referenced assets in an ANIM shot as FBXs
         # for use in Unreal.
-        if cmds.ls(references=True):
-            self.collect_session_fbx(session_item)
+        work_fields = work_template.get_fields(path)
+        if 'ANIM' in work_fields['Step']:
+            # We only want to collect publishable items in an ANIM step
+            if cmds.ls(references=True):
+                self.collect_session_fbx(session_item)
 
         self.logger.info("Collected current Maya scene")
 
@@ -373,15 +376,6 @@ class MayaSessionCollector(HookBaseClass):
             fbx_item.properties["file_path"] = obj_path
             fbx_item.properties["node_name"] = obj['node_name']
             fbx_item.properties["asset_name"] = obj['node_name'].split('_')[0]
-
-            # Feed in the the master group node of the reference obj.
-            # i.e. Character_RIG:master or Prop_RIG:master
-            obj_nodes = cmds.referenceQuery(obj['node_name'], nodes=True)
-            for node in obj_nodes:
-                # We only want to target the `master` group.
-                if "master" in node:
-                    fbx_item.properties['master_group'] = node
-                    break
 
     def collect_playblasts(self, parent_item, project_root):
         """Creates items for quicktime playblasts.
