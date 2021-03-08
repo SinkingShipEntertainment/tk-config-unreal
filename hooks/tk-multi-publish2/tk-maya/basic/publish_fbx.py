@@ -24,6 +24,7 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # Note: Two extra zeros are required at the end of the fbx version number..
 # More info here: https://docs.unrealengine.com/en-US/WorkingWithContent/Importing/FBX/index.html
 FBX_EXPORT_VERSION = 'FBX201800'
+ACCEPTED_ASSET_TYPES = ['Character', 'Prop', 'Environment', 'Pipeline']
 
 class MayaFBXPublishPlugin(HookBaseClass):
     """
@@ -132,6 +133,10 @@ class MayaFBXPublishPlugin(HookBaseClass):
         publisher = self.parent
         template_name = settings["Publish Template"].value
 
+        # SSE: we want this off by default when the UI starts, see also return
+        # below (DW 2020-08-17)
+        checked = False
+
         # ensure a work file template is available on the parent item
         work_template = item.parent.properties.get("work_template")
         if not work_template:
@@ -159,16 +164,21 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # natively.
         item.context_change_allowed = False
 
-        checked_value = True
-        # Let's uncheck the default fbx export item for the entire scene.
-        # We want to export individual assets instead.
-        if item.properties.get("file_path") is None:
-            checked_value = False
-            # TODO: Disable it from user interaction as well?
+        path = _session_path()
+        work_template = item.parent.properties.get("work_template")
+        work_fields = work_template.get_fields(path)
+        if 'ANIM' in work_fields['Step']:
+            # Let's uncheck the default fbx export item for the entire scene.
+            # We want to export individual assets instead.
+            if item.properties.get("file_path") is None:
+                checked = False
+            else:
+                # In an ANIM shot check everything else that is accepted
+                checked = True
 
         return {
             "accepted": accepted,
-            "checked": checked_value
+            "checked": checked
         }
 
     def validate(self, settings, item):
@@ -227,19 +237,36 @@ class MayaFBXPublishPlugin(HookBaseClass):
         if "version" in work_fields:
             item.properties["publish_version"] = work_fields["version"]
 
-        # --- SSE: Before publishing we need to target the actual sub-groups
-        # --- within the hierarchy to export and add that to our selection list.
-        # TODO: Determine the type of export to perform.
-        #   If these are referenced assets, we export fbx with animation
-        #   If not, we run a vanilla export (default logic)
+        if 'ANIM' in work_fields['Step']:
+            # Let's add the step in the item properties so we know what kind
+            # of fbx export to use (i.e. export selected or export all)
+            item.properties['step'] = work_fields['Step']
+            self.validate_references_in_anim_step(item)
+
+        # run the base class validation
+        return super(MayaFBXPublishPlugin, self).validate(settings, item)
+
+    def validate_references_in_anim_step(self, item):
+        """
+        Validate references in an anim scene.
+
+        :param item: Item to process
+        :return:
+        """
+        self.get_master_group_node(item)
+
         sg_inst = utils_api3.ShotgunApi3()
         self.filter_asset_type(item, sg_inst)
         obj_type = item.properties.get("reference_type")
         search_group = ['model', 'rig']
-        # TODO: Move the accepted types to a more suitable location
-        accepted_types = ['Character', 'Prop', 'Environment', 'Pipeline']
 
         if obj_type:
+            if not obj_type in ACCEPTED_ASSET_TYPES:
+                # We don't want to allow publishing of any other types except
+                # the ones in the list
+                self.logger.debug('Invalid asset type => {}'.format(obj_type))
+                return False
+
             # Handle cameras
             if "Pipeline" in obj_type:
                 for cam_shape in cmds.ls(type="camera"):
@@ -248,7 +275,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
                         item.properties["export_groups"] = [cam_shape]
 
             elif "Environment" in obj_type:
-                # TODO: Should this more granular and require a "model" group
+                # TODO: Make this more granular and require a "model" group
                 #   to exist in the hierarchy?
                 item.properties["export_groups"] = [item.properties.get(
                     'master_group'
@@ -291,7 +318,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         # Let's bake the name of the asset in the output fbx by
         # inserting the name into the "publish_path" file path.
-        if item.properties.get("reference_type") is not None:
+        if item.properties.get("reference_type"):
             self.tweak_fbx_base_name(item, sg_inst)
 
         # --- For debugging contents of item ---
@@ -299,8 +326,23 @@ class MayaFBXPublishPlugin(HookBaseClass):
         for key, val in item.properties.items():
             self.logger.debug('{} => {}'.format(key, val))
 
-        # run the base class validation
-        return super(MayaFBXPublishPlugin, self).validate(settings, item)
+    def get_master_group_node(self, item):
+        """
+        Grab the name of the master group.
+
+        :param item: Item to process
+        :return: The master group node name
+        """
+        # Feed in the the master group node of the reference obj.
+        # i.e. Character_RIG:master or Prop_RIG:master
+        obj_nodes = cmds.referenceQuery(
+            item.properties['node_name'], nodes=True
+        )
+        for node in obj_nodes:
+            # We only want to target the `master` group.
+            if "master" in node:
+                item.properties['master_group'] = node
+                break
 
     def get_export_group(self, item, group_to_search):
         """
@@ -338,23 +380,6 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         project = util_reference.get_project(util_reference.get_current_shot())
         valid_asset_types = shotgun_instance.get_valid_asset_types(project)
-
-        # valid asset types = > [
-        #   'Add-on',
-        #   'AlienTerrain',
-        #   'AlienVegetation',
-        #   'Character',
-        #   'DigitalMP',
-        #   'Dynamic',
-        #   'Effect',
-        #   'Environment',
-        #   'Graphics',
-        #   'Pipeline',
-        #   'Prop',
-        #   'Proxy',
-        #   'Terrain',
-        #   'Vegetation',
-        #   'Vehicle']
 
         # Let's add the asset type to the properties
         for asset_type in valid_asset_types:
@@ -415,19 +440,23 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         # Let's select the groups we want to export
         cmds.select(clear=True)
-        if item.properties.get('export_groups'):
-            for group in item.properties.get('export_groups'):
-                cmds.select(group, add=True)
-            select_flag = '-s'
-            additional_options = ';'.join([
-                "fbx",
-                "groups=1",
-                "ptgroups=1",
-                "materials=1",
-            ])
-        else:
-            select_flag = ''
-            additional_options = ''
+
+        select_flag = ''
+        additional_options = ''
+        try:
+            if item.properties.get('step'):
+                for group in item.properties.get('export_groups'):
+                    cmds.select(group, add=True)
+                select_flag = '-s'
+                additional_options = ';'.join([
+                    "fbx",
+                    "groups=1",
+                    "ptgroups=1",
+                    "materials=1",
+                ])
+        except:
+            # Handle a default fbx publish
+            self.logger.debug('Running vanilla fbx export')
 
         # Run the export
         self.export_fbx([
@@ -461,9 +490,11 @@ class MayaFBXPublishPlugin(HookBaseClass):
             cmds.FBXExportGenerateLog('-v', False)
             cmds.FBXExportFileVersion('-v', FBX_EXPORT_VERSION)
             self.logger.debug('all fbx args => {}'.format(fbx_args))
-            cmd = "cmds.FBXExport('-f', {}, '-s')".format(fbx_args[0])
+            cmd = "cmds.FBXExport('-f', {0}, {1})".format(
+                fbx_args[0], fbx_args[1]
+            )
             self.logger.debug('fbx_export_cmd: {}'.format(cmd))
-            cmds.FBXExport('-f', fbx_args[0], '-s')
+            cmds.FBXExport('-f', fbx_args[0], fbx_args[1])
 
         except Exception as e:
             self.logger.error(
