@@ -20,6 +20,9 @@ import os
 import tank
 
 
+CONFIG_SITE_PACKAGES = "X:/tools/projects/HoneyBadger/HoneyBadger_pipeline_2_5_master_dev_repo/unreal/site-packages"
+
+
 class BeforeAppLaunch(tank.Hook):
     """
     Hook to set up the system prior to app launch.
@@ -44,10 +47,11 @@ class BeforeAppLaunch(tank.Hook):
         # NB: Adding to sys.path (e.g. with `site.addsitepackage`) won't work,
         # this Hook is executed by Shotgun Desktop's Python interpreter, while
         # Unreal has its own Python interpreter.
-        super(BeforeAppLaunch, self).execute()#app_path, app_args, version, engine_name, software_entity, **kwargs)
-        config_site_packages = os.path.join(
-            self.sgtk.configuration_descriptor.get_config_folder(),
-            "site-packages",
-        )
+        super(BeforeAppLaunch, self).execute()
+        config_site_packages = CONFIG_SITE_PACKAGES
+        # config_site_packages = os.path.join(
+        #     self.sgtk.configuration_descriptor.get_config_folder(),
+        #     "site-packages",
+        # )
         if not config_site_packages in os.environ.get("PYTHONPATH", ""):
             os.environ["PYTHONPATH"] += os.pathsep + config_site_packages
