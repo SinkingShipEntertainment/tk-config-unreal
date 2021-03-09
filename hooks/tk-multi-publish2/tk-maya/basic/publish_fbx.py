@@ -298,8 +298,9 @@ class MayaFBXPublishPlugin(HookBaseClass):
                     cmds.warning(msg)
                     return False
 
-        # If there are instances of an asset in the scene, let's add this
-        # detail in the name of the fbx. i.e. Prop_RIG, Prop_RIG1, etc.
+        # If there are multiple references of the same asset in the scene,
+        # let's add this detail in the name of the fbx.
+        # i.e. Prop_RIG, Prop_RIG1, etc.
         try:
             obj_instance = re.findall(
                 r"(?<=_RIGRN)\w+",
@@ -443,11 +444,13 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         select_flag = ''
         additional_options = ''
+        export_animation = False
         try:
             if item.properties.get('step'):
                 for group in item.properties.get('export_groups'):
                     cmds.select(group, add=True)
                 select_flag = '-s'
+                export_animation = True
                 additional_options = ';'.join([
                     "fbx",
                     "groups=1",
@@ -463,7 +466,8 @@ class MayaFBXPublishPlugin(HookBaseClass):
             publish_path,
             select_flag,
             additional_options,
-            FBX_EXPORT_VERSION
+            export_animation,
+            FBX_EXPORT_VERSION,
         ])
 
         cmds.select(clear=True)
@@ -485,8 +489,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
         try:
             cmds.FBXResetExport()
             cmds.FBXExportSmoothingGroups('-v', True)
-            # Bake animation into export
-            cmds.FBXExportBakeComplexAnimation('-v', True)
+            cmds.FBXExportBakeComplexAnimation('-v', fbx_args[3])
             cmds.FBXExportGenerateLog('-v', False)
             cmds.FBXExportFileVersion('-v', FBX_EXPORT_VERSION)
             self.logger.debug('all fbx args => {}'.format(fbx_args))
