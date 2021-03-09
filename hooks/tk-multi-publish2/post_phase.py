@@ -122,7 +122,7 @@ class PostPhaseHook(HookBaseClass):
             if p_step == 'Animation':
                 self.post_publish_maya_anim(scene_name, wk_fields)
             if p_step == 'Character Finaling':
-                pass
+                self.post_publish_maya_cfx(scene_name, wk_fields)
             if p_step == 'FX':
                 self.post_publish_maya_fx_shot(scene_name, wk_fields)
             if p_step == 'Lighting':
@@ -356,7 +356,7 @@ class PostPhaseHook(HookBaseClass):
         self._copy_file(scene_name, anim_file)
 
     def post_publish_maya_anim(self, scene_name, wk_fields):
-        """For the 'Animation'/ANIM Shot Publishes, submit the initial Alembic
+        """For the 'Animation'/ANIM Shot Publishes, submit the starting Alembic
         and Yeti caching process as a Deadline Job on the render farm.
 
         Args:
@@ -371,11 +371,46 @@ class PostPhaseHook(HookBaseClass):
         self._log_scene(scene_name)
         self._log_fields(wk_fields)
 
-        # submit the deadline job
-        # TODO: try/except
+        # submit the deadline job for ANIM
+        # TODO: try/except?
+        self.logger.debug('Submit the deadline job for ANIM...')
         from python import publish_anim
         reload(publish_anim)
         publish_anim.run_publish(submit=True)
+
+        m = '{} Submitted ABC/Yeti cache Job to Deadline'.format(
+            SSE_HEADER
+        )
+        self.logger.debug(m)
+
+        # create the initial file for CFX
+        # TODO: try/except?
+        self.logger.debug('Create the "initial" file for CFX')
+        from python import publish_cfx
+        reload(publish_cfx)
+        publish_cfx.create_initial_cfx_file(scene_name)
+
+    def post_publish_maya_cfx(self, scene_name, wk_fields):
+        """For the 'Character Finaling'/CFX Shot Publishes, submit the starting
+        Alembic and Yeti caching process as a Deadline Job on the render farm.
+
+        Args:
+            scene_name (str): The full path to the curently open Maya file.
+            wk_fields (dict): Fields provided by the Shotgun Toolkit template
+                for the Project.
+        """
+        m = '{} post_publish_maya_cfx'.format(SSE_HEADER)
+        self.logger.debug(m)
+
+        # incoming fields/values for debug
+        self._log_scene(scene_name)
+        self._log_fields(wk_fields)
+
+        # submit the deadline job for CFX
+        # TODO: try/except?
+        from python import publish_cfx
+        reload(publish_cfx)
+        publish_cfx.run_publish(submit=True)
 
         m = '{} Submitted ABC/Yeti cache Job to Deadline'.format(
             SSE_HEADER
