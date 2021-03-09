@@ -70,7 +70,8 @@ class MayaSessionCollector(HookBaseClass):
         """
         # intercept before collection to run the qctool checks
         # (DW 2020-08-19)
-        self.run_qc_tool()
+        if parent_item.context.step['name'] != 'Previz':
+            self.run_qc_tool()
 
         # create an item representing the current maya session
         item = self.collect_current_maya_session(settings, parent_item)
@@ -224,7 +225,8 @@ class MayaSessionCollector(HookBaseClass):
 
         # texture handling
         p_step = self.parent.context.step['name']
-        if p_step == 'Texturing':
+        # if p_step == 'Texturing':
+        if p_step == 'Surfacing':
             tex_item = session_item.create_item(
                 "maya.textures",
                 "Textures",

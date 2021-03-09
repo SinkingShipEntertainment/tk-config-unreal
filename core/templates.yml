@@ -701,6 +701,15 @@ paths:
     nuke_shot_render_movie:
         definition: '@shot_root/review/{Shot}_{name}_{nuke.output}_v{version}.mov'
 
+    # --- SSE: Various output directories for multi-channel mattes for
+    # --- different use cases (DW 2021-02-11)
+    nuke_output_matte_root:
+        definition: '@sequence_root/renders/{Shot}/matte'
+        root_name: 'secondary'
+    nuke_output_rgb_matte_exr:
+        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE.{SEQ}.exr'
+        root_name: 'secondary'
+
     #
     # Hiero
     #
