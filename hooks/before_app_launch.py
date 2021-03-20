@@ -450,6 +450,19 @@ class BeforeAppLaunch(tank.Hook):
                         sub_dir
                     )
 
+            # --- HoudiniEngine...
+            houdiniengine_home = '{0}{1}{2}'.format(
+                module_path,
+                os.sep,
+                'houdiniEngine'
+            )
+            os.environ['PATH'] = '{0}{1}{2}{3}plug-ins'.format(
+                os.environ['PATH'],
+                os.pathsep,
+                houdiniengine_home,
+                os.sep
+            )
+
             # --- Module path wrap-up (additions should be placed in
             # --- 'add_modules' *NOT* 'main_module_list')...
             main_module_list = [
@@ -462,7 +475,8 @@ class BeforeAppLaunch(tank.Hook):
                 'iDeform',
                 'AtomsMaya',
                 'ziva',
-                'SOUPopenVDB'
+                'SOUPopenVDB',
+                'houdiniEngine'
             ]
 
             for add_module in add_modules:
