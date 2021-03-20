@@ -450,18 +450,18 @@ class BeforeAppLaunch(tank.Hook):
                         sub_dir
                     )
 
-            # --- HoudiniEngine...
-            houdiniengine_home = '{0}{1}{2}'.format(
-                module_path,
-                os.sep,
-                'houdiniEngine'
-            )
-            os.environ['PATH'] = '{0}{1}{2}{3}plug-ins'.format(
-                os.environ['PATH'],
-                os.pathsep,
-                houdiniengine_home,
-                os.sep
-            )
+            # --- HoudiniEngine (again more weirdness with the Maya .mod file,
+            # --- which has this defined there but seems to be ignored, so we
+            # --- do it here... DW 2021-03-19)
+            h_ver = '18.0.597'
+            h_bin = 'C:/Program Files/Side Effects Software'
+            h_bin += '/Houdini {}/bin'.format(h_ver)
+            if os.path.exists(h_bin):
+                os.environ['PATH'] = '{0}{1}{2}'.format(
+                    os.environ['PATH'],
+                    os.pathsep,
+                    h_bin
+                )
 
             # --- Module path wrap-up (additions should be placed in
             # --- 'add_modules' *NOT* 'main_module_list')...
