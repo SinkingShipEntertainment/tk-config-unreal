@@ -24,6 +24,9 @@ import sgtk
 LOGGER = sgtk.platform.get_logger(__name__)
 MY_SEP = ('=' * 10)
 
+# --- gloabl variables...
+OCIO_CONFIG = 'X:/tools/aces/aces_1.0.3/config.ocio'
+
 
 class BeforeAppLaunch(tank.Hook):
     """
@@ -593,6 +596,13 @@ class BeforeAppLaunch(tank.Hook):
         script_paths.append(self._sg_a3_path)
         for script_path in script_paths:
             sys.path.insert(0, script_path)
+
+        # --- OCIO/ACES...
+        os.environ['OCIO'] = OCIO_CONFIG
+        os.environ['OCIO_ACTIVE_DISPLAYS'] = 'ACES'
+        os.environ['OCIO_ACTIVE_VIEWS'] = 'Rec.709:sRGB:Raw:Log'
+        os.environ['HOUDINI_OCIO_SRGB_FILE_COLORSPACE'] = \
+            'Utility - Linear - sRGB'
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
