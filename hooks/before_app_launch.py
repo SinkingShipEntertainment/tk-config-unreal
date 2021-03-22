@@ -589,7 +589,7 @@ class BeforeAppLaunch(tank.Hook):
         Method to set up all the wanted environment
         variables when launching a Houdini session.
         """
-        _setup = '_tk_aftereffects_env_setup'
+        _setup = '_tk_houdini_env_setup'
         self._headers(_setup)
 
         script_paths = []
