@@ -322,6 +322,20 @@ class MayaFBXPublishPlugin(HookBaseClass):
         if item.properties.get("reference_type"):
             self.tweak_fbx_base_name(item, sg_inst)
 
+        # add dependencies for the base class to register when publishing
+        # Let's link the fbx to the source published shotgun asset that
+        # it comes from.
+        # Note: In order for the "Upstream Published Files" field to be filled
+        # with the proper information, the file path fed into this property
+        # NEEDS to exist in the same project. In other words, assets referenced
+        # from *another project* will result in this field being empty.
+        asset_publish_path = [cmds.referenceQuery(
+            item.properties["node_name"],
+            filename=True,
+            wcn=True
+        )]
+        item.properties["publish_dependencies"] = asset_publish_path
+
         # --- For debugging contents of item ---
         self.logger.debug('== Item properties ==')
         for key, val in item.properties.items():
