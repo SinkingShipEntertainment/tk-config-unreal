@@ -479,7 +479,8 @@ class BeforeAppLaunch(tank.Hook):
                 'AtomsMaya',
                 'ziva',
                 'SOUPopenVDB',
-                'houdiniEngine'
+                'houdiniEngine',
+                'MayaBonusTools'
             ]
 
             for add_module in add_modules:
