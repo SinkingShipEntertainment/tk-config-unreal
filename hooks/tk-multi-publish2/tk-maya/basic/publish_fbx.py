@@ -258,7 +258,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
         sg_inst = utils_api3.ShotgunApi3()
         self.filter_asset_type(item, sg_inst)
         obj_type = item.properties.get("reference_type")
-        search_group = ['model', 'rig']
+        search_group = ['model', 'structure']
 
         if obj_type:
             if not obj_type in ACCEPTED_ASSET_TYPES:
@@ -292,7 +292,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
                     item.properties['export_groups'] = export_grps
                 else:
                     msg = 'Please check that the asset contains a "model"'
-                    msg += 'and "rig" group underneath the master group!'
+                    msg += 'and "structure" group underneath the master group!'
                     self.logger.debug('Could not find all groups to export!')
                     self.logger.debug(msg)
                     cmds.warning(msg)
@@ -369,7 +369,10 @@ class MayaFBXPublishPlugin(HookBaseClass):
         :returns: The full string name of the group. None otherwise.
         """
         group_to_select = None
-        sub_groups = cmds.listRelatives(item.properties.get('master_group'))
+        sub_groups = cmds.listRelatives(
+            item.properties.get('master_group'),
+            allDescendents=True
+        )
 
         for group in sub_groups:
             if group_to_search in group:
