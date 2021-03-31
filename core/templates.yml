@@ -483,7 +483,7 @@ paths:
 
     # define the location of a work area
     shot_work_area_houdini:
-        definition: '@shot_root/work/houdini'
+        definition: '@shot_root/work/{current_user_name}/houdini'
         root_name: 'primary'
     # define the location of a publish area
     shot_publish_area_houdini:
@@ -491,22 +491,25 @@ paths:
         root_name: 'primary'
     # The location of WIP files
     houdini_shot_work:
-        definition: '@shot_root/work/houdini/{name}.{Step}.v{version}.hip'
+        #definition: '@shot_root/work/houdini/{name}.{Step}.v{version}.hip'
+        definition: '@shot_work_area_houdini/{Shot}.[{name}.]{Step}.v{version}.hip'
         root_name: 'primary'
     # The location of backups of WIP files
     houdini_shot_snapshot:
-        definition: '@shot_root/work/houdini/snapshots/{name}.{Step}.v{version}.{timestamp}.hip'
+        #definition: '@shot_root/work/houdini/snapshots/{name}.{Step}.v{version}.{timestamp}.hip'
+        definition: '@shot_work_area_houdini/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.hip'
         root_name: 'primary'
     # The location of published houdini files
     houdini_shot_publish:
-        definition: '@shot_root/publish/houdini/{name}.{Step}.v{version}.hip'
+        #definition: '@shot_root/publish/houdini/{name}.{Step}.v{version}.hip'
+        definition: '@shot_publish_area_houdini/{Shot}.[{name}.]{Step}.v{version}.hip'
         root_name: 'primary'
 
     # @Shervin - Discuss with FX, Change alembic, render and mantra paths to secondary
     # Alembic caches
     houdini_shot_work_alembic_cache:
         #definition: '@shot_root/work/houdini/cache/alembic/{name}/{houdini.node}/v{version}/{Shot}_{name}_v{version}_{node}.abc'
-        definition: '@sequence_root/caches/{name}/{Step}/houdini/alembic/{houdini.node}/{name}.{houdini.node}.v{version}.abc'
+        definition: '@sequence_root/caches/{name}/{Step}/houdini/alembic/{houdini.node}/{Shot}.{houdini.node}.v{version}.abc'
         root_name: 'secondary'
     # Rendered images
     houdini_shot_render:
@@ -943,7 +946,7 @@ paths:
 
     # define the location of a work area
     asset_work_area_houdini:
-        definition: '@asset_root/work/houdini'
+        definition: '@asset_root/work/{current_user_name}/houdini'
         root_name: 'primary'
     # define the location of a publish area
     asset_publish_area_houdini:
@@ -951,11 +954,11 @@ paths:
         root_name: 'primary'
     # The location of WIP files
     houdini_asset_work:
-        definition: '@asset_root/work/houdini/{name}.v{version}.hip'
+        definition: '@asset_root/work/{current_user_name}/houdini/{name}.v{version}.hip'
         root_name: 'primary'
     # The location of backups of WIP files
     houdini_asset_snapshot:
-        definition: '@asset_root/work/houdini/snapshots/{name}.v{version}.{timestamp}.hip'
+        definition: '@asset_root/work/{current_user_name}/houdini/snapshots/{name}.v{version}.{timestamp}.hip'
         root_name: 'primary'
     # The location of published houdini files
     houdini_asset_publish:
@@ -968,7 +971,8 @@ paths:
 
     # Rendered images
     houdini_asset_render:
-        definition: '@asset_root/work/images/{name}/{houdini.node}/v{version}/{width}x{height}/{Asset}_{name}.v{version}.{SEQ}.exr'
+        #definition: '@asset_root/work/images/{name}/{houdini.node}/v{version}/{width}x{height}/{Asset}_{name}.v{version}.{SEQ}.exr'
+        definition: '@asset_root/work/{current_user_name}/images/{name}/v{version}/{width}x{height}/{Asset}_{name}_v{version}.{SEQ}.exr'
         root_name: 'primary'
 
     # Additional mantra outputs
