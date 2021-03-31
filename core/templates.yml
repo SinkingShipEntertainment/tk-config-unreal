@@ -514,7 +514,7 @@ paths:
     # Rendered images
     houdini_shot_render:
         #definition: '@shot_root/work/images/{name}/{houdini.node}/v{version}/{width}x{height}/{Shot}_{name}_v{version}.{SEQ}.exr'
-        definition: '@sequence_root/renders/{name}/3d/houdini/v{version}/{houdini.node}/{name}.{houdini.node}.v{version}.{SEQ}.abc'
+        definition: '@sequence_root/renders/{name}/3d/houdini/v{version}/{houdini.node}/{name}.{houdini.node}.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
     # Additional mantra outputs
