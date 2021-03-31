@@ -125,6 +125,7 @@ class MayaTexturesPublishPlugin(HookBaseClass):
         # SSE: we want this ON by default when the UI starts, see also return
         # below (DW 2020-09-18)
         checked = True
+        enabled = False
 
         # SSE: check that there are texture files in the Maya session
         # (DW 2020-09-18)
@@ -166,7 +167,8 @@ class MayaTexturesPublishPlugin(HookBaseClass):
 
         return {
             "accepted": accepted,
-            "checked": checked
+            "checked": checked,
+            "enabled": enabled
         }
 
     def validate(self, settings, item):
