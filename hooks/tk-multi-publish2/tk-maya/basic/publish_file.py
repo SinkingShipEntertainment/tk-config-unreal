@@ -269,7 +269,7 @@ class BasicFilePublishPlugin(HookBaseClass):
         )
 
         # return the accepted info
-        return {"accepted": True}
+        return {"accepted": True, "enabled": False}
 
     def validate(self, settings, item):
         """
@@ -290,8 +290,9 @@ class BasicFilePublishPlugin(HookBaseClass):
 
         # ---- SSE: Check the QCTool logs for the Entity to see if the checks
         # ---- have been passed and publish is valid - DW 2021-01-21
-        self.logger.debug('Checking Sinking Ship QCTool logs')
-        self.qc_tool_check()
+        if item.context.step['name'] != 'Previz':
+            self.logger.debug('Checking Sinking Ship QCTool logs')
+            self.qc_tool_check()
 
         # ---- determine the information required to validate
 

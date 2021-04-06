@@ -153,14 +153,17 @@ class MayaActions(HookBaseClass):
         # ---       '.' in a namespace. Not sure if it will affect anything
         # ---       downstream yet (maybe the namespace normalizing method in
         # ---       initial light builds). ~DW 2020-01-29
-        namespace = '{}'.format(sg_publish_data.get('name'))
-        namespace = self._remove_file_ext_from_namespace(namespace)
 
-        # --- SinkingShip: if RIG, check for 'versionless' filepath, and
-        # --- substitute it if you find it (DW 2019-03-20)...
         app = self.parent
         app.log_debug('path >> {}'.format(path))
 
+        namespace = '{}'.format(sg_publish_data.get('name'))
+        app.log_debug('### SSE > orig namespace > {}'.format(namespace))
+        namespace = self._remove_file_ext_from_namespace(namespace)
+        app.log_debug('### SSE > new namespace  > {}'.format(namespace))
+
+        # --- SinkingShip: if RIG, check for 'versionless' filepath, and
+        # --- substitute it if you find it (DW 2019-03-20)...
         # --- Holding off on this after discussion with Shervin about
         # --- tracking Version 'snapshots-in-time' for later trouble-
         # --- shooting through TLO/ANIM - keepin' it around though
@@ -282,10 +285,8 @@ class MayaActions(HookBaseClass):
         new_nspc = orig_nspc
 
         _cfg_delimiter = '.'
-        _cfg_delimiter_max = 1
-        if orig_nspc.count(_cfg_delimiter) > _cfg_delimiter_max:
-            orig_nspc_parts = orig_nspc.split(_cfg_delimiter)
-            if orig_nspc_parts[-1] in file_exts:
-                new_nspc = '.'.join(orig_nspc_parts[:2])
+        orig_nspc_parts = orig_nspc.split(_cfg_delimiter)
+        if orig_nspc_parts[-1] in file_exts:
+            new_nspc = '.'.join(orig_nspc_parts[:-1])
 
         return new_nspc

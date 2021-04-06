@@ -125,6 +125,7 @@ class MayaTexturesPublishPlugin(HookBaseClass):
         # SSE: we want this ON by default when the UI starts, see also return
         # below (DW 2020-09-18)
         checked = True
+        enabled = False
 
         # SSE: check that there are texture files in the Maya session
         # (DW 2020-09-18)
@@ -166,7 +167,8 @@ class MayaTexturesPublishPlugin(HookBaseClass):
 
         return {
             "accepted": accepted,
-            "checked": checked
+            "checked": checked,
+            "enabled": enabled
         }
 
     def validate(self, settings, item):
@@ -388,6 +390,7 @@ def _get_texture_list():
             if cmds.nodeType(tex_node) == 'aiImage':
                 tex_path = cmds.getAttr('{}.filename'.format(tex_node))
                 if tex_path:
+                    tex_dict = {}
                     tex_dict['node_name'] = tex_node
                     tex_dict['node_type'] = ['MtoA', 'aiImage']
                     tex_dict['file_path'] = tex_path
@@ -405,7 +408,7 @@ def _get_texture_list():
                     mel_bits = []
                     mel_bits.append('pgYetiGraph')
                     mel_bits.append('-node {}'.format(y_tex_node))
-                    mel_bits.append('-param "filename"')
+                    mel_bits.append('-param "file_name"')
                     mel_bits.append('-getParamValue {}'.format(ynode))
                     _mel_cmd = ' '.join(mel_bits)
                     tex_path = mel.eval(_mel_cmd)

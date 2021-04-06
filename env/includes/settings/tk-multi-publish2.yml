@@ -208,11 +208,7 @@ settings.tk-multi-publish2.maya.asset_step:
     hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_fbx.py"
     settings:
         Publish Template: maya_asset_fbx_publish
-  # Texture "publish" (DW 2020-09-18)
-  - name: Publish Session Textures
-    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_textures.py"
-    settings:
-        Publish Template: asset_publish_tex_list
+  # SSE - Unreal turntable related, commented out for now...
   # - name: Publish and Submit for Review
   #   hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_turntable.py"
   #   settings:
@@ -245,15 +241,26 @@ settings.tk-multi-publish2.maya.asset_step_surfacing:
   - name: Begin file versioning
     hook: "{engine}/tk-multi-publish2/basic/start_version_control.py"
     settings: {}
-  - name: Publish to Shotgun
+  - name: Publish to Shotgun (Maya file)
     hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{engine}/tk-multi-publish2/basic/publish_session.py"
+    # hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_session.py"
     settings:
         Publish Template: maya_asset_publish_surfacing_arnold
+  # ABC publish (DW 2020-07-28)
+  - name: Publish to Shotgun (Alembic)
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_abc.py"
+    settings:
+        Publish Template: asset_alembic_cache
   # ASS publish (DW 2020-07-28)
   - name: Publish to Shotgun (Arnold Standin)
     hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_ass.py"
     settings:
         Publish Template: asset_arnold_standin_surfacing
+  # Texture "publish" (DW 2020-09-18)
+  - name: Publish Session Textures
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-maya/basic/publish_file.py:{config}/tk-multi-publish2/{engine_name}/basic/publish_textures.py"
+    settings:
+        Publish Template: asset_publish_tex_list
   # SSE - Using post_phase to migrate legacy+ config post_publish methods (DW 2020-08-11)
   post_phase: "{self}/post_phase.py:{config}/tk-multi-publish2/post_phase.py"
   help_url: *help_url
