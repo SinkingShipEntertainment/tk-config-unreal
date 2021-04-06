@@ -269,7 +269,7 @@ class BasicFilePublishPlugin(HookBaseClass):
         )
 
         # return the accepted info
-        return {"accepted": True}
+        return {"accepted": True, "enabled": False}
 
     def validate(self, settings, item):
         """
