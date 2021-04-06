@@ -75,6 +75,7 @@ class MayaSessionCollector(HookBaseClass):
 
         # create an item representing the current maya session
         item = self.collect_current_maya_session(settings, parent_item)
+        item.enabled = False
         project_root = item.properties["project_root"]
 
         # look at the render layers to find rendered images on disk
@@ -151,6 +152,7 @@ class MayaSessionCollector(HookBaseClass):
             "maya.png"
         )
         session_item.set_icon_from_path(icon_path)
+        session_item.enabled = False
 
         # Remove file extension from display_name to use in subsequent
         # display names
@@ -225,7 +227,6 @@ class MayaSessionCollector(HookBaseClass):
 
         # texture handling
         p_step = self.parent.context.step['name']
-        # if p_step == 'Texturing':
         if p_step == 'Surfacing':
             tex_item = session_item.create_item(
                 "maya.textures",
@@ -242,6 +243,7 @@ class MayaSessionCollector(HookBaseClass):
             )
 
             tex_item.set_icon_from_path(icon_path)
+            tex_item.enabled = False
 
         # discover the project root which helps in discovery of other
         # publishable items
