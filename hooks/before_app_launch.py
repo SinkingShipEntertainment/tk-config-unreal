@@ -166,6 +166,7 @@ class BeforeAppLaunch(tank.Hook):
                 # --- For developers to point to *any* pipeline code repository
                 # --- as specified in the called Shotgun configuration...
                 repo_path = my_config_repo_custom
+
                 if '\\' in repo_path:
                     repo_path = repo_path.replace('\\', '/')
 
@@ -534,8 +535,81 @@ class BeforeAppLaunch(tank.Hook):
             m = 'No Maya version specific environment variables required.'
             LOGGER.debug(m)
 
+
+        # - Run cg factory path setup.
+        self._tk_maya_cgFactory_env_setup()
+
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
+
+
+    def _tk_maya_cgFactory_env_setup(self):
+        r"""Add Maya environment relative to cg_factory submodule."""
+        def appendToEnv(envVar, *paths):
+            # - Convert given paths to system default.
+            paths = [os.path.normpath(p) for p in paths]
+
+            # - If var is not already in env, make it.
+            if envVar not in os.environ:
+                os.environ[envVar] = os.pathsep.join(paths)
+                return
+
+            # - If env has envVar update paths to system default
+            envPaths = [os.path.normpath(ep) for ep in os.environ[envVar].split(os.pathsep)]
+            # add each path as necessary
+            for path in paths:
+                # check if path already in values
+                if path not in envPaths:
+                    # os.environ[envVar] += os.pathsep+path
+                    os.environ[envVar] =  os.environ[envVar] + os.pathsep+path
+        # [end] appendToEnv
+
+        CG_FACTORY_PATH = os.path.join(self._repo_path, 'maya/cg_factory/')
+        appendToEnv('CG_FACTORY_PATH', CG_FACTORY_PATH)
+
+        #NOTE:
+        #
+        # do not try to get a python debugger (ie pdb trace). does not work
+        # with shotgun launcher.
+
+        # - PYTHONPATH.
+        pythonPaths = [
+            'mayaConfigs/mayapy-extras/site-packages',
+            'mayaConfigs/scripts',
+            'assetPipeline',
+            'riggingPipeline',
+            'textureShadingPipeline',
+        ]
+        pythonPaths = [CG_FACTORY_PATH] + [os.path.join(CG_FACTORY_PATH,f) for f in pythonPaths]
+
+        appendToEnv('PYTHONPATH', *pythonPaths)
+
+        # - Scripts (and general user setup).
+        scriptPaths = [
+            CG_FACTORY_PATH,
+            CG_FACTORY_PATH+'mayaConfigs/scripts'
+        ]
+        appendToEnv('MAYA_SCRIPT_PATH', *scriptPaths)
+
+        # - Maya icons.
+        iconPath = CG_FACTORY_PATH+'mayaConfigs/icons'
+        appendToEnv('XBMLANGPATH', iconPath)
+
+        # - Plug-ins
+        pluginPath = CG_FACTORY_PATH + 'mayaConfigs/plugins' # for python and root for mlls.
+        appendToEnv('MAYA_PLUG_IN_PATH', pluginPath)
+        mllDir = os.path.join(pluginPath, self._version)
+        if os.path.isdir(mllDir):
+            LOGGER.debug('MLL FOLDER FOUND: %s'%mllDir)
+            appendToEnv('MAYA_PLUG_IN_PATH', mllDir)
+
+        # - Modules
+        modPaths = [
+            'mayaConfigs/modules'
+        ]
+        modPaths = [CG_FACTORY_PATH+p for p in modPaths]
+        appendToEnv('MAYA_MODULE_PATH', *modPaths)
+
 
     def _tk_nuke_env_setup(self):
         """
