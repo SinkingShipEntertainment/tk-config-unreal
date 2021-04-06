@@ -20,6 +20,6 @@ filters: [
   {
     "path": "short_name",
     "relation": "in",
-    "values": [ "ANIM", "LIGHT", FX", "CFX", "PRVZ" ]
+    "values": [ "ANIM", "LIGHT", "FX", "CFX", "PRVZ" ]
   }
 ]
