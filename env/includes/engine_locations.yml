@@ -22,7 +22,7 @@ engines.tk-3dsmaxplus.location:
 engines.tk-3dsmax.location:
   type: app_store
   name: tk-3dsmax
-  version: v1.1.5
+  version: v1.1.6
 
 # After Effects
 engines.tk-aftereffects.location:
@@ -34,7 +34,7 @@ engines.tk-aftereffects.location:
 engines.tk-alias.location:
   type: app_store
   name: tk-alias
-  version: v2.0.8
+  version: v2.0.10
 
 # Desktop
 engines.tk-desktop.location:
@@ -70,7 +70,7 @@ engines.tk-mari.location:
 engines.tk-maya.location:
   type: app_store
   name: tk-maya
-  version: v0.10.3
+  version: v0.10.4
 
 # Motion Builder
 engines.tk-motionbuilder.location:
@@ -82,7 +82,7 @@ engines.tk-motionbuilder.location:
 engines.tk-nuke.location:
   type: app_store
   name: tk-nuke
-  version: v0.12.11
+  version: v0.13.0
 
 # Photoshop
 engines.tk-photoshopcc.location:
@@ -108,13 +108,6 @@ engines.tk-vred.location:
   name: tk-vred
   version: v2.0.8
 
-# Unreal
-engines.tk-unreal.location:
-  type: github_release
-  organization: ue4plugins
-  repository: tk-unreal
-  version: v1.1.0
-
 # -------------------------------------------- #
 # --- SSE additions below (-DW 2020-02-04) --- #
 # -------------------------------------------- #
@@ -124,3 +117,9 @@ engines.tk-natron.location:
   branch: master
   path: https://github.com/diegogarciahuerta/tk-natron.git
   version: v1.0.1
+
+# Unreal
+engines.tk-unreal.location:
+  type: path
+  path: X:/dev/ss_dev_baptiste/tk-unreal-imgspc
+  version: v0.1

@@ -108,6 +108,9 @@ class BeforeAppLaunch(tank.Hook):
         if engine_name == 'tk-natron':
             self._tk_natron_env_setup()
 
+        if engine_name == 'tk-unreal':
+            self._tk_unreal_env_setup()
+
     def _return_repo_path(self, project_name):
         """
         Use Shotgun (Toolkit and Database) to get data
@@ -565,7 +568,6 @@ class BeforeAppLaunch(tank.Hook):
         else:
             LOGGER.debug('No existing NUKE_PATH in os.environ, creating...')
             os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
-        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -641,6 +643,28 @@ class BeforeAppLaunch(tank.Hook):
             m = 'No existing NATRON_PLUGIN_PATH in os.environ, creating...'
             LOGGER.debug(m)
             os.environ['NATRON_PLUGIN_PATH'] = '{}'.format(studio_na_paths)
+
+        # --- Tell the user what's up...
+        self.env_paths_sanity_check()
+
+    def _tk_unreal_env_setup(self):
+        """
+        Method to set up all the wanted environment
+        variables when launching an Unreal Engine session.
+        """
+        _setup = '_tk_unreal_env_setup'
+        self._headers(_setup)
+
+        project_tools = "X:/tools/projects"
+        repo = os.path.join(
+            project_tools,
+            "HoneyBadger",
+            "HoneyBadger_pipeline_2_5_master_dev_repo"
+        )
+        config_site_packages = os.path.join(repo, "unreal", "site-packages")
+
+        if not config_site_packages in os.environ.get("PYTHONPATH", ""):
+            os.environ["PYTHONPATH"] += os.pathsep + config_site_packages
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()

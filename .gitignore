@@ -39,3 +39,6 @@ pip-log.txt
 
 # ignore PyCharm's .idea folder
 .idea/
+
+# ignore python caches
+__pycache__
