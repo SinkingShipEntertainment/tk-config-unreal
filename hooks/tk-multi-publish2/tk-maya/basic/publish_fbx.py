@@ -243,59 +243,125 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # Bake the pipeline step into item properties to check if we need to
         # FBXExportBakeComplexAnimation during export or not.
         item.properties['current_step'] = work_fields['Step']
+        try:
+            self.get_master_group_node(item, step=work_fields['Step'])
+        except Exception as e:
+            self.logger.debug(e)
+
+        # Set the fbx export flag to "Export all" by default
+        item.properties['select_flag'] = ''
 
         # Under HoneyBadger project, we want to use `fbx export selected`
-        # for steps: RIG, and ANIM by default.
+        # for steps: RIG and ANIM by default.
         if 'HoneyBadger' in PROJ_NAME:
+            # Insert the project name as an item property to know that we
+            # should target specific selected groups on export.
+            item.properties['project_name'] = PROJ_NAME
+            item.properties['select_flag'] = '-s'
             if 'RIG' in work_fields['Step'] and \
                     work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                self.validate_rigs(item, work_fields['Step'], work_fields)
+                self.validate_rigs_in_hb(item, work_fields)
             if 'ANIM' in work_fields['Step'] and \
                     work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                self.validate_references(item, work_fields['Step'])
+                self.validate_references_in_hb(item)
+        else:
+            if 'ANIM' in work_fields['Step']:
+                # The default behaviour is to "export all" which works as
+                # intended in a MOD/RIG context. In an ANIM context it does not.
+                # The expectation is that only the published item selected (the
+                # referenced asset), will be exported - not the entire scene.
+                valid_refs = self.validate_references(item)
+                if not valid_refs:
+                    return False
 
-            # --- For debugging contents of item ---
-            self.logger.debug('== Item properties ==')
-            for key, val in item.properties.items():
-                self.logger.debug('{} => {}'.format(key, val))
+        # --- For debugging contents of item ---
+        self.logger.debug('== Item properties ==')
+        for key, val in item.properties.items():
+            self.logger.debug('{} => {}'.format(key, val))
 
         # run the base class validation
         return super(MayaFBXPublishPlugin, self).validate(settings, item)
 
-    def validate_rigs(self, item, step, work_fields):
+    def validate_rigs(self, item, work_fields):
         """
         Validate asset in RIG step.
 
-        We specifically want to run "Export Selected" under a RIG/ANIM task
-        since it is mandatory that both exports match when brought into Unreal.
-
         :param item: Item to process
-        :param step: The pipeline step we are in
         :param work_fields: The work fields dict associated with the file
         """
-        self.get_master_group_node(item, step)
-
+        if not work_fields:
+            self.logger.warning(
+                'Workfields data is required! {} given'.format(work_fields)
+            )
         item.properties['asset_type'] = work_fields['sg_asset_type']
 
         # Use the work_fields info to grab the name of the asset
         item.properties['fbx_name'] = work_fields['Asset']
 
-        export_grps = [
-            self.get_export_group(item, group) for group in SEARCH_GROUP
-        ]
+        self.validate_export_groups(item, [item.properties['master_group']])
 
-        self.validate_export_groups(item, export_grps)
-
-    def validate_references(self, item, step):
+    def validate_references(self, item):
         """
         Validate referenced assets.
 
         :param item: Item to process
-        :param step: The pipeline step we are in
+        :return: True if all validation passes. False otherwise.
         """
-        self.get_master_group_node(item, step)
         sg_inst = utils_api3.ShotgunApi3()
-        obj_type = self.get_asset_type(item, sg_inst)
+        self.get_asset_type(item, sg_inst)
+
+        self.check_reference_number(item)
+
+        # Let's bake the name of the asset in the output fbx by
+        # inserting the name into the "publish_path" file path.
+        if item.properties.get("asset_type"):
+            self.tweak_fbx_base_name(item, sg_inst)
+
+        # Populate the "Upstream Published Files" field for the published FBX
+        self.set_upstream_published_files(item)
+
+        # Set the export groups property
+        valid_groups = self.validate_export_groups(
+            item,
+            [item.properties['master_group']]
+        )
+
+        if valid_groups:
+            item.properties['select_flag'] = '-s'
+            return True
+        else:
+            # If the current project is not HoneyBadger and validation of
+            # export groups returns False (a 'None' value is in the list), we
+            # prevent this PublishItem from publishing.
+            if not 'HoneyBadger' in PROJ_NAME:
+                return False
+
+    def validate_rigs_in_hb(self, item, work_fields):
+        """
+        Validate rigs in HoneyBadger project.
+
+        The main difference here is which groups we are targeting for export.
+        :param item: Item to process
+        :param work_fields: The work fields dict associated with the file
+        """
+        # Run default rig validation first
+        self.validate_rigs(item, work_fields)
+
+        export_grps = [
+            self.get_export_group(item, group) for group in SEARCH_GROUP
+        ]
+        self.validate_export_groups(item, export_grps)
+
+    def validate_references_in_hb(self, item):
+        """
+        Validate referenced assets in HoneyBadger project.
+
+        :param item: Item to process
+        """
+        # Run default validation first
+        self.validate_references(item)
+
+        obj_type = item.properties.get("asset_type")
 
         if not obj_type in ACCEPTED_ASSET_TYPES:
             # We don't want to allow publishing of any other types except
@@ -303,6 +369,38 @@ class MayaFBXPublishPlugin(HookBaseClass):
             self.logger.debug('Invalid asset type => {}'.format(obj_type))
             return False
 
+        if "Pipeline" in obj_type:
+            for cam_shape in cmds.ls(type="camera"):
+                if "TRACKCAM" in cam_shape:
+                    self.logger.debug('Referenced camera detected!')
+                    item.properties["export_groups"] = [cam_shape]
+
+        elif "Environment" in obj_type:
+            # TODO: Make this more granular and require a "model" group
+            #   to exist in the hierarchy?
+            item.properties["export_groups"] = [item.properties['master_group']]
+
+        else:
+            # TODO: Use a dict of which groups to export given the pipe step?
+            #   i.e. {'ANIM': ['model', 'structure'], 'MOD': ['master']}
+            export_grps = [
+                self.get_export_group(item, group) for group in SEARCH_GROUP
+            ]
+            valid_export_groups = self.validate_export_groups(item, export_grps)
+            if not valid_export_groups:
+                msg = 'Please check that the asset contains the following'
+                msg += ' group(s) underneath the master group! {}'.format(
+                    SEARCH_GROUP
+                )
+                self.logger.warning(msg)
+
+    def check_reference_number(self, item):
+        """
+        Check for multiple references of the same asset and store which number
+        it is.
+
+        :param item: Item to process
+        """
         # If there are multiple references of the same asset in the scene,
         # let's add this detail in the name of the fbx.
         # i.e. Prop_RIG, Prop_RIG1, etc.
@@ -322,14 +420,13 @@ class MayaFBXPublishPlugin(HookBaseClass):
             # We don't do anything else if there's only one reference
             item.properties['fbx_name'] = item.properties.get('asset_name')
 
-        # Let's bake the name of the asset in the output fbx by
-        # inserting the name into the "publish_path" file path.
-        if item.properties.get("asset_type"):
-            self.tweak_fbx_base_name(item, sg_inst)
+    def set_upstream_published_files(self, item):
+        """
+        Add dependencies for the base class to register when publishing by
+        linking the fbx to the source published shotgun asset.
 
-        # add dependencies for the base class to register when publishing
-        # Let's link the fbx to the source published shotgun asset that
-        # it comes from.
+        :param item: Item to process
+        """
         # Note: In order for the "Upstream Published Files" field to be filled
         # with the proper information, the file path fed into this property
         # NEEDS to exist in the same project. In other words, assets referenced
@@ -339,24 +436,16 @@ class MayaFBXPublishPlugin(HookBaseClass):
             filename=True,
             wcn=True
         )]
+        if not PROJ_NAME in asset_publish_path[0]:
+            msg = '{} is sourced from another project!'.format(
+                asset_publish_path
+            )
+            # TODO: Don't display this warning for assets in `pipelineassets`
+            #   i.e. TRACKCAM ?
+            self.logger.warning(msg)
+            cmds.warning(msg)
+
         item.properties["publish_dependencies"] = asset_publish_path
-
-        if "Pipeline" in obj_type:
-            for cam_shape in cmds.ls(type="camera"):
-                if "TRACKCAM" in cam_shape:
-                    self.logger.debug('Referenced camera detected!')
-                    item.properties["export_groups"] = [cam_shape]
-
-        elif "Environment" in obj_type:
-            # TODO: Make this more granular and require a "model" group
-            #   to exist in the hierarchy?
-            item.properties["export_groups"] = [item.properties['master_group']]
-
-        else:
-            export_grps = [
-                self.get_export_group(item, group) for group in SEARCH_GROUP
-            ]
-            self.validate_export_groups(item, export_grps)
 
     def validate_export_groups(self, item, export_group_list):
         """
@@ -364,43 +453,49 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         :param item: Item to process
         :param export_group_list: List of of groups to export
-        :return:
+        :return: False if None value is found in the export group list.
+                 True otherwise.
         """
         # Sanity check that the list does not contain any None values.
         # If there is, this means that the asset doesn't have the
         # proper naming convention/hierarchy...
         if not None in export_group_list:
             item.properties['export_groups'] = export_group_list
+            return True
         else:
-            msg = 'Please check that the asset contains a "model" and'
-            msg += '"structure" group underneath the master group!'
-            self.logger.debug('Could not find all groups to export!')
-            self.logger.debug(msg)
+            msg = 'Could not find all groups to export!'
+            self.logger.warning('{} => {}'.format(msg, export_group_list))
             cmds.warning(msg)
             return False
 
-    def get_master_group_node(self, item, step):
+    def get_master_group_node(self, item, step=None):
         """
         Grab the name of the master group.
 
         :param item: Item to process
         :param step: The current pipeline step
-        :return: The master group node name
         """
-        if 'ANIM' in step:
-            # Feed in the the master group node of the reference obj.
-            # i.e. Character_RIG:master or Prop_RIG:master
-            obj_nodes = cmds.referenceQuery(
-                item.properties['node_name'], nodes=True
-            )
-            for node in obj_nodes:
-                # We only want to target the `master` group.
-                if "master" in node:
-                    item.properties['master_group'] = node
-                    break
+        if step:
+            if 'ANIM' in step:
+                # Feed in the the master group node of the reference obj.
+                # i.e. Character_RIG:master or Prop_RIG:master
+                obj_nodes = cmds.referenceQuery(
+                    item.properties['node_name'], nodes=True
+                )
+                for node in obj_nodes:
+                    # We only want to target the `master` group.
+                    if "master" in node:
+                        item.properties['master_group'] = node
+                        break
+                    else:
+                        item.properties['master_group'] = None
         else:
             item.properties['master_group'] = cmds.ls('master')
 
+        if not item.properties['master_group']:
+            raise Exception('Unable to find master group for node: {}'.format(
+                item.properties['node_name'])
+            )
 
     def get_export_group(self, item, group_to_search):
         """
@@ -409,7 +504,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         :param item: Item to process.
         :param group_to_search: The search string for the group we want.
-        :returns: The full string name of the group. None otherwise.
+        :return: The full string name of the group. None otherwise.
         """
         group_to_select = None
         sub_groups = cmds.listRelatives(
@@ -430,7 +525,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         :param shotgun_instance: Shotgun instance to query data from
         :param item: Item to process
-        :returns: The shotgun asset type string
+        :return: The shotgun asset type string
         """
         # Set an initial value first
         asset_type = None
@@ -455,7 +550,8 @@ class MayaFBXPublishPlugin(HookBaseClass):
     def tweak_fbx_base_name(self, item, shotgun_instance):
         """
         Tweak the fbx file name from default (which is the name of the
-        maya file) to the name of the asset.
+        maya file) to the name of the asset. This is primarily within an ANIM
+        shot.
 
         :param shotgun_instance: Shotgun instance to query data from
         :param item: Item to process
@@ -503,32 +599,41 @@ class MayaFBXPublishPlugin(HookBaseClass):
         publish_folder = os.path.dirname(publish_path)
         self.parent.ensure_folder_exists(publish_folder)
 
-        # Let's select the groups we want to export
+        # Let's select the group(s) we want to export
         cmds.select(clear=True)
-
-        select_flag = ''
         export_animation = False
         embed_media = False
+        current_step = item.properties.get('current_step')
         try:
-            current_step = item.properties.get('current_step')
-            if current_step in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                for group in item.properties.get('export_groups'):
-                    cmds.select(group, add=True)
-                select_flag = '-s'
+            if 'HoneyBadger' in item.properties.get('project_name'):
+                if current_step in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
+                    for group in item.properties.get('export_groups'):
+                        cmds.select(group, add=True)
+                    if 'ANIM' in current_step:
+                        export_animation = True
+                        # embed_media = True  # TODO: Enable this in ANIM step?
+                    if 'RIG' in current_step:
+                        embed_media = True
+
+            else:
                 if 'ANIM' in current_step:
                     export_animation = True
-                    # embed_media = True  # TODO: Check this in ANIM step?
-                if 'RIG' in current_step:
-                    embed_media = True
+                if item.properties.get('select_flag'):
+                    if item.properties.get('export_groups'):
+                        for group in item.properties.get('export_groups'):
+                            cmds.select(group, add=True)
+
         except Exception as e:
             # Handle a default fbx publish
-            self.logger.debug('Failed to select export group(s) {}'.format(e))
+            self.loggger.warning(
+                'Failed to select export group(s) {}'.format(e)
+            )
             self.logger.debug('Running vanilla fbx export')
 
         # Run the export
         self.export_fbx([
             publish_path,
-            select_flag,
+            item.properties.get('select_flag'),
             export_animation,
             embed_media,
             FBX_EXPORT_VERSION,
@@ -548,7 +653,10 @@ class MayaFBXPublishPlugin(HookBaseClass):
         :return: True if successful, False otherwise.
         """
         selected_groups = cmds.ls(sl=True)
-        self.logger.debug('Exporting => {}'.format(selected_groups))
+        if selected_groups:
+            self.logger.debug('Exporting => {}'.format(selected_groups))
+        else:
+            self.logger.debug('Exporting all')
 
         try:
             cmds.FBXResetExport()
@@ -564,10 +672,9 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
             cmds.FBXExportGenerateLog('-v', False)
             self.logger.debug('FBX args => {}'.format(fbx_args))
-            cmd = "cmds.FBXExport('-f', {0}, {1})".format(
+            self.logger.debug("cmds.FBXExport('-f', {0}, {1})".format(
                 fbx_args[0], fbx_args[1]
-            )
-            self.logger.debug('Cmd: {}'.format(cmd))
+            ))
             cmds.FBXExport('-f', fbx_args[0], fbx_args[1])
 
         except Exception as e:
