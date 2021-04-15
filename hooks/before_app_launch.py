@@ -91,10 +91,6 @@ class BeforeAppLaunch(tank.Hook):
         # --- Make the SSE Shotgun API available...
         self._sg_a3_path = '{}/shotgun/api3'.format(self._repo_path)
 
-        # set the OCIO env var for all apps
-        os.environ['OCIO'] = OCIO_CONFIG
-        LOGGER.debug('set OCIO to {}'.format(os.environ['OCIO']))
-
         # --- Call methods based on the Toolkit engine we're invoking
         # --- (e.g. Maya > 'tk-maya', Nuke > 'tk-nuke', etc.)...
         if engine_name == 'tk-maya':
