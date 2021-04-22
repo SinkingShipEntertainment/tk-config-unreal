@@ -618,27 +618,30 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_nuke_env_setup'
         self._headers(_setup)
 
+        # Update the sys.path 
         script_paths = []
         script_paths.append(self._sg_a3_path)
         for script_path in script_paths:
             sys.path.insert(0, script_path)
 
-        # Check if NUKE_PATH exists.
-        # TODO - After NUKE_PATH is purged from boxes, remove condition so we
-        # find out-of-sync boxes
+        # Update the NUKE_PATH
+        # - Previously, the I.T. department was configuring machines with the NUKE_PATH already set to 'x:\tools\nuke'
+        # - This is now legacy and will be ignored when we launch nuke via the sgtk
+        # - Also, log a warning if any NUKE_PATH already exists that is not a part of the expected "sgtk" launch mechanism
         nuke_plugin_path = '{}/nuke'.format(self._repo_path).replace('/', '\\')
+        updated_nuke_path = [nuke_plugin_path]
+
+        # Process the existing NUKE_PATH
         if 'NUKE_PATH' in os.environ:
-            LOGGER.debug('Found existing NUKE_PATH in os.environ...')
-            os.environ['NUKE_PATH'] = os.pathsep.join(
-                [
-                    nuke_plugin_path,
-                    os.environ['NUKE_PATH']
-                ]
-            )
-        else:
-            LOGGER.debug('No existing NUKE_PATH in os.environ, creating...')
-            os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
-        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+            nuke_paths = os.environ['NUKE_PATH'].split(os.pathsep)
+            for nuke_path in nuke_paths:
+                if 'sgtk' in nuke_path:
+                    updated_nuke_path.append(nuke_path)
+                else:
+                    LOGGER.warn('Bad value in NUKE_PATH, ignoring: {}'.format(nuke_path))
+
+        LOGGER.debug('Setting NUKE_PATH in os.environ...')
+        os.environ['NUKE_PATH'] = os.pathsep.join(updated_nuke_path)
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -681,6 +684,7 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
+
 
     def _tk_natron_env_setup(self):
         """
