@@ -295,6 +295,8 @@ class MayaFBXPublishPlugin(HookBaseClass):
             )
         item.properties['asset_type'] = work_fields['sg_asset_type']
 
+        self.get_master_group_node(item)
+
         # Use the work_fields info to grab the name of the asset
         item.properties['fbx_name'] = work_fields['Asset']
 
