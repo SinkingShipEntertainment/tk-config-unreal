@@ -1,3 +1,7 @@
+# ignore toolkit system files
+install_location.yml
+pipeline_configuration.yml
+
 # ---- ignore special files written during config setup
 
 core/app_store.yml
