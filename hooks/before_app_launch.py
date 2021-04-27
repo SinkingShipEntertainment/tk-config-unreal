@@ -679,6 +679,26 @@ class BeforeAppLaunch(tank.Hook):
         os.environ['HOUDINI_OCIO_SRGB_FILE_COLORSPACE'] = \
             'Utility - Linear - sRGB'
 
+        # --- houdini pipeline path
+        houdini_pipe_path = "X:/dev/ss_dev_claudiohickstein/studio_pipeline_2_5_dev_master_repo/houdini/"
+
+        houdini_path = os.environ["HOUDINI_PATH"]
+        LOGGER.debug("Original Houdini path > {}".format(houdini_path))
+        LOGGER.debug("Adding {} to HOUDINI_PATH".format(houdini_pipe_path))
+        os.environ['HOUDINI_PATH'] = "{}{}{}".format(houdini_path, ";", houdini_pipe_path)
+        LOGGER.debug("New HOUDINI_PATH > {}".format( os.environ["HOUDINI_PATH"]))
+
+        # 
+        #if 'HOUDINI_MENU_PATH' in os.environ:
+        #    houdini_menu_path = os.environ["HOUDINI_MENU_PATH"]
+        #    LOGGER.debug("Original HOUDINI_MENU_PATH > {}".format(houdini_menu_path))
+        #    LOGGER.debug("Adding {} to HOUDINI_MENU_PATH".format(houdini_pipe_path))
+        #    os.environ['HOUDINI_MENU_PATH'] = "{}{}{}".format(houdini_menu_path, ";", houdini_pipe_path)
+        #    LOGGER.debug("New HOUDINI_MENU_PATH > {}".format( os.environ['HOUDINI_MENU_PATH']))
+        #else:
+        #    LOGGER.debug('No existing HOUDINI_MENU_PATH in os.environ, creating...')
+        #    os.environ['HOUDINI_MENU_PATH'] = '{}'.format(houdini_pipe_path)
+
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
 
