@@ -95,8 +95,10 @@ class MayaSessionCollector(HookBaseClass):
                 }
             )
 
-            self.collect_playblasts(item, project_root)
-            self.collect_alembic_caches(item, project_root)
+            # disabling unwanted default collections
+            # (DW 2021-04-07)
+            # self.collect_playblasts(item, project_root)
+            # self.collect_alembic_caches(item, project_root)
         else:
 
             self.logger.info(
