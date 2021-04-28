@@ -251,19 +251,19 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # Set the fbx export flag to "Export all" by default
         item.properties['select_flag'] = ''
 
-        # Under HoneyBadger project, we want to use `fbx export selected`
+        # Under BuilderBrothersS1 project, we want to use `fbx export selected`
         # for steps: RIG and ANIM by default.
-        if 'HoneyBadger' in PROJ_NAME:
+        if 'BuilderBrothersS1' in PROJ_NAME:
             # Insert the project name as an item property to know that we
             # should target specific selected groups on export.
             item.properties['project_name'] = PROJ_NAME
             item.properties['select_flag'] = '-s'
             if 'RIG' in work_fields['Step'] and \
                     work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                self.validate_rigs_in_hb(item, work_fields)
+                self.validate_rigs_in_bb(item, work_fields)
             if 'ANIM' in work_fields['Step'] and \
                     work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                self.validate_references_in_hb(item)
+                self.validate_references_in_bb(item)
         else:
             if 'ANIM' in work_fields['Step']:
                 # The default behaviour is to "export all" which works as
@@ -332,15 +332,15 @@ class MayaFBXPublishPlugin(HookBaseClass):
             item.properties['select_flag'] = '-s'
             return True
         else:
-            # If the current project is not HoneyBadger and validation of
+            # If the current project is not BuilderBrothersS1 and validation of
             # export groups returns False (a 'None' value is in the list), we
             # prevent this PublishItem from publishing.
-            if not 'HoneyBadger' in PROJ_NAME:
+            if not 'BuilderBrothersS1' in PROJ_NAME:
                 return False
 
-    def validate_rigs_in_hb(self, item, work_fields):
+    def validate_rigs_in_bb(self, item, work_fields):
         """
-        Validate rigs in HoneyBadger project.
+        Validate rigs in BuilderBrothersS1 project.
 
         The main difference here is which groups we are targeting for export.
         :param item: Item to process
@@ -354,9 +354,9 @@ class MayaFBXPublishPlugin(HookBaseClass):
         ]
         self.validate_export_groups(item, export_grps)
 
-    def validate_references_in_hb(self, item):
+    def validate_references_in_bb(self, item):
         """
-        Validate referenced assets in HoneyBadger project.
+        Validate referenced assets in BuilderBrothersS1 project.
 
         :param item: Item to process
         """
@@ -607,7 +607,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
         embed_media = False
         current_step = item.properties.get('current_step')
         try:
-            if 'HoneyBadger' in item.properties.get('project_name'):
+            if 'BuilderBrothersS1' in item.properties.get('project_name'):
                 if current_step in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
                     for group in item.properties.get('export_groups'):
                         cmds.select(group, add=True)
