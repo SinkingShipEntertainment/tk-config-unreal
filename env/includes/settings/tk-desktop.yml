@@ -39,6 +39,8 @@ settings.tk-desktop.project:
     tk-multi-launchmotionbuilder: "@settings.tk-multi-launchapp.motionbuilder"
     tk-multi-publish2: "@settings.tk-multi-publish2.standalone"
     tk-multi-screeningroom: "@settings.tk-multi-screeningroom.rv"
+    tk-harvest: "@settings.tk-multi-launchapp.harvest"
+    tk-copyasset: "@settings.tk-multi-launchapp.copyasset"
   groups:
   - matches:
     - "*Fla*"
