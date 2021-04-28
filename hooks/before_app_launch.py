@@ -108,6 +108,7 @@ class BeforeAppLaunch(tank.Hook):
         if engine_name == 'tk-natron':
             self._tk_natron_env_setup()
 
+
     def _return_repo_path(self, project_name):
         """
         Use Shotgun (Toolkit and Database) to get data
@@ -166,6 +167,7 @@ class BeforeAppLaunch(tank.Hook):
                 # --- For developers to point to *any* pipeline code repository
                 # --- as specified in the called Shotgun configuration...
                 repo_path = my_config_repo_custom
+
                 if '\\' in repo_path:
                     repo_path = repo_path.replace('\\', '/')
 
@@ -534,8 +536,79 @@ class BeforeAppLaunch(tank.Hook):
             m = 'No Maya version specific environment variables required.'
             LOGGER.debug(m)
 
+
+        # - Run cg factory path setup.
+        self._tk_maya_cgFactory_env_setup()
+
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
+
+
+    def _tk_maya_cgFactory_env_setup(self):
+        r"""Add Maya environment relative to cg_factory submodule."""
+        def appendToEnv(envVar, *paths):
+            # - Convert given paths to system default.
+            paths = [os.path.normpath(p) for p in paths]
+
+            # - If var is not already in env, make it.
+            if envVar not in os.environ:
+                os.environ[envVar] = os.pathsep.join(paths)
+                return
+
+            # - If env has envVar update paths to system default
+            envPaths = [os.path.normpath(ep) for ep in os.environ[envVar].split(os.pathsep)]
+            # add each path as necessary
+            for path in paths:
+                # check if path already in values
+                if path not in envPaths:
+                    # os.environ[envVar] += os.pathsep+path
+                    os.environ[envVar] =  os.environ[envVar] + os.pathsep+path
+        # [end] appendToEnv
+
+        CG_FACTORY_PATH = os.path.join(self._repo_path, 'maya/cg_factory/')
+
+        # - Environment data.
+        envDict = {
+            'CG_FACTORY_PATH':[
+                CG_FACTORY_PATH,
+            ],
+            'PYTHONPATH':[
+                CG_FACTORY_PATH,
+                CG_FACTORY_PATH+'mayaConfigs/mayapy-extras/site-packages',
+                CG_FACTORY_PATH+'mayaConfigs/scripts',
+                CG_FACTORY_PATH+'assetPipeline',
+                CG_FACTORY_PATH+'riggingPipeline',
+                CG_FACTORY_PATH+'textureShadingPipeline',
+            ],
+            'MAYA_SCRIPT_PATH':[
+                CG_FACTORY_PATH,
+                CG_FACTORY_PATH+'mayaConfigs/scripts'
+            ],
+            'XBMLANGPATH':[
+                CG_FACTORY_PATH+'mayaConfigs/icons'
+            ],
+            'MAYA_PLUG_IN_PATH':[
+                CG_FACTORY_PATH + 'mayaConfigs/plugins' # for python and root for mlls.
+            ],
+            'MAYA_MODULE_PATH':[
+                CG_FACTORY_PATH + 'mayaConfigs/modules'
+            ],
+        }
+
+        # - Include plugin maya version if folder exists.
+        mllDir = os.path.join(envDict['MAYA_PLUG_IN_PATH'][0], self._version)
+        if os.path.isdir(mllDir):
+            envDict['MAYA_PLUG_IN_PATH'].append(mllDir)
+
+        # - Add environments to system
+        for envK,envV in envDict.items():
+            appendToEnv(envK, *envV)
+
+        #NOTE:
+        #
+        # do not try to get a python debugger (ie pdb trace). does not work
+        # with shotgun launcher.
+
 
     def _tk_nuke_env_setup(self):
         """
@@ -545,27 +618,30 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_nuke_env_setup'
         self._headers(_setup)
 
+        # Update the sys.path 
         script_paths = []
         script_paths.append(self._sg_a3_path)
         for script_path in script_paths:
             sys.path.insert(0, script_path)
 
-        # Check if NUKE_PATH exists.
-        # TODO - After NUKE_PATH is purged from boxes, remove condition so we
-        # find out-of-sync boxes
+        # Update the NUKE_PATH
+        # - Previously, the I.T. department was configuring machines with the NUKE_PATH already set to 'x:\tools\nuke'
+        # - This is now legacy and will be ignored when we launch nuke via the sgtk
+        # - Also, log a warning if any NUKE_PATH already exists that is not a part of the expected "sgtk" launch mechanism
         nuke_plugin_path = '{}/nuke'.format(self._repo_path).replace('/', '\\')
+        updated_nuke_path = [nuke_plugin_path]
+
+        # Process the existing NUKE_PATH
         if 'NUKE_PATH' in os.environ:
-            LOGGER.debug('Found existing NUKE_PATH in os.environ...')
-            os.environ['NUKE_PATH'] = os.pathsep.join(
-                [
-                    nuke_plugin_path,
-                    os.environ['NUKE_PATH']
-                ]
-            )
-        else:
-            LOGGER.debug('No existing NUKE_PATH in os.environ, creating...')
-            os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
-        #os.environ['NUKE_PATH'] = os.pathsep.join([nuke_plugin_path, os.environ['NUKE_PATH']])
+            nuke_paths = os.environ['NUKE_PATH'].split(os.pathsep)
+            for nuke_path in nuke_paths:
+                if 'sgtk' in nuke_path:
+                    updated_nuke_path.append(nuke_path)
+                else:
+                    LOGGER.warn('Bad value in NUKE_PATH, ignoring: {}'.format(nuke_path))
+
+        LOGGER.debug('Setting NUKE_PATH in os.environ...')
+        os.environ['NUKE_PATH'] = os.pathsep.join(updated_nuke_path)
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -606,8 +682,29 @@ class BeforeAppLaunch(tank.Hook):
         os.environ['HOUDINI_OCIO_SRGB_FILE_COLORSPACE'] = \
             'Utility - Linear - sRGB'
 
+        # --- houdini pipeline path
+        houdini_pipe_path = "X:/dev/ss_dev_claudiohickstein/studio_pipeline_2_5_dev_master_repo/houdini/"
+
+        houdini_path = os.environ["HOUDINI_PATH"]
+        LOGGER.debug("Original Houdini path > {}".format(houdini_path))
+        LOGGER.debug("Adding {} to HOUDINI_PATH".format(houdini_pipe_path))
+        os.environ['HOUDINI_PATH'] = "{}{}{}".format(houdini_path, ";", houdini_pipe_path)
+        LOGGER.debug("New HOUDINI_PATH > {}".format( os.environ["HOUDINI_PATH"]))
+
+        # 
+        #if 'HOUDINI_MENU_PATH' in os.environ:
+        #    houdini_menu_path = os.environ["HOUDINI_MENU_PATH"]
+        #    LOGGER.debug("Original HOUDINI_MENU_PATH > {}".format(houdini_menu_path))
+        #    LOGGER.debug("Adding {} to HOUDINI_MENU_PATH".format(houdini_pipe_path))
+        #    os.environ['HOUDINI_MENU_PATH'] = "{}{}{}".format(houdini_menu_path, ";", houdini_pipe_path)
+        #    LOGGER.debug("New HOUDINI_MENU_PATH > {}".format( os.environ['HOUDINI_MENU_PATH']))
+        #else:
+        #    LOGGER.debug('No existing HOUDINI_MENU_PATH in os.environ, creating...')
+        #    os.environ['HOUDINI_MENU_PATH'] = '{}'.format(houdini_pipe_path)
+
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
+
 
     def _tk_natron_env_setup(self):
         """
