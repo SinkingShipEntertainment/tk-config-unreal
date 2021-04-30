@@ -251,28 +251,26 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # Set the fbx export flag to "Export all" by default
         item.properties['select_flag'] = ''
 
-        # Under BuilderBrothersS1 project, we want to use `fbx export selected`
-        # for steps: RIG and ANIM by default.
-        if 'BuilderBrothersS1' in PROJ_NAME:
-            # Insert the project name as an item property to know that we
-            # should target specific selected groups on export.
-            item.properties['project_name'] = PROJ_NAME
-            item.properties['select_flag'] = '-s'
-            if 'RIG' in work_fields['Step'] and \
-                    work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                self.validate_rigs_in_bb(item, work_fields)
-            if 'ANIM' in work_fields['Step'] and \
-                    work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                self.validate_references_in_bb(item)
+        # In an Unreal pipeline based projects, we want
+        # to use `fbx export selected` for steps: RIG and ANIM by default.
+        item.properties['project_name'] = PROJ_NAME
+        item.properties['select_flag'] = '-s'
+        if 'RIG' in work_fields['Step'] and \
+                work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
+            self.validate_rigs_for_ue(item, work_fields)
+        if 'ANIM' in work_fields['Step'] and \
+                work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
+            valid_refs = self.validate_references_for_ue(item)
+            if not valid_refs:
+                return False
         else:
-            if 'ANIM' in work_fields['Step']:
-                # The default behaviour is to "export all" which works as
-                # intended in a MOD/RIG context. In an ANIM context it does not.
-                # The expectation is that only the published item selected (the
-                # referenced asset), will be exported - not the entire scene.
-                valid_refs = self.validate_references(item)
-                if not valid_refs:
-                    return False
+            # The default behaviour is to "export all" which works as
+            # intended in a MOD/RIG context. In an ANIM context it does not.
+            # The expectation is that only the published item selected (the
+            # referenced asset), will be exported - not the entire scene.
+            valid_refs = self.validate_references(item)
+            if not valid_refs:
+                return False
 
         # --- For debugging contents of item ---
         self.logger.debug('== Item properties ==')
@@ -332,15 +330,11 @@ class MayaFBXPublishPlugin(HookBaseClass):
             item.properties['select_flag'] = '-s'
             return True
         else:
-            # If the current project is not BuilderBrothersS1 and validation of
-            # export groups returns False (a 'None' value is in the list), we
-            # prevent this PublishItem from publishing.
-            if not 'BuilderBrothersS1' in PROJ_NAME:
-                return False
+            return False
 
-    def validate_rigs_in_bb(self, item, work_fields):
+    def validate_rigs_for_ue(self, item, work_fields):
         """
-        Validate rigs in BuilderBrothersS1 project.
+        Validate rigs for an unreal pipeline project.
 
         The main difference here is which groups we are targeting for export.
         :param item: Item to process
@@ -354,9 +348,9 @@ class MayaFBXPublishPlugin(HookBaseClass):
         ]
         self.validate_export_groups(item, export_grps)
 
-    def validate_references_in_bb(self, item):
+    def validate_references_for_ue(self, item):
         """
-        Validate referenced assets in BuilderBrothersS1 project.
+        Validate referenced assets for an unreal pipeline project.
 
         :param item: Item to process
         """
@@ -589,7 +583,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
             instances.
         :param item: Item to process
         """
-        self.logger.debug('publish: Attempting to publish => {}'.format(
+        self.logger.debug('Attempting to publish => {}'.format(
             item.properties.get('path'))
         )
         publisher = self.parent
@@ -607,23 +601,14 @@ class MayaFBXPublishPlugin(HookBaseClass):
         embed_media = False
         current_step = item.properties.get('current_step')
         try:
-            if 'BuilderBrothersS1' in item.properties.get('project_name'):
-                if current_step in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-                    for group in item.properties.get('export_groups'):
-                        cmds.select(group, add=True)
-                    if 'ANIM' in current_step:
-                        export_animation = True
-                        # embed_media = True  # TODO: Enable this in ANIM step?
-                    if 'RIG' in current_step:
-                        embed_media = True
-
-            else:
+            if current_step in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
+                for group in item.properties.get('export_groups'):
+                    cmds.select(group, add=True)
                 if 'ANIM' in current_step:
                     export_animation = True
-                if item.properties.get('select_flag'):
-                    if item.properties.get('export_groups'):
-                        for group in item.properties.get('export_groups'):
-                            cmds.select(group, add=True)
+                    # embed_media = True  # TODO: Enable this in ANIM step?
+                if 'RIG' in current_step:
+                    embed_media = True
 
         except Exception as e:
             # Handle a default fbx publish
