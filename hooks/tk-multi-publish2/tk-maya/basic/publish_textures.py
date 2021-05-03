@@ -268,12 +268,12 @@ class MayaTexturesPublishPlugin(HookBaseClass):
             return
 
         # Call the pipeline repository python module
-        try:
-            from python import publish_texture
-            publish_texture._publish_texture()
-        except Exception, e:
-            self.logger.error("Failed to run publish_texture: %s" % e)
-            return
+        #try:
+        #    from python import publish_texture
+        #    publish_texture._publish_texture()
+        #except Exception, e:
+        #    self.logger.error("Failed to run publish_texture: %s" % e)
+        #    return
 
         # standard Publish code
         publisher = self.parent
