@@ -254,23 +254,23 @@ class MayaFBXPublishPlugin(HookBaseClass):
         # In an Unreal pipeline based projects, we want
         # to use `fbx export selected` for steps: RIG and ANIM by default.
         item.properties['project_name'] = PROJ_NAME
-        item.properties['select_flag'] = '-s'
         if 'RIG' in work_fields['Step'] and \
                 work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
             self.validate_rigs_for_ue(item, work_fields)
-        if 'ANIM' in work_fields['Step'] and \
-                work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
-            valid_refs = self.validate_references_for_ue(item)
-            if not valid_refs:
-                return False
-        else:
-            # The default behaviour is to "export all" which works as
-            # intended in a MOD/RIG context. In an ANIM context it does not.
-            # The expectation is that only the published item selected (the
-            # referenced asset), will be exported - not the entire scene.
-            valid_refs = self.validate_references(item)
-            if not valid_refs:
-                return False
+
+        if 'ANIM' in work_fields['Step']:
+            if work_fields['Step'] in ALLOWED_STEPS_FOR_EXPORT_SELECTED:
+                valid_refs = self.validate_references_for_ue(item)
+                if not valid_refs:
+                    return False
+            else:
+                # The default behaviour is to "export all" which works as
+                # intended in a MOD/RIG context. In an ANIM context it does not.
+                # The expectation is that only the published item selected (the
+                # referenced asset), will be exported - not the entire scene.
+                valid_refs = self.validate_references(item)
+                if not valid_refs:
+                    return False
 
         # --- For debugging contents of item ---
         self.logger.debug('== Item properties ==')
