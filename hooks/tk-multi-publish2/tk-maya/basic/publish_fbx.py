@@ -353,6 +353,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
         Validate referenced assets for an unreal pipeline project.
 
         :param item: Item to process
+        :return: True if all validation passes. False otherwise.
         """
         # Run default validation first
         self.validate_references(item)
@@ -389,6 +390,8 @@ class MayaFBXPublishPlugin(HookBaseClass):
                     SEARCH_GROUP
                 )
                 self.logger.warning(msg)
+                return False
+        return True
 
     def check_reference_number(self, item):
         """
@@ -432,12 +435,11 @@ class MayaFBXPublishPlugin(HookBaseClass):
             filename=True,
             wcn=True
         )]
-        if not PROJ_NAME in asset_publish_path[0]:
+        if not PROJ_NAME in asset_publish_path[0] and \
+                "Pipeline" not in item.properties['asset_type']:
             msg = '{} is sourced from another project!'.format(
                 asset_publish_path
             )
-            # TODO: Don't display this warning for assets in `pipelineassets`
-            #   i.e. TRACKCAM ?
             self.logger.warning(msg)
             cmds.warning(msg)
 
@@ -459,10 +461,11 @@ class MayaFBXPublishPlugin(HookBaseClass):
             item.properties['export_groups'] = export_group_list
             return True
         else:
-            msg = 'Could not find all groups to export!'
-            self.logger.warning('{} => {}'.format(msg, export_group_list))
-            cmds.warning(msg)
-            return False
+            if 'TRACKCAM' not in item.properties['asset_name']:
+                msg = 'Could not find all groups to export!'
+                self.logger.warning('{} => {}'.format(msg, export_group_list))
+                cmds.warning(msg)
+                return False
 
     def get_master_group_node(self, item, step=None):
         """
