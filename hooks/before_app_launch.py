@@ -782,7 +782,10 @@ class BeforeAppLaunch(tank.Hook):
             pass
 
         if self._engine_name == 'tk-houdini':
-            pass
+            _houdini_paths = [
+                'HOUDINI_PATH'
+            ]
+            path_list.extend(_houdini_paths)
 
         if self._engine_name == 'tk-natron':
             _natron_paths = [
