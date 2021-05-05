@@ -401,12 +401,13 @@ class BasicFilePublishPlugin(HookBaseClass):
             )
 
         # Call the pipeline repository python module
-        try:
-            from python import publish_texture
-            publish_texture._publish_texture()
-        except Exception, e:
-            self.logger.error("Failed to run publish_texture: %s" % e)
-            return
+        if item.context.step['name'] == "Surfacing":
+            try:
+                from python import publish_texture
+                publish_texture._publish_texture()
+            except Exception, e:
+                self.logger.error("Failed to run publish_texture: %s" % e)
+                return
 
         # handle copying of work to publish if templates are in play
         self._copy_work_to_publish(settings, item)
