@@ -670,10 +670,11 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_houdini_env_setup'
         self._headers(_setup)
 
-        script_paths = []
-        script_paths.append(self._sg_a3_path)
-        for script_path in script_paths:
-            sys.path.insert(0, script_path)
+        #script_paths = []
+        #script_paths.append(self._sg_a3_path)
+        
+        #for script_path in script_paths:
+        #    sys.path.insert(0, script_path)
 
         # --- OCIO/ACES...
         os.environ['OCIO'] = OCIO_CONFIG
@@ -684,11 +685,27 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- houdini pipeline path
         houdini_path = os.environ["HOUDINI_PATH"]
-        LOGGER.debug("Original Houdini path > {}".format(houdini_path))
         
         # adding studio repo_path
-        os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', '{}/houdini/'.format(self._repo_path))
+        os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', \
+            '{}/houdini/'.format(self._repo_path))
+
+        # sg api3 to houdini
+        # test purpose - replacing sys.path insertion for pythonpath
+        os.environ['PYTHONPATH'] = "{0}{1}{2}".format(os.environ["PYTHONPATH"], ';', \
+            '{}'.format(self._sg_a3_path))
+
         LOGGER.debug("New HOUDINI_PATH > {}".format( os.environ["HOUDINI_PATH"]))
+
+        # --- For test purpose using htoA...
+        # replace houdini version - hard coding.
+        
+        #htoa_path = "{}".format("N:/projects/RnD/Arnold_for_Houdini/htoa-5.6.1.0_rf9edb5c_houdini-18.5.532_windows/htoa-5.6.1.0_rf9edb5c_houdini-houdini-18.5.532")
+        #os.environ['PYTHONPATH'] = "{0}{1}{2}".format(os.environ["PYTHONPATH"], ';', \
+        #    '{}/scripts/bin/'.format(htoa_path))
+        
+        #os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(os.environ["HOUDINI_PATH"], ';', \
+        #    '{}'.format(htoa_path))
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -782,7 +799,10 @@ class BeforeAppLaunch(tank.Hook):
             pass
 
         if self._engine_name == 'tk-houdini':
-            pass
+            _houdini_paths = [
+                'HOUDINI_PATH'
+            ]
+            path_list.extend(_houdini_paths)
 
         if self._engine_name == 'tk-natron':
             _natron_paths = [
