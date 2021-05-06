@@ -615,7 +615,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         except Exception as e:
             # Handle a default fbx publish
-            self.loggger.warning(
+            self.logger.warning(
                 'Failed to select export group(s) {}'.format(e)
             )
             self.logger.debug('Running vanilla fbx export')
