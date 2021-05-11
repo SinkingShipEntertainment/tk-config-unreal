@@ -119,12 +119,12 @@ settings.tk-nuke-writenode.shot:
     tile_color: []
   # --- Pipeline 2.5 - ACEScg - COMP
   - file_type: exr
-    name: Comp EXR, ACEScg, DWAB 45 (final)
+    name: Comp EXR, AcesCG, DWAB 45 (final)
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_comp_render_pub_exr
-    render_template: nuke_shot_comp_render_exr
+    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    render_template: nuke_shot_comp_render_acescg_exr
     settings: {channels: rgba, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
       compression: DWAB, dw_compression_level: 45, autocrop: true, datatype: 16
         bit half}
@@ -145,12 +145,12 @@ settings.tk-nuke-writenode.shot:
     tile_color: []
   # --- Pipeline 2.5 - ACEScg - RGB MATTES
   - file_type: exr
-    name: RGB MATTE EXR, ACEScg, DWAB 45 (final)
+    name: RGB MATTE EXR, AcesCG, DWAB 45 (final)
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_comp_render_pub_exr
-    render_template: nuke_output_rgb_matte_exr
+    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    render_template: nuke_output_rgb_matte_acescg_exr
     settings: {channels: rgb, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
       compression: DWAB, dw_compression_level: 45, autocrop: false, datatype: 16
         bit half}
