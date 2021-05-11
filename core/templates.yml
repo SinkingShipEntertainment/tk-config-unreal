@@ -584,7 +584,7 @@ paths:
 
     # define the location of a work area
     shot_work_area_nuke:
-        #definition: '@shot_root/work/nuke'                              # --- user work areas ~DW 2020-01-09
+        #definition: '@shot_root/work/nuke'
         definition: '@shot_root/work/{current_user_name}/nuke'
         root_name: 'primary'
     # define the location of a publish area
@@ -593,19 +593,19 @@ paths:
         root_name: 'primary'
     # The location of WIP script files
     nuke_shot_work:
-        #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'  # --- user work areas ~DW 2020-01-09
+        #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'
         #definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
-        definition: '@shot_root/work/{current_user_name}/nuke/{Shot}.[{name}.]v{version}.nk' # ~DW 2020-03-09
+        definition: '@shot_work_area_nuke/{Shot}.v{version}.nk'
         root_name: 'primary'
     # The location of backups of WIP files
     nuke_shot_snapshot:
         #definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
-        definition: '@shot_root/work/nuke/snapshots/{Shot}.[{name}.]{Step}.v{version}.{timestamp}.nk' # ~DW 2020-03-09
+        definition: '@shot_work_area_nuke/snapshots/{Shot}.{Step}.v{version}.{timestamp}.nk'
         root_name: 'primary'
     # The location of published nuke script files
     nuke_shot_publish:
         #definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
-        definition: '@shot_root/publish/nuke/{Shot}.[{name}.]{Step}.v{version}.nk' # ~DW 2020-03-09
+        definition: '@shot_publish_area_nuke/{Shot}.{Step}.v{version}.nk'
         root_name: 'primary'
     # write node outputs
     #nuke_shot_render_mono_dpx:
@@ -641,7 +641,7 @@ paths:
     # NEW COMP
     nuke_shot_comp_render_exr:
         #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.Comp.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}_comp.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
         root_name: 'secondary'
     nuke_shot_comp_render_pub_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
@@ -674,10 +674,12 @@ paths:
         root_name: 'secondary'
     # DEGRAIN
     nuke_shot_degrain_render_exr:
-        definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{name}_{nuke.output}_degrain_v{version}.{SEQ}.exr'
+        # definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{name}_{nuke.output}_degrain_v{version}.{SEQ}.exr'
+        definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{Shot}_[{name}_]{nuke.output}_degrain_v{version}.{SEQ}.exr'
         root_name: 'secondary'
     nuke_shot_degrain_render_pub_exr:
-        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_degrain_v{version}.{SEQ}.jpg'
+        # definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_degrain_v{version}.{SEQ}.jpg'
+        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}_[{name}_]{nuke.output}_degrain_v{version}.{SEQ}.jpg'
         root_name: 'secondary'
     # R3D -> LINEAR
     nuke_shot_r3d_linear_render_exr:
