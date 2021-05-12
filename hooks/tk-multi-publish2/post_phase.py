@@ -437,7 +437,7 @@ class PostPhaseHook(HookBaseClass):
         import maya.app.renderSetup.model.renderSetup as renderSetup
 
         # define export paths and filenames
-        wk_template = self.parent.sgtk.templates.get('maya_shot_work')
+        wk_template = self.parent.sgtk.templates.get('maya_shot_publish')
         export_dir = os.path.dirname(wk_template.apply_fields(wk_fields))
         export_dir = export_dir.replace('\\', '/')
         export_dir = '{}/export'.format(export_dir)
