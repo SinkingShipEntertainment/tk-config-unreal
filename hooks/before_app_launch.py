@@ -24,7 +24,7 @@ import sgtk
 LOGGER = sgtk.platform.get_logger(__name__)
 MY_SEP = ('=' * 10)
 
-# --- gloabl variables...
+# --- global variables...
 OCIO_CONFIG = 'X:/tools/aces/aces_1.0.3/config.ocio'
 
 
@@ -628,20 +628,56 @@ class BeforeAppLaunch(tank.Hook):
         # - Previously, the I.T. department was configuring machines with the NUKE_PATH already set to 'x:\tools\nuke'
         # - This is now legacy and will be ignored when we launch nuke via the sgtk
         # - Also, log a warning if any NUKE_PATH already exists that is not a part of the expected "sgtk" launch mechanism
-        nuke_plugin_path = '{}/nuke'.format(self._repo_path).replace('/', '\\')
-        updated_nuke_path = [nuke_plugin_path]
+
+        # Update the NUKE_PATH
+        # - Previously, the I.T. department was configuring machines with the NUKE_PATH already set to 'x:\tools\nuke'
+        # - This is now legacy and will be ignored when we launch nuke via the sgtk
+        # - Also, log a warning if any NUKE_PATH already exists that is not a part of the expected "sgtk" launch mechanism
+        nuke_plugin_path = []
 
         # Process the existing NUKE_PATH
+        # - this is necessary to pickup the sgtk from the existing path
         if 'NUKE_PATH' in os.environ:
             nuke_paths = os.environ['NUKE_PATH'].split(os.pathsep)
             for nuke_path in nuke_paths:
                 if 'sgtk' in nuke_path:
-                    updated_nuke_path.append(nuke_path)
+                    nuke_plugin_path.append(nuke_path)
                 else:
                     LOGGER.warn('Bad value in NUKE_PATH, ignoring: {}'.format(nuke_path))
 
+        # Add main/dev pipeline repos to NUKE_PATH
+        try:
+            # old method
+            sse_nuke_pipeline = '{}/nuke'.format(self._repo_path).replace('/', '\\')
+            nuke_plugin_path.append(sse_nuke_pipeline)
+        except:
+            # new method: 
+            # Only take the first entry in the list, the rest are fallbacks and are irrelevant for nuke.
+            sse_nuke_pipeline = '{}/nuke'.format(self._repo_paths[0]).replace('/', '\\')
+            nuke_plugin_path.append(sse_nuke_pipeline)
+            
         LOGGER.debug('Setting NUKE_PATH in os.environ...')
-        os.environ['NUKE_PATH'] = os.pathsep.join(updated_nuke_path)
+        os.environ['NUKE_PATH'] = os.pathsep.join(nuke_plugin_path)
+         
+        # Update SSE nuke tools paths
+        # 1) SSE_NUKE_PIPELINE 
+        #    - location of TD controlled pipeline scripts/tools/templates/etc
+        #    - This should match the location of the currently selected repo (self._repo_paths[0])
+        #
+        # 2) SSE_NUKE_TOOLS
+        #    - location of ARTIST controlled scripts/tools/templates/etc
+        #    - For now, this is hard coded.
+        #         
+        # TODO: support mac/linux paths?
+        #
+        LOGGER.debug('Setting SSE_NUKE_PIPELINE in os.environ...')
+        os.environ['SSE_NUKE_PIPELINE'] = sse_nuke_pipeline
+
+        LOGGER.debug('Setting SSE_NUKE_TOOLS in os.environ...')
+        os.environ['SSE_NUKE_TOOLS'] = "N:\\Resources\\Tools\\Nuke\\StudioTools"
+
+        # Prevent python from writing bytecode (avoids .pyc files)
+        os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -670,10 +706,11 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_houdini_env_setup'
         self._headers(_setup)
 
-        script_paths = []
-        script_paths.append(self._sg_a3_path)
-        for script_path in script_paths:
-            sys.path.insert(0, script_path)
+        #script_paths = []
+        #script_paths.append(self._sg_a3_path)
+        
+        #for script_path in script_paths:
+        #    sys.path.insert(0, script_path)
 
         # --- OCIO/ACES...
         os.environ['OCIO'] = OCIO_CONFIG
@@ -684,11 +721,27 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- houdini pipeline path
         houdini_path = os.environ["HOUDINI_PATH"]
-        LOGGER.debug("Original Houdini path > {}".format(houdini_path))
         
         # adding studio repo_path
-        os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', '{}/houdini/'.format(self._repo_path))
+        os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', \
+            '{}/houdini/'.format(self._repo_path))
+
+        # sg api3 to houdini
+        # test purpose - replacing sys.path insertion for pythonpath
+        os.environ['PYTHONPATH'] = "{0}{1}{2}".format(os.environ["PYTHONPATH"], ';', \
+            '{}'.format(self._sg_a3_path))
+
         LOGGER.debug("New HOUDINI_PATH > {}".format( os.environ["HOUDINI_PATH"]))
+
+        # --- For test purpose using htoA...
+        # replace houdini version - hard coding.
+        
+        #htoa_path = "{}".format("N:/projects/RnD/Arnold_for_Houdini/htoa-5.6.1.0_rf9edb5c_houdini-18.5.532_windows/htoa-5.6.1.0_rf9edb5c_houdini-houdini-18.5.532")
+        #os.environ['PYTHONPATH'] = "{0}{1}{2}".format(os.environ["PYTHONPATH"], ';', \
+        #    '{}/scripts/bin/'.format(htoa_path))
+        
+        #os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(os.environ["HOUDINI_PATH"], ';', \
+        #    '{}'.format(htoa_path))
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
@@ -782,7 +835,10 @@ class BeforeAppLaunch(tank.Hook):
             pass
 
         if self._engine_name == 'tk-houdini':
-            pass
+            _houdini_paths = [
+                'HOUDINI_PATH'
+            ]
+            path_list.extend(_houdini_paths)
 
         if self._engine_name == 'tk-natron':
             _natron_paths = [
