@@ -628,11 +628,6 @@ class BeforeAppLaunch(tank.Hook):
         # - Previously, the I.T. department was configuring machines with the NUKE_PATH already set to 'x:\tools\nuke'
         # - This is now legacy and will be ignored when we launch nuke via the sgtk
         # - Also, log a warning if any NUKE_PATH already exists that is not a part of the expected "sgtk" launch mechanism
-
-        # Update the NUKE_PATH
-        # - Previously, the I.T. department was configuring machines with the NUKE_PATH already set to 'x:\tools\nuke'
-        # - This is now legacy and will be ignored when we launch nuke via the sgtk
-        # - Also, log a warning if any NUKE_PATH already exists that is not a part of the expected "sgtk" launch mechanism
         nuke_plugin_path = []
 
         # Process the existing NUKE_PATH
