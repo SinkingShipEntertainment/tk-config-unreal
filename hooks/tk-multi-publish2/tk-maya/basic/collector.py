@@ -11,7 +11,7 @@ import maya.mel as mel
 import sgtk
 # from tank import TankError
 
-from python.utilities import utils_reference
+from python.utilities import utils_reference, utils_yeti
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -249,6 +249,10 @@ class MayaSessionCollector(HookBaseClass):
             tex_item.set_icon_from_path(icon_path)
             tex_item.enabled = False
 
+        # yeti grooms
+        if p_step == 'Surfacing':
+            self.collect_session_yeti_grooms(session_item)
+
         # discover the project root which helps in discovery of other
         # publishable items
         project_root = cmds.workspace(q=True, rootDirectory=True)
@@ -382,6 +386,41 @@ class MayaSessionCollector(HookBaseClass):
             fbx_item.properties["file_path"] = obj_path
             fbx_item.properties["node_name"] = obj['node_name']
             fbx_item.properties["asset_name"] = obj['node_name'].split('_')[0]
+
+    def collect_session_yeti_grooms(self, parent_item):
+        """
+        Creates items for referenced assets in the scene.
+
+        :param parent_item: Parent Item instance
+        """
+
+        yeti_nodes = utils_yeti.return_yeti_nodes()
+        yeti_maya_nodes = []
+        for yeti_node in yeti_nodes:
+            if cmds.objectType(yeti_node) == "pgYetiMaya":
+                yeti_maya_nodes.append(yeti_node)
+
+        for yeti_maya_node in yeti_maya_nodes:
+            self.logger.info('collect_session_yeti_grooms: Parsing => {}'.format(yeti_maya_node))
+            groom_item = parent_item.create_item(
+                "maya.groom",
+                "Groom Export",
+                # "%s.GRM.abc" % yeti_maya_node,
+                '%s.GRM.abc' % (yeti_maya_node.split('_')[-1].split('Shape')[0]).title()
+            )
+
+            icon_path = os.path.join(
+                self.disk_location,
+                os.pardir,
+                "icons",
+                "yeti.png"
+            )
+
+            groom_item.set_icon_from_path(icon_path)
+            groom_item.enabled = False
+
+            # add additional info to item properties for the validation process
+            groom_item.properties["node_name"] = yeti_maya_node
 
     def collect_playblasts(self, parent_item, project_root):
         """Creates items for quicktime playblasts.
