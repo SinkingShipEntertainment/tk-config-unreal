@@ -652,6 +652,14 @@ paths:
     nuke_shot_comp_render_pub_jpeg:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.jpg'
         root_name: 'secondary'
+    # COMP - ACEScg    
+    nuke_shot_comp_render_acescg_exr:
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}_comp_ACEScg.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
+        root_name: 'secondary'
+    nuke_shot_comp_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp_ACEScg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
     # ROTO
     nuke_shot_roto_render_jpeg:
         definition: '@sequence_root/renders/{Shot}/roto/v{version}/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
@@ -716,6 +724,9 @@ paths:
         root_name: 'secondary'
     nuke_output_rgb_matte_exr:
         definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_output_rgb_matte_acescg_exr:
+        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE_ACEScg.{SEQ}.exr'
         root_name: 'secondary'
 
     #
