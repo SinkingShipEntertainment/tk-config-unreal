@@ -652,6 +652,14 @@ paths:
     nuke_shot_comp_render_pub_jpeg:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.jpg'
         root_name: 'secondary'
+    # COMP - ACEScg
+    nuke_shot_comp_render_acescg_exr:
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}_comp_acescg.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
+        root_name: 'secondary'
+    nuke_shot_comp_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
     # ROTO
     nuke_shot_roto_render_jpeg:
         definition: '@sequence_root/renders/{Shot}/roto/v{version}/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
@@ -716,6 +724,9 @@ paths:
         root_name: 'secondary'
     nuke_output_rgb_matte_exr:
         definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_output_rgb_matte_acescg_exr:
+        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE_acescg.{SEQ}.exr'
         root_name: 'secondary'
 
     #
@@ -919,7 +930,7 @@ paths:
         definition: '@asset_publish_area_maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
         root_name: 'primary'
     maya_asset_publish_surfacing_arnold_shadernetwork:
-        definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD_AI.v{version}.ma'
+        definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD.AI.v{version}.ma'
         root_name: 'primary'
 
     # The location of FBX exports for Unreal
