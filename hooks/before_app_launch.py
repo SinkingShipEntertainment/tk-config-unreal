@@ -432,18 +432,18 @@ class BeforeAppLaunch(tank.Hook):
             sys.path.insert(0, sp)
 
             old_py_path = os.environ['PYTHONPATH']
-            if sp in old_py_path:
+            if sp in old_py_path.split(os.pathsep):
                 m = 'Found {} in PYTHONPATH, no need to add it.'.format(sp)
                 LOGGER.debug(m)
             else:
-                LOGGER.debug('old_py_path > {}'.format(old_py_path))
                 old_py_path_bits = old_py_path.split(os.pathsep)
-
                 old_py_path_bits.insert(0, sp)
                 new_py_path = os.pathsep.join(old_py_path_bits)
-
-                LOGGER.debug('new_py_path > {}'.format(new_py_path))
                 os.environ['PYTHONPATH'] = new_py_path
+                LOGGER.debug('PYTHONPATH, added > {}'.format(sp))
+
+        LOGGER.debug('old_py_path > {}'.format(old_py_path))
+        LOGGER.debug('new_py_path > {}'.format(new_py_path))
 
         import python
         reload(python)
@@ -719,7 +719,8 @@ class BeforeAppLaunch(tank.Hook):
         h_ver = '18.0.597'
         h_bin = 'C:/Program Files/Side Effects Software'
         h_bin += '/Houdini {}/bin'.format(h_ver)
-        if os.path.exists(h_bin) and h_bin not in os.environ['PATH']:
+        path_split = os.environ['PATH'].split(os.pathsep)
+        if os.path.exists(h_bin) and h_bin not in path_split:
             os.environ['PATH'] = '{0}{1}{2}'.format(
                 os.environ['PATH'],
                 os.pathsep,
