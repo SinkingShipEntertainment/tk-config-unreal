@@ -226,6 +226,23 @@ class MayaGroomPublishPlugin(HookBaseClass):
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
+        # SSE: check that the Yeti graph for the node is not empty
+        cmd = [
+            'pgYetiGraph',
+            '-listNodes',
+            '"%s"' % node_name
+        ]
+        cmd_str = " ".join(cmd)
+
+        try:
+            nodes = mel.eval(cmd_str)
+            if not nodes:
+                error_msg = 'The Yeti graph for %s is empty.' % node_name
+                self.logger.error(error_msg)
+                raise Exception(error_msg)
+        except Exception, e:
+            raise Exception(e)
+
         # get the configured work file template
         work_template = item.parent.properties.get("work_template")
         publish_template = item.properties.get("publish_template")
