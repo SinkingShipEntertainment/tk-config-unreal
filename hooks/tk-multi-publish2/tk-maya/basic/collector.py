@@ -249,10 +249,6 @@ class MayaSessionCollector(HookBaseClass):
             tex_item.set_icon_from_path(icon_path)
             tex_item.enabled = False
 
-        # yeti grooms
-        if p_step == 'Surfacing':
-            self.collect_session_yeti_grooms(session_item)
-
         # discover the project root which helps in discovery of other
         # publishable items
         project_root = cmds.workspace(q=True, rootDirectory=True)
@@ -278,6 +274,11 @@ class MayaSessionCollector(HookBaseClass):
         # We want to export the referenced assets in an ANIM shot as FBXs
         # for use in Unreal.
         work_fields = work_template.get_fields(path)
+
+        # yeti grooms
+        if p_step in ['Surfacing', 'Groom']:
+            self.collect_session_yeti_grooms(session_item, work_fields)
+
         if 'ANIM' in work_fields['Step']:
             # We only want to collect publishable items in an ANIM step
             if cmds.ls(references=True):
@@ -387,13 +388,16 @@ class MayaSessionCollector(HookBaseClass):
             fbx_item.properties["node_name"] = obj['node_name']
             fbx_item.properties["asset_name"] = obj['node_name'].split('_')[0]
 
-    def collect_session_yeti_grooms(self, parent_item):
+    def collect_session_yeti_grooms(self, parent_item, work_fields):
         """
         Creates items for referenced assets in the scene.
 
         :param parent_item: Parent Item instance
+        :param work_fields: Dictionary of work path tokens used to construct the display name.
         """
 
+        asset_name = work_fields['Asset']
+        version = 'v%s' % str(work_fields['version']).zfill(3)
         yeti_nodes = utils_yeti.return_yeti_nodes()
         yeti_maya_nodes = []
         for yeti_node in yeti_nodes:
@@ -401,12 +405,13 @@ class MayaSessionCollector(HookBaseClass):
                 yeti_maya_nodes.append(yeti_node)
 
         for yeti_maya_node in yeti_maya_nodes:
+            descriptor = (yeti_maya_node.split('_')[-1].split('Shape')[0]).title()
+            display_name = '%s.%s.GRM.%s.abc' % (asset_name, descriptor, version)
             self.logger.info('collect_session_yeti_grooms: Parsing => {}'.format(yeti_maya_node))
             groom_item = parent_item.create_item(
                 "maya.groom",
                 "Groom Export",
-                # "%s.GRM.abc" % yeti_maya_node,
-                '%s.GRM.abc' % (yeti_maya_node.split('_')[-1].split('Shape')[0]).title()
+                display_name
             )
 
             icon_path = os.path.join(
