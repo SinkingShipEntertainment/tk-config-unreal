@@ -476,6 +476,10 @@ paths:
         root_name: 'primary'
     # END >>> from old sg_config
 
+    # CFX sim guide curve cache location
+    maya_shot_guide_curve_cache_folder:
+        definition: '@sequence_root/caches/{Shot}/{Step}/guide_curve_cache/'
+        root_name: 'secondary'
 
     #
     # Houdini
