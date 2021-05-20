@@ -346,7 +346,13 @@ class MayaFBXPublishPlugin(HookBaseClass):
         export_grps = [
             self.get_export_group(item, group) for group in SEARCH_GROUP
         ]
-        self.validate_export_groups(item, export_grps)
+        valid_groups = self.validate_export_groups(item, export_grps)
+
+        if valid_groups:
+            item.properties['select_flag'] = '-s'
+            return True
+        else:
+            return False
 
     def validate_references_for_ue(self, item):
         """
