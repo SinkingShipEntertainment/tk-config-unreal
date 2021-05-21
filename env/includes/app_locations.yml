@@ -71,7 +71,7 @@ apps.tk-multi-reviewsubmission.location:
 apps.tk-multi-screeningroom.location:
   type: app_store
   name: tk-multi-screeningroom
-  version: v0.4.1
+  version: v0.4.0
 
 # setframerange
 apps.tk-multi-setframerange.location:
@@ -127,7 +127,7 @@ apps.tk-shotgun-launchfolder.location:
 apps.tk-shotgun-launchpublish.location:
   type: app_store
   name: tk-shotgun-launchpublish
-  version: v0.4.1
+  version: v0.4.0
 
 # ---- Hiero apps
 
@@ -135,13 +135,13 @@ apps.tk-shotgun-launchpublish.location:
 apps.tk-hiero-export.location:
   type: app_store
   name: tk-hiero-export
-  version: v0.6.0
+  version: v0.5.3
 
 # hiero openinshotgun
 apps.tk-hiero-openinshotgun.location:
   type: app_store
   name: tk-hiero-openinshotgun
-  version: v0.3.5
+  version: v0.3.4
 
 # ---- Houdini apps
 
