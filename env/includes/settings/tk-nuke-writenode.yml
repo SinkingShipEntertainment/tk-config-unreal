@@ -117,7 +117,20 @@ settings.tk-nuke-writenode.shot:
         bit half}
     tank_type: Rendered Image
     tile_color: []
-  # --- Pipeline 2.5 - RGB MATTES
+  # --- Pipeline 2.5 - ACEScg - COMP
+  - file_type: exr
+    name: Comp EXR, AcesCG, DWAB 45 (final)
+    promote_write_knobs: []
+    proxy_publish_template:
+    proxy_render_template:
+    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    render_template: nuke_shot_comp_render_acescg_exr
+    settings: {channels: rgba, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
+      compression: DWAB, dw_compression_level: 45, autocrop: true, datatype: 16
+        bit half}
+    tank_type: Rendered Image
+    tile_color: []
+  # --- Pipeline 2.5 - ACES2065-1 - RGB MATTES
   - file_type: exr
     name: RGB MATTE EXR, Aces2065, DWAB 45 (final)
     promote_write_knobs: []
@@ -130,7 +143,20 @@ settings.tk-nuke-writenode.shot:
         bit half}
     tank_type: Rendered Image
     tile_color: []
-  # DEGRAIN
+  # --- Pipeline 2.5 - ACEScg - RGB MATTES
+  - file_type: exr
+    name: RGB MATTE EXR, AcesCG, DWAB 45 (final)
+    promote_write_knobs: []
+    proxy_publish_template:
+    proxy_render_template:
+    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    render_template: nuke_output_rgb_matte_acescg_exr
+    settings: {channels: rgb, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
+      compression: DWAB, dw_compression_level: 45, autocrop: false, datatype: 16
+        bit half}
+    tank_type: Rendered Image
+    tile_color: []
+  # --- DEGRAIN
   - file_type: exr
     name: Degrain EXR, 16 bit
     promote_write_knobs: []
@@ -143,3 +169,4 @@ settings.tk-nuke-writenode.shot:
     tank_type: Rendered Image
     tile_color: []
   location: "@apps.tk-nuke-writenode.location"
+
