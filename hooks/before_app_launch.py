@@ -939,25 +939,11 @@ class BeforeAppLaunch(tank.Hook):
             'Utility - Linear - sRGB'
 
         # --- houdini pipeline path
-<<<<<<< HEAD
         houdini_path = os.environ["HOUDINI_PATH"]
         
         # connecting studio repo_path
         os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', \
             '{}/houdini/'.format(self._repo_path))
-=======
-        houdini_path = os.environ['HOUDINI_PATH']
-
-        # adding studio repo_path
-        os.environ['HOUDINI_PATH'] = '{0}{1}{2}'.format(
-            houdini_path,
-            os.pathsep,
-            '{}/houdini/'.format(self._repo_path)
-        )
-
-        m = 'New HOUDINI_PATH > {}'.format(os.environ['HOUDINI_PATH'])
-        LOGGER.debug(m)
->>>>>>> 3260928209c091b498b2d15c42f133cbacb51de6
 
 
         # custom libs and additional scripts
@@ -992,8 +978,6 @@ class BeforeAppLaunch(tank.Hook):
         py_paths = []
         py_paths.append(self._sg_a3_path)
 
-<<<<<<< HEAD
-=======
         for py_path in py_paths:
             os.environ['PYTHONPATH'] = '{0}{1}{2}'.format(
                 os.environ['PYTHONPATH'],
@@ -1003,7 +987,6 @@ class BeforeAppLaunch(tank.Hook):
         m = 'New PYTHONPATH > {}'.format(os.environ['PYTHONPATH'])
         LOGGER.debug(m)
 
->>>>>>> 3260928209c091b498b2d15c42f133cbacb51de6
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
 
