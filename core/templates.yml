@@ -581,7 +581,6 @@ paths:
         definition: '@shot_root/publish/mobu/{name}.{Step}.v{version}.fbx'
         root_name: 'primary'
 
-
     #
     # Nuke
     #
@@ -599,17 +598,20 @@ paths:
     nuke_shot_work:
         #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'
         #definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
-        definition: '@shot_work_area_nuke/{Shot}.v{version}.nk'
+        #definition: '@shot_work_area_nuke/{Shot}.v{version}.nk'
+        definition: '@shot_work_area_nuke/{Shot}.{task_name}.v{version}.nk'
         root_name: 'primary'
     # The location of backups of WIP files
     nuke_shot_snapshot:
         #definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
-        definition: '@shot_work_area_nuke/snapshots/{Shot}.{Step}.v{version}.{timestamp}.nk'
+        #definition: '@shot_work_area_nuke/snapshots/{Shot}.{Step}.v{version}.{timestamp}.nk'
+        definition: '@shot_work_area_nuke/snapshots/{Shot}.{task_name}.v{version}.{timestamp}.nk'
         root_name: 'primary'
     # The location of published nuke script files
     nuke_shot_publish:
         #definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
-        definition: '@shot_publish_area_nuke/{Shot}.{Step}.v{version}.nk'
+        #definition: '@shot_publish_area_nuke/{Shot}.{Step}.v{version}.nk'
+        definition: '@shot_publish_area_nuke/{Shot}.{task_name}.v{version}.nk'
         root_name: 'primary'
     # write node outputs
     #nuke_shot_render_mono_dpx:
@@ -631,7 +633,6 @@ paths:
     nuke_shot_render_pub_mono_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}.v{version}.{SEQ}.exr'
         root_name: 'secondary'
-
     nuke_shot_render_mono_dpx:
         definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}.v{version}.{SEQ}.dpx'
         root_name: 'secondary'
@@ -664,12 +665,26 @@ paths:
     nuke_shot_comp_render_acescg_pub_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp_acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
+    # LIGHT SLAP COMP - ACEScg
+    nuke_shot_lt_slap_comp_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/3d/lt_slap_comps/v{version}/{Shot}_lt_slap_comp_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_lt_slap_comp_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_lt_slap_comp_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
     # ROTO
     nuke_shot_roto_render_jpeg:
         definition: '@sequence_root/renders/{Shot}/roto/v{version}/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
         root_name: 'secondary'
     nuke_shot_roto_render_pub_jpeg:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
+        root_name: 'secondary'
+    # ROTO - ACEScg
+    nuke_shot_roto_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/roto/v{version}/{Shot}_roto_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_roto_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_roto_acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
     # CLEAN PLATE
     nuke_shot_clean_plate_render_exr:
