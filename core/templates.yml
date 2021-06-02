@@ -665,12 +665,12 @@ paths:
     nuke_shot_comp_render_acescg_pub_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp_acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
-    # LIGHT SLAP COMP - ACEScg
-    nuke_shot_lt_slap_comp_render_acescg_exr:
-        definition: '@sequence_root/renders/{Shot}/3d/lt_slap_comps/v{version}/{Shot}_lt_slap_comp_acescg.v{version}.{SEQ}.exr'
+    # LIGHT - ACEScg (slapcomp)
+    nuke_shot_light_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/3d/lt_slap_comps/v{version}/{Shot}_light_acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
-    nuke_shot_lt_slap_comp_render_acescg_pub_exr:
-        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_lt_slap_comp_acescg.v{version}.{SEQ}.exr'
+    nuke_shot_light_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_light_acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
     # ROTO
     nuke_shot_roto_render_jpeg:
