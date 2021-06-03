@@ -939,18 +939,40 @@ class BeforeAppLaunch(tank.Hook):
             'Utility - Linear - sRGB'
 
         # --- houdini pipeline path
-        houdini_path = os.environ['HOUDINI_PATH']
+        houdini_path = os.environ["HOUDINI_PATH"]
+        
+        # connecting studio repo_path
+        os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', \
+            '{}/houdini/'.format(self._repo_path))
 
-        # adding studio repo_path
-        os.environ['HOUDINI_PATH'] = '{0}{1}{2}'.format(
-            houdini_path,
-            os.pathsep,
-            '{}/houdini/'.format(self._repo_path)
-        )
 
-        m = 'New HOUDINI_PATH > {}'.format(os.environ['HOUDINI_PATH'])
-        LOGGER.debug(m)
+        # custom libs and additional scripts
+        hou_script_paths = []
 
+        # --- NOTE: probably moving to houdini packages soon.
+
+        #script_paths.append('{}/otls/qlib'.format(self._repo_path))
+        hou_script_paths.append("@\\otls;N:\\Resources\\Tools\\Houdini\\shared\\otls")
+        studio_hou_paths = os.pathsep.join(hou_script_paths)
+
+        # adding custom scripts tools to houdini_otl_scanpath
+        LOGGER.debug('Setting Custom Shared OTLS lib in HOUDINI_OTLSCAN_PATH...') 
+        os.environ['SSE_SHARED_OTLS_PATH'] = "@;N:\\Resources\\Tools\\Houdini\\shared\\otls"
+
+        if 'HOUDINI_OTLSCAN_PATH' in os.environ:
+             LOGGER.debug('Found existing HOUDINI_OTLSCAN_PATH in os.environ...')
+             os.environ['HOUDINI_OTLSCAN_PATH'] = os.pathsep.join(
+                 [
+                     os.environ['HOUDINI_OTLSCAN_PATH'],
+                     os.environ['SSE_SHARED_OTLS_PATH']
+                 ]
+             )
+        else:
+             m = 'No existing HOUDINI_OTL_SCANPATH in os.environ, creating...'
+             LOGGER.debug(m)
+             os.environ['HOUDINI_OTLSCAN_PATH'] = '{}'.format(studio_hou_paths)
+
+        
         # sg api3 to houdini
         # test purpose - replacing sys.path insertion for pythonpath
         py_paths = []
@@ -1057,7 +1079,8 @@ class BeforeAppLaunch(tank.Hook):
 
         if self._engine_name == 'tk-houdini':
             _houdini_paths = [
-                'HOUDINI_PATH'
+                'HOUDINI_PATH',
+                'HOUDINI_OTLSCAN_PATH'
             ]
             path_list.extend(_houdini_paths)
 
