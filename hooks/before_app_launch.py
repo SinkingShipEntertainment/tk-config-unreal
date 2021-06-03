@@ -655,13 +655,12 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_unreal_env_setup'
         self._headers(_setup)
 
-        project_tools = "X:/tools/projects"
-        repo = os.path.join(
-            project_tools,
-            "HoneyBadger",
-            "HoneyBadger_pipeline_2_5_master_dev_repo"
+        project_name = os.environ['CURR_PROJECT']
+        repo_path = self._return_repo_path(project_name)
+        
+        config_site_packages = os.path.join(
+            repo_path, "unreal", "site-packages"
         )
-        config_site_packages = os.path.join(repo, "unreal", "site-packages")
 
         if not config_site_packages in os.environ.get("PYTHONPATH", ""):
             os.environ["PYTHONPATH"] += os.pathsep + config_site_packages
