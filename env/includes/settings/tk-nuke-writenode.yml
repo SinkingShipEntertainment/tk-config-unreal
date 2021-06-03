@@ -130,6 +130,19 @@ settings.tk-nuke-writenode.shot:
         bit half}
     tank_type: Rendered Image
     tile_color: []
+  # --- Pipeline 2.5 - ACEScg - PIZ - COMP
+  - file_type: exr
+    name: Comp EXR, AcesCG, PIZ (final)
+    promote_write_knobs: []
+    proxy_publish_template:
+    proxy_render_template:
+    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    render_template: nuke_shot_comp_render_acescg_exr
+    settings: {channels: rgba, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
+      compression: PIZ Wavelet (32 scanlines), dw_compression_level: 45, autocrop: true, datatype: 16
+        bit half}
+    tank_type: Rendered Image
+    tile_color: []
   # --- Pipeline 2.5 - ACEScg - Lighting Slap Comp
   - file_type: exr
     name: Light EXR, AcesCG, DWAB 45 (final)
