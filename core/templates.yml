@@ -812,6 +812,10 @@ paths:
         definition: '@asset_root/publish/caches/{Asset}.[{name}.]{Step}.v{version}.abc'
         root_name: 'primary'
 
+    asset_fur_cache:
+        definition: '@asset_root/publish/caches/{Asset}.{name}.GRM.v{version}.abc'
+        root_name: 'primary'
+
     asset_arnold_standin:
         #definition: '@asset_root/publish/ass/{name}.ass'
         definition: '@asset_root/publish/ass/{Asset}.[{name}.]{Step}.v{version}.ass'
