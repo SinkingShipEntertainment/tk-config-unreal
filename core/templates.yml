@@ -505,6 +505,11 @@ paths:
         # definition: '@shot_root/publish/houdini/{name}.{Step}.v{version}.hip'
         definition: '@shot_publish_area_houdini/{Shot}.[{name}.]{Step}.v{version}.hip'
         root_name: 'primary'
+    
+    # Houdini review files
+    houdini_shot_review:
+        definition: "@shot_work_area_houdini/version/{Shot}/sh{Shot}_srgb_v{version}.mov"
+        root_name: 'primary'       
 
     # @Shervin - Discuss with FX, Change alembic, render and mantra paths to secondary
     # Alembic caches
