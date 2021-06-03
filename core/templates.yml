@@ -476,6 +476,10 @@ paths:
         root_name: 'primary'
     # END >>> from old sg_config
 
+    # CFX sim guide curve cache location
+    maya_shot_guide_curve_cache_folder:
+        definition: '@sequence_root/caches/{Shot}/{Step}/guide_curve_cache/'
+        root_name: 'secondary'
 
     #
     # Houdini
@@ -577,7 +581,6 @@ paths:
         definition: '@shot_root/publish/mobu/{name}.{Step}.v{version}.fbx'
         root_name: 'primary'
 
-
     #
     # Nuke
     #
@@ -595,17 +598,20 @@ paths:
     nuke_shot_work:
         #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'
         #definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
-        definition: '@shot_work_area_nuke/{Shot}.v{version}.nk'
+        #definition: '@shot_work_area_nuke/{Shot}.v{version}.nk'
+        definition: '@shot_work_area_nuke/{Shot}.{task_name}.v{version}.nk'
         root_name: 'primary'
     # The location of backups of WIP files
     nuke_shot_snapshot:
         #definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
-        definition: '@shot_work_area_nuke/snapshots/{Shot}.{Step}.v{version}.{timestamp}.nk'
+        #definition: '@shot_work_area_nuke/snapshots/{Shot}.{Step}.v{version}.{timestamp}.nk'
+        definition: '@shot_work_area_nuke/snapshots/{Shot}.{task_name}.v{version}.{timestamp}.nk'
         root_name: 'primary'
     # The location of published nuke script files
     nuke_shot_publish:
         #definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
-        definition: '@shot_publish_area_nuke/{Shot}.{Step}.v{version}.nk'
+        #definition: '@shot_publish_area_nuke/{Shot}.{Step}.v{version}.nk'
+        definition: '@shot_publish_area_nuke/{Shot}.{task_name}.v{version}.nk'
         root_name: 'primary'
     # write node outputs
     #nuke_shot_render_mono_dpx:
@@ -627,7 +633,6 @@ paths:
     nuke_shot_render_pub_mono_exr:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}.v{version}.{SEQ}.exr'
         root_name: 'secondary'
-
     nuke_shot_render_mono_dpx:
         definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}.v{version}.{SEQ}.dpx'
         root_name: 'secondary'
@@ -652,12 +657,34 @@ paths:
     nuke_shot_comp_render_pub_jpeg:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.jpg'
         root_name: 'secondary'
+    # COMP - ACEScg
+    nuke_shot_comp_render_acescg_exr:
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}_comp_acescg.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
+        root_name: 'secondary'
+    nuke_shot_comp_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    # LIGHT - ACEScg (slapcomp)
+    nuke_shot_light_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/3d/lt_slap_comps/v{version}/{Shot}_light_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_light_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_light_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
     # ROTO
     nuke_shot_roto_render_jpeg:
         definition: '@sequence_root/renders/{Shot}/roto/v{version}/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
         root_name: 'secondary'
     nuke_shot_roto_render_pub_jpeg:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
+        root_name: 'secondary'
+    # ROTO - ACEScg
+    nuke_shot_roto_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/roto/v{version}/{Shot}_roto_acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_roto_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_roto_acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
     # CLEAN PLATE
     nuke_shot_clean_plate_render_exr:
@@ -716,6 +743,9 @@ paths:
         root_name: 'secondary'
     nuke_output_rgb_matte_exr:
         definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_output_rgb_matte_acescg_exr:
+        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE_acescg.{SEQ}.exr'
         root_name: 'secondary'
 
     #
@@ -919,7 +949,7 @@ paths:
         definition: '@asset_publish_area_maya/{Asset}.[{name}.]SUR.AI.v{version}.ma'
         root_name: 'primary'
     maya_asset_publish_surfacing_arnold_shadernetwork:
-        definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD_AI.v{version}.ma'
+        definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD.AI.v{version}.ma'
         root_name: 'primary'
 
     # The location of FBX exports for Unreal
