@@ -68,7 +68,6 @@ settings.tk-multi-launchapp.motionbuilder:
 
 # SSE Harvest Tool
 settings.tk-multi-launchapp.harvest:
-  engine: ''
   hook_app_launch: default
   hook_before_app_launch: default
   windows_path: "@path.windows.harvest"
