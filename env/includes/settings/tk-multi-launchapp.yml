@@ -68,10 +68,18 @@ settings.tk-multi-launchapp.motionbuilder:
 
 # SSE Harvest Tool
 settings.tk-multi-launchapp.harvest:
-  engine: ''
   hook_app_launch: default
   hook_before_app_launch: default
   windows_path: "@path.windows.harvest"
   menu_name: PublishAndHarvest
+  location: "@apps.tk-multi-launchapp.location"
+  icon: "X:\\tools\\sinking_ship\\shotgun\\icons\\ss_logo_256x256.png"
+
+# SSE Copy Asset Tool
+settings.tk-multi-launchapp.copyasset:
+  hook_app_launch: default
+  hook_before_app_launch: default
+  windows_path: "@path.windows.copyasset"
+  menu_name: CopyAsset
   location: "@apps.tk-multi-launchapp.location"
   icon: "X:\\tools\\sinking_ship\\shotgun\\icons\\ss_logo_256x256.png"
