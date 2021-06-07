@@ -125,19 +125,9 @@ class BeforeAppLaunch(tank.Hook):
         if engine_name == 'tk-natron':
             self._tk_natron_env_setup()
 
-<<<<<<< HEAD
         if engine_name == 'tk-unreal':
             self._tk_unreal_env_setup()
 
-    def _return_repo_path(self, project_name):
-        """
-        Use Shotgun (Toolkit and Database) to get data
-        and return the correct code repo root path for
-        the Project that Toolkit launched.
-        @return str repo_path: The root of the path
-                               based on information
-                               gleaned from Shotgun.
-=======
     def return_proj_short_name(self, project_name):
         """Return the Project short name from a Shotgun DB query based on the
         Project's full name.
@@ -147,7 +137,6 @@ class BeforeAppLaunch(tank.Hook):
 
         Returns:
             str: The Project's short name.
->>>>>>> 8bb697675f9041c86d40cbf72e40eda135c46afc
         """
         sg_filters = [
             ['name', 'is', project_name]
@@ -870,18 +859,6 @@ class BeforeAppLaunch(tank.Hook):
         # Process the existing NUKE_PATH
         # - this is necessary to pickup the sgtk from the existing path
         if 'NUKE_PATH' in os.environ:
-<<<<<<< HEAD
-            LOGGER.debug('Found existing NUKE_PATH in os.environ...')
-            os.environ['NUKE_PATH'] = os.pathsep.join(
-                [
-                    nuke_plugin_path,
-                    os.environ['NUKE_PATH']
-                ]
-            )
-        else:
-            LOGGER.debug('No existing NUKE_PATH in os.environ, creating...')
-            os.environ['NUKE_PATH'] = '{}'.format(nuke_plugin_path)
-=======
             nuke_paths = os.environ['NUKE_PATH'].split(os.pathsep)
             for nuke_path in nuke_paths:
                 if 'sgtk' in nuke_path:
@@ -929,7 +906,6 @@ class BeforeAppLaunch(tank.Hook):
 
         # Prevent python from writing bytecode (avoids .pyc files)
         os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
->>>>>>> 8bb697675f9041c86d40cbf72e40eda135c46afc
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
