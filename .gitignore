@@ -41,8 +41,10 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 
-# ignore PyCharm's .idea folder
-.idea/
-
 # ignore python caches
 __pycache__
+
+# ignore any IDE configuration folders (PyCharm, VSCode, etc.)
+.idea/
+.vs/
+.vscode/
