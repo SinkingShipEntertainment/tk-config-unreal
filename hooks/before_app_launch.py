@@ -804,7 +804,7 @@ class BeforeAppLaunch(tank.Hook):
             ],
             'XBMLANGPATH': [
                 '{}mayaConfigs/icons'.format(cgf_path),
-                '{}mayaConfigs/shelves/projects/icons'.format(cgf_path)
+                '{}mayaConfigs/projects/icons'.format(cgf_path)
             ],
             'MAYA_PLUG_IN_PATH': [
                 # for python and root for mlls.
