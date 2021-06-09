@@ -24,6 +24,7 @@ includes:
 - ./tk-multi-snapshot.yml
 - ./tk-multi-workfiles2.yml
 - ./tk-nuke-writenode.yml
+- ./tk-nuke-quickreview.yml
 
 ################################################################################
 # Hiero
@@ -85,8 +86,7 @@ settings.tk-nuke.asset:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel'
     # tk-multi-workfiles2: "@settings.tk-multi-workfiles2"
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.launch_at_startup'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   location: '@engines.tk-nuke.location'
@@ -104,8 +104,7 @@ settings.tk-nuke.asset_step:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel.nuke'
     tk-multi-snapshot: '@settings.tk-multi-snapshot.nuke.asset_step'
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.nuke.asset_step'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
     tk-nuke-writenode: '@settings.tk-nuke-writenode.asset'
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
@@ -122,8 +121,7 @@ settings.tk-nuke.project:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel'
     # tk-multi-workfiles2: "@settings.tk-multi-workfiles2"
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.launch_at_startup'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   location: '@engines.tk-nuke.location'
@@ -136,8 +134,7 @@ settings.tk-nuke.sequence:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel'
     # tk-multi-workfiles2: "@settings.tk-multi-workfiles2"
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.launch_at_startup'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   location: '@engines.tk-nuke.location'
@@ -149,8 +146,7 @@ settings.tk-nuke.shot:
     tk-multi-screeningroom: '@settings.tk-multi-screeningroom.rv'
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel'
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.launch_at_startup'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
   location: '@engines.tk-nuke.location'
@@ -170,8 +166,7 @@ settings.tk-nuke.shot_step:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel.nuke'
     tk-multi-snapshot: '@settings.tk-multi-snapshot.nuke.shot_step'
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.nuke.shot_step'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
     tk-nuke-writenode: '@settings.tk-nuke-writenode.shot'
   menu_favourites:
   - {app_instance: tk-multi-workfiles2, name: File Open...}
@@ -197,8 +192,7 @@ settings.tk-nuke.nukestudio.asset_step:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel.nukestudio'
     tk-multi-snapshot: '@settings.tk-multi-snapshot.hiero'
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.hiero'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
     tk-nuke-writenode: '@settings.tk-nuke-writenode.asset'
   bin_context_menu:
   - app_instance: tk-multi-workfiles2
@@ -230,8 +224,7 @@ settings.tk-nuke.nukestudio.project:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel.nukestudio'
     tk-multi-snapshot: '@settings.tk-multi-snapshot.hiero'
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.hiero'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
     tk-hiero-openinshotgun:
       location: '@apps.tk-hiero-openinshotgun.location'
     tk-hiero-export: '@settings.tk-hiero-export'
@@ -283,8 +276,7 @@ settings.tk-nuke.nukestudio.shot_step:
     tk-multi-shotgunpanel: '@settings.tk-multi-shotgunpanel.nukestudio'
     tk-multi-snapshot: '@settings.tk-multi-snapshot.hiero'
     tk-multi-workfiles2: '@settings.tk-multi-workfiles2.hiero'
-    tk-nuke-quickreview:
-      location: '@apps.tk-nuke-quickreview.location'
+    tk-nuke-quickreview: '@settings.tk-nuke-quickreview'
     tk-nuke-writenode: '@settings.tk-nuke-writenode.shot'
   bin_context_menu:
   - app_instance: tk-multi-workfiles2
