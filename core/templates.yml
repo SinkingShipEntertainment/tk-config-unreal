@@ -716,6 +716,14 @@ paths:
         definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_linear_v{version}.{SEQ}.jpg'
         root_name: 'secondary'
 
+    external_plates:
+        definition: '@sequence_root/plates/{Shot}/external/'
+        root_name: 'secondary'
+
+    acescg_plates:
+        definition: '@sequence_root/plates/{Shot}/acescg/acescg.{SEQ}.exr'
+        root_name: 'secondary'
+
     resolve_graded_plates:
         definition: '@sequence_root/plates/{Shot}/graded_plates/'
         root_name: 'secondary'
