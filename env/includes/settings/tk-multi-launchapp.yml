@@ -83,3 +83,12 @@ settings.tk-multi-launchapp.copyasset:
   menu_name: CopyAsset
   location: "@apps.tk-multi-launchapp.location"
   icon: "X:\\tools\\sinking_ship\\shotgun\\icons\\ss_logo_256x256.png"
+
+# SSE ACES conversion
+settings.tk-multi-launchapp.acesconversion:
+  hook_app_launch: default
+  hook_before_app_launch: default
+  windows_path: "@path.windows.acesconversion"
+  menu_name: ACESConversion
+  location: "@apps.tk-multi-launchapp.location"
+  icon: "X:\\tools\\sinking_ship\\shotgun\\icons\\ss_logo_256x256.png"
