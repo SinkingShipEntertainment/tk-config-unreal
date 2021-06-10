@@ -23,9 +23,9 @@ path.windows.mari: C:\Program Files\Mari4.2v1\Bundle\bin\Mari4.2v1.exe
 path.windows.motionbuilder: C:\Program Files\Autodesk\MotionBuilder 2018\bin\x64\motionbuilder.exe
 
 # Hiero
-path.linux.hiero: "Nuke11.2"
+path.linux.hiero: "Nuke11.3"
 path.mac.hiero: "/Applications/Nuke11.2v4/Hiero11.2v4.app"
-path.windows.hiero: C:\Program Files\Nuke11.2v4\Nuke11.2.exe
+path.windows.hiero: C:\Program Files\Nuke11.3v1\Nuke11.3.exe
 
 # RV
 path.linux.rv: "rv"
@@ -43,3 +43,6 @@ path.windows.harvest: X:\tools\sinking_ship\shotgun\RunHarvestPublish.bat
 
 # Sinking Ship Copy Asset
 path.windows.copyasset: X:\tools\win_tools\CopyAsset\run_CopyAsset.bat
+
+# Sinking Ship Aces Conversion
+path.windows.acesconversion: X:\tools\pipeline_repos\studio_pipeline_2_5_repo\shotgun\RunAcesConversion.bat

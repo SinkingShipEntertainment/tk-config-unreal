@@ -62,6 +62,8 @@ class BeforeAppLaunch(tank.Hook):
         LOGGER.debug('engine_name > {}'.format(engine_name))
         LOGGER.debug('kwargs      > {}'.format(kwargs))
 
+        # --- This legacy path keeps kicking around, need to determine if it's
+        # --- necessary any longer...
         os.environ["XBMLANGPATH"] = "X:\\tools\\release\\icons"
 
         # --- SG supplied ENVIRONMENT VARIABLES...
@@ -84,12 +86,27 @@ class BeforeAppLaunch(tank.Hook):
         # --- Set instance variables...
         self._version = version
         self._engine_name = engine_name
+        self._shotgun_inst = sgtk.api.shotgun.connection.get_sg_connection()
 
-        # --- Unified studio tools pathing!
-        self._repo_path = self._return_repo_path(project_name)
+        # --- Unified studio tools pathing:
+        # --- one variable for when we want the fallback effect...
+        self._repo_paths = self._return_repo_paths(project_name)
+        # --- and another for when we just want the highest-level in
+        # --- in the returned repo paths "hierarchy"...
+        self._repo_path = self._repo_paths[0]
+
+        # --- OS plug-in component root location (just Windows for now)...
+        if sys.platform == 'win32':
+            self._wpf_root = 'C:{}Program Files'.format(os.sep)
 
         # --- Make the SSE Shotgun API available...
-        self._sg_a3_path = '{}/shotgun/api3'.format(self._repo_path)
+        # --- one variable for when we want the fallback effect...
+        self._sg_a3_paths = []
+        for rp in self._repo_paths:
+            self._sg_a3_paths.append('{}/shotgun/api3'.format(rp))
+        # --- and another for when we just want the highest-level in
+        # --- in the returned repo paths "hierarchy"...
+        self._sg_a3_path = self._sg_a3_paths[0]
 
         # --- Call methods based on the Toolkit engine we're invoking
         # --- (e.g. Maya > 'tk-maya', Nuke > 'tk-nuke', etc.)...
@@ -108,22 +125,55 @@ class BeforeAppLaunch(tank.Hook):
         if engine_name == 'tk-natron':
             self._tk_natron_env_setup()
 
+    def return_proj_short_name(self, project_name):
+        """Return the Project short name from a Shotgun DB query based on the
+        Project's full name.
 
-    def _return_repo_path(self, project_name):
+        Args:
+            project_name (str): The Project's full name in Shotgun.
+
+        Returns:
+            str: The Project's short name.
         """
-        Use Shotgun (Toolkit and Database) to get data
-        and return the correct code repo root path for
-        the Project that Toolkit launched.
-        @return str repo_path: The root of the path
-                               based on information
-                               gleaned from Shotgun.
+        sg_filters = [
+            ['name', 'is', project_name]
+        ]
+
+        try:
+            sg_fields = sorted(
+                self._shotgun_inst.schema_read()['Project'].keys()
+            )
+
+            f_proj = self._shotgun_inst.find_one(
+                'Project',
+                sg_filters,
+                sg_fields
+            )
+        except Exception:
+            # --- In case of method call outside of subclass instantiation
+            # --- on farm...
+            shotgun_inst = sgtk.api.shotgun.connection.get_sg_connection()
+            sg_fields = sorted(shotgun_inst.schema_read()['Project'].keys())
+            f_proj = shotgun_inst.find_one('Project', sg_filters, sg_fields)
+
+        proj_short_name = f_proj['sg_short_name']
+
+        return proj_short_name
+
+    def return_sgtk_configs(self, project_name):
+        """Return a list of Shotgun Toolkit configuration dictionaries related
+        to the Project name.
+
+        Args:
+            project_name (str): The Project's full name in Shotgun.
+
+        Returns:
+            list: Discovered Shotgun Toolkit configurations.
         """
-        repo_path = None
+        sg_filters = [
+            ['project.Project.name', 'is', project_name]
+        ]
 
-        LOGGER.debug(MY_SEP)
-
-        shotgun_inst = sgtk.api.shotgun.connection.get_sg_connection()
-        sg_filters = [['project.Project.name', 'is', project_name]]
         sg_fields = [
             'id',
             'code',
@@ -132,82 +182,212 @@ class BeforeAppLaunch(tank.Hook):
             'sg_ss_tools_repo_custom_path',
             'windows_path'
         ]
-        sgtk_configs = shotgun_inst.find(
-            'PipelineConfiguration',
-            sg_filters,
-            sg_fields
-        )
 
+        try:
+            sgtk_configs = self._shotgun_inst.find(
+                'PipelineConfiguration',
+                sg_filters,
+                sg_fields
+            )
+        except Exception:
+            # --- In case of method call outside of subclass instantiation
+            # --- on farm...
+            shotgun_inst = sgtk.api.shotgun.connection.get_sg_connection()
+            sgtk_configs = shotgun_inst.find(
+                'PipelineConfiguration',
+                sg_filters,
+                sg_fields
+            )
+
+        return sgtk_configs
+
+    def return_wanted_repo_key(self, sgtk_configs):
+        """Returns the wanted repo key based on the current SGTK session, as
+        well as any related custom path if present.
+
+        Args:
+            sgtk_configs (list): a list of Shotgun Toolkit configuration
+                dictionaries
+
+        Returns:
+            str, str: The wanted repo key for the configuration and the related
+                custom repo path (None if there isn't one).
+        """
         wanted_repo_key = None
-
-        sg_auth = sgtk.get_authenticated_user()
-        sgtk_core_user = sg_auth.login
+        my_config_repo_custom = None
 
         sgtk_module_path = sgtk.get_sgtk_module_path()
-        if '\\' in sgtk_module_path:
-            sgtk_module_path = sgtk_module_path.replace('\\', '/')
+        sgtk_module_path = sgtk_module_path.replace('\\', '/')
         sgtk_cfg_path = '/'.join(sgtk_module_path.split('/')[:5])
-        LOGGER.debug('sgtk_module_path >> {}'.format(sgtk_module_path))
-        LOGGER.debug('sgtk_cfg_path >> {}'.format(sgtk_cfg_path))
 
         for my_config in sgtk_configs:
             my_config_repo_key = my_config['sg_ss_tools_repo']
             my_config_repo_custom = my_config['sg_ss_tools_repo_custom_path']
+
             my_config_path = my_config['windows_path']
-            if '\\' in my_config_path:
-                my_config_path = my_config_path.replace('\\', '/')
-                if my_config_path == sgtk_cfg_path:
-                    wanted_repo_key = my_config_repo_key
-                    m = 'wanted_repo_key >> {}'.format(wanted_repo_key)
-                    LOGGER.debug(m)
-                    break
+            my_config_path = my_config_path.replace('\\', '/')
+            if my_config_path == sgtk_cfg_path:
+                wanted_repo_key = my_config_repo_key
+                m = 'wanted_repo_key >> {}'.format(wanted_repo_key)
+                LOGGER.debug(m)
+                break
 
-        if wanted_repo_key:
-            if wanted_repo_key == 'custom':
-                # --- For developers to point to *any* pipeline code repository
-                # --- as specified in the called Shotgun configuration...
-                repo_path = my_config_repo_custom
+        return wanted_repo_key, my_config_repo_custom
 
-                if '\\' in repo_path:
-                    repo_path = repo_path.replace('\\', '/')
+    def return_spr_path(self):
+        """A single custom non-project entity exists to provide a central
+        Shotgun-centric location to store data about the latest pipeline code
+        repository location on disk; this method queries it for the path.
 
-                if repo_path.endswith('/'):
-                    repo_path = repo_path.strip('/')
+        Returns:
+            str: The pipeline code repository root path, or None.
+        """
+        spr_path = None
 
-                if not os.path.exists(repo_path):
-                    m = 'Custom path does not exist! >> {}'.format(repo_path)
-                    raise tank.TankError(m)
-            elif wanted_repo_key == 'dev':
-                # --- For developers to do individual tesing against clones of
-                # --- same-named repositories within their X:/dev location...
-                repo_path = 'X:/dev/ss_dev_{0}/{1}_repo'.format(
-                    sgtk_core_user,
-                    project_name
-                )
-                # --- If it's not a Project-specific repo, we have to resort
-                # --- to the generic studio repo...
-                if not os.path.exists(repo_path):
-                    repo_path = 'X:/dev/ss_dev_{0}/ss_studio_repo'.format(
-                        sgtk_core_user,
-                        project_name
-                    )
-            elif wanted_repo_key == 'project':
-                # --- For everyone to launch using a Project-specific repo...
-                repo_path = 'X:/tools/projects/{0}/{0}_repo'.format(
-                    project_name
-                )
-            else:
-                # --- For everyone to launch using the generic studio repo...
-                repo_path = 'X:/tools/ss_studio_repo'
-        LOGGER.debug(MY_SEP)
+        custom_ent = 'CustomNonProjectEntity04'
 
-        # --- Check to make sure the resolved path, whatever it is, still
-        # --- exists at the given location...
-        # if not os.path.exists(repo_path):
-        #     m = 'Resolved path does not exist! >> {}'.format(repo_path)
-        #     raise tank.TankError(m)
+        my_filters = [
+            ['code', 'is', 'studio_pipeline'],
+            ['id', 'is', 1],
+            ['sg_status_list', 'is', 'cmpt']
+        ]
+
+        try:
+            my_fields = sorted(
+                self._shotgun_inst.schema_read()[custom_ent].keys()
+            )
+
+            my_spr_data = self._shotgun_inst.find_one(
+                custom_ent,
+                my_filters,
+                my_fields
+            )
+        except Exception:
+            # --- In case of method call outside of subclass instantiation
+            # --- on farm...
+            shotgun_inst = sgtk.api.shotgun.connection.get_sg_connection()
+            my_fields = sorted(shotgun_inst.schema_read()[custom_ent].keys())
+
+            my_spr_data = shotgun_inst.find_one(
+                custom_ent,
+                my_filters,
+                my_fields
+            )
+
+        if my_spr_data:
+            repo_root = my_spr_data['sg_repo_root_path']
+            major_v = my_spr_data['sg_repo_major_version']
+            minor_v = my_spr_data['sg_repo_minor_version']
+
+            # replace the keys in the path with the appropriate
+            # numbers...
+            spr_path = repo_root.replace('{MAJ}', str(major_v))
+            spr_path = spr_path.replace('{MIN}', str(minor_v))
+            spr_path = spr_path.replace('\\', '/')
+
+        return spr_path
+
+    def _return_repo_path(self, project_name):
+        """Use Shotgun (Toolkit and Database) to get data and return the
+        correct code repo root path (singular, first wanted) for the Project
+        that Toolkit launched.
+
+        Args:
+            project_name (str): The Project's full name in Shotgun.
+
+        Returns:
+            str: The root of the path based on information gleaned from
+                Shotgun.
+        """
+        repo_path = None
+
+        repo_paths = self._return_repo_paths(project_name)
+        repo_path = repo_paths[0]
 
         return repo_path
+
+    def _return_repo_paths(self, project_name):
+        """Use Shotgun (Toolkit and Database) to get data and return the
+        correct code repo root paths for the Project that Toolkit launched.
+
+        Args:
+            project_name (str): The Project's full name in Shotgun.
+
+        Returns:
+            list:  The roots of the repo paths based on information gleaned
+                from Shotgun.
+        """
+        repo_paths = []
+
+        sg_auth = sgtk.get_authenticated_user()
+        sgtk_core_user = sg_auth.login
+
+        spr_path = self.return_spr_path()
+        spr_split = os.path.basename(spr_path).split('_')
+        v_maj = spr_split[2]
+        v_min = spr_split[3]
+
+        # --- Get the Project short name...
+        proj_short_name = self.return_proj_short_name(project_name)
+
+        # --- Get the SG configs...
+        sgtk_configs = self.return_sgtk_configs(project_name)
+        wanted_repo_key, my_config_repo_custom = self.return_wanted_repo_key(
+            sgtk_configs
+        )
+
+        # --- First check ('custom')...
+        if wanted_repo_key == 'custom':
+            if my_config_repo_custom:
+                if os.path.exists(my_config_repo_custom):
+                    repo_path = my_config_repo_custom.replace(
+                        '\\', '/'
+                    )
+                    repo_path = repo_path.strip('/')
+                    if os.path.exists(repo_path):
+                        repo_paths.append(repo_path)
+
+        # --- Second check ('dev')...
+        if wanted_repo_key == 'dev':
+            # --- For developers to do individual tesing against clones of
+            # --- same-named repositories within their X:/dev location...
+            repo_path = 'X:/dev/ss_dev_{}'.format(sgtk_core_user)
+            repo_path += '/{0}_pipeline_{1}_{2}_dev_master_repo'.format(
+                proj_short_name,
+                v_maj,
+                v_min
+            )
+            # --- If it's not a Project-specific repo, we have to resort
+            # --- to the generic studio repo dev clone...
+            if not os.path.exists(repo_path):
+                spr_base = os.path.basename(spr_path)
+
+                repo_path = 'X:/dev/ss_dev_{0}/{1}'.format(
+                    sgtk_core_user,
+                    spr_base
+                )
+
+            if os.path.exists(repo_path):
+                repo_paths.append(repo_path)
+
+        # --- Third check ('project')...
+        if wanted_repo_key == 'project':
+            repo_path = 'X:/tools/projects/{}'.format(project_name)
+            repo_path += '/{0}_pipeline_{1}_{2}_repo'.format(
+                proj_short_name,
+                v_maj,
+                v_min
+            )
+
+            if os.path.exists(repo_path):
+                repo_paths.append(repo_path)
+
+        # --- Always include the studio repo as the last repo path in the
+        # --- list, and return the first entry from the list (the same if
+        # --- there's only one entry in the list)...
+        repo_paths.append(spr_path)
+
+        return repo_paths
 
     def _tk_maya_env_setup(self):
         """
@@ -218,78 +398,110 @@ class BeforeAppLaunch(tank.Hook):
         self._headers(_setup)
 
         maya_script_paths = []
-        maya_script_paths.append(
-            '{}/maya/scripts/mel'.format(self._repo_path)
-        )
-        maya_script_paths.append(
-            '{}/maya/scripts/vtool'.format(self._repo_path)
-        )
-        maya_script_paths.append(
-            '{}/maya/scripts/mel/anim'.format(self._repo_path)
-        )
-        maya_script_paths.append(
-            '{}/maya/scripts/mel/light'.format(self._repo_path)
-        )
-        maya_script_paths.append(
-            '{}/maya/scripts/mel/modeling'.format(self._repo_path)
-        )
-        maya_script_paths.append(
-            '{}/maya/scripts/mel/rigging'.format(self._repo_path)
-        )
-        os.environ['MAYA_SCRIPT_PATH'] = ';'.join(maya_script_paths)
+        maya_tool_paths = []
+        self._module_paths = []
+        plugin_paths = []
 
-        maya_tool_path = '{}/maya/scripts'.format(self._repo_path)
-        module_path = '{}/maya/modules'.format(self._repo_path)
-        plugin_path = '{}/maya/plug-ins'.format(self._repo_path)
+        for rp in self._repo_paths:
+            maya_script_paths.append('{}/maya/scripts/mel'.format(rp))
+            maya_script_paths.append('{}/maya/scripts/vtool'.format(rp))
+            maya_script_paths.append('{}/maya/scripts/mel/anim'.format(rp))
+            maya_script_paths.append('{}/maya/scripts/mel/light'.format(rp))
+            maya_script_paths.append('{}/maya/scripts/mel/modeling'.format(rp))
+            maya_script_paths.append('{}/maya/scripts/mel/rigging'.format(rp))
+
+            maya_tool_path = '{}/maya/scripts'.format(rp)
+            maya_tool_paths.append(maya_tool_path)
+
+            module_path = '{}/maya/modules'.format(rp)
+            self._module_paths.append(module_path)
+
+            plugin_path = '{}/maya/plug-ins'.format(rp)
+            plugin_paths.append(plugin_path)
+
+        os.environ['MAYA_SCRIPT_PATH'] = os.pathsep.join(maya_script_paths)
 
         script_paths = []
-        script_paths.append(self._sg_a3_path)
-        script_paths.append(maya_tool_path)
-        for script_path in script_paths:
-            sys.path.insert(0, script_path)
+        self._sg_a3_paths.reverse()
+        script_paths.extend(self._sg_a3_paths)
 
-        for script_path in script_paths:
+        maya_tool_paths.reverse()
+        script_paths.extend(maya_tool_paths)
+
+        for sp in script_paths:
+            sys.path.insert(0, sp)
+
             old_py_path = os.environ['PYTHONPATH']
-            if script_path in old_py_path:
-                m = 'Found {} in PYTHONPATH, no need to add it.'.format(
-                    script_path
-                )
+            if sp in old_py_path.split(os.pathsep):
+                m = 'Found {} in PYTHONPATH, no need to add it.'.format(sp)
                 LOGGER.debug(m)
             else:
-                LOGGER.debug('old_py_path > {}'.format(old_py_path))
-                old_py_path_bits = old_py_path.split(';')
-
-                old_py_path_bits.insert(0, script_path)
-                new_py_path = ';'.join(old_py_path_bits)
-
-                LOGGER.debug('new_py_path > {}'.format(new_py_path))
+                old_py_path_bits = old_py_path.split(os.pathsep)
+                old_py_path_bits.insert(0, sp)
+                new_py_path = os.pathsep.join(old_py_path_bits)
                 os.environ['PYTHONPATH'] = new_py_path
+                LOGGER.debug('PYTHONPATH, added > {}'.format(sp))
+
+        LOGGER.debug('old_py_path > {}'.format(old_py_path))
+        LOGGER.debug('new_py_path > {}'.format(new_py_path))
 
         import python
         reload(python)
 
-        # --- specific related to Maya versions...
-        module_path = '{0}{1}{2}'.format(module_path, os.sep, self._version)
-        LOGGER.debug('module_path > {}'.format(module_path))
-
         if self._version in ['2018', '2020']:
-            # --- General plugins...
-            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}'.format(
-                plugin_path,
-                os.sep,
-                self._version
-            )
+            # --- Yeti version...
+            self._yeti_vers = 'v3.1.10'
+            if self._version == '2020':
+                self._yeti_vers = 'v3.7.0'
 
+            # --- Maya plug-in paths, general (server)...
+            ppvs = []
+            for pp in plugin_paths:
+                pp_str = '{0}{1}{2}'.format(pp, os.sep, self._version)
+                ppvs.append(pp_str)
+            os.environ['MAYA_PLUG_IN_PATH'] = os.pathsep.join(ppvs)
+
+            # --- Maya module paths, version (server)...
+            # --- NOTE: additions should be placed in initial 'adds' list as
+            #           follows, NOT 'module_list'
+            main_module_list = []
+            for mp in self._module_paths:
+                mp = '{0}{1}{2}'.format(mp, os.sep, self._version)
+                mp = mp.replace('\\', '/')
+                LOGGER.debug('mp > {}'.format(mp))
+
+                module_list = [mp]
+
+                adds = [
+                    'AtomsMaya',
+                    'brSmoothWeights',
+                    'houdiniEngine',
+                    'iDeform',
+                    'MayaBonusTools',
+                    'SOUPopenVDB',
+                    'yeti{0}{1}'.format(os.sep, self._yeti_vers),
+                    'ziva'
+                ]
+                adds = ['{0}{1}{2}'.format(mp, os.sep, a) for a in adds]
+                adds = [a.replace('\\', '/') for a in adds]
+
+                module_list.extend(adds)
+                main_module_list.extend(module_list)
+
+            maya_module_path = os.pathsep.join(main_module_list)
+            LOGGER.debug('maya_module_path > {}'.format(maya_module_path))
+            os.environ['MAYA_MODULE_PATH'] = maya_module_path
+
+            # --- NOTE TODO: THIS IS A LOCAL PATH
             # --- Arnold (experimental *NOT CALLED BY ANYTHING YET*
             # --- ~ DW 202-07-13)
-            wpf_root = 'C:{}Program Files'.format(os.sep)
             arnold_home = 'C:{0}solidangle{0}mtoadeploy{0}{1}'.format(
                 os.sep,
                 self._version
             )
             if self._version == '2020':
                 arnold_home = '{0}{1}Autodesk{1}Arnold{1}maya{2}'.format(
-                    wpf_root,
+                    self._wpf_root,
                     os.sep,
                     self._version
                 )
@@ -301,136 +513,145 @@ class BeforeAppLaunch(tank.Hook):
             LOGGER.debug('arnold_bin > {}'.format(arnold_bin))
             # TODO
 
-            # --- VRay (legacy, we don't actually use it,
-            # --- but maybe for retrieving old Assets?)...
-            vray_home = '{0}{1}Autodesk{1}Maya{2}{1}vray'.format(
-                wpf_root,
-                os.sep,
+            # --- VRay (legacy, we don't actually use it, but maybe for
+            # --- retrieving old Assets?)...
+            self._v_main_key = 'VRAY_FOR_MAYA{}_MAIN_x64'.format(self._version)
+            self._v_plug_key = 'VRAY_FOR_MAYA{}_PLUGINS_x64'.format(
                 self._version
             )
-            v_main_key = 'VRAY_FOR_MAYA{}_MAIN_x64'.format(self._version)
-            os.environ[v_main_key] = vray_home
-            v_plug_key =  'VRAY_FOR_MAYA{}_PLUGINS_x64'.format(self._version)
-            os.environ[v_plug_key] = '{0}{1}{2}'.format(
-                vray_home,
-                os.sep,
-                'vrayplugins'
-            )
-
-            v_root = '{0}{1}Chaos Group{1}V-Ray{1}Maya {2} for x64'.format(
-                wpf_root,
-                os.sep,
-                self._version
-            )
-            v_tools_key = 'VRAY_TOOLS_MAYA{}_x64'.format(self._version)
-            os.environ[v_tools_key] = '{0}{1}bin'.format(
-                v_root,
-                os.sep
-            )
-            v_osl_key = 'VRAY_OSL_PATH_MAYA{}_x64'.format(self._version)
-            os.environ[v_osl_key] = '{0}{1}opensl'.format(
-                v_root,
-                os.sep
-            )
+            self._tk_maya_env_setup_lcl_vray()
 
             # --- Yeti...
-            yeti_vers = 'v3.1.10'
-            if self._version == '2020':
-                # yeti_vers = 'v3.6.2'
-                yeti_vers = 'v3.7.0'
-
-            yeti_home = '{1}{0}yeti{0}{2}'.format(
-                os.sep,
-                module_path,
-                yeti_vers
-            )
-            LOGGER.debug('yeti_home > {}'.format(yeti_home))
-
-            os.environ['YETI_HOME'] = yeti_home
-            os.environ['PATH'] = '{0}{1}{2}{3}bin'.format(
-                os.environ['PATH'],
-                os.pathsep,
-                yeti_home,
-                os.sep
-            )
-            os.environ['XBMLANGPATH'] = '{0}{1}{2}{3}icons'.format(
-                os.environ['XBMLANGPATH'],
-                os.pathsep,
-                yeti_home,
-                os.sep
-            )
-            os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}{2}{3}plug-ins'.format(
-                os.environ['MAYA_PLUG_IN_PATH'],
-                os.pathsep,
-                yeti_home,
-                os.sep
-            )
-            os.environ['MAYA_SCRIPT_PATH'] = '{0}{1}{2}{3}scripts'.format(
-                os.environ['MAYA_SCRIPT_PATH'],
-                os.pathsep,
-                yeti_home,
-                os.sep
-            )
-
-            if 'VRAY_PLUGINS_x64' in os.environ.keys():
-                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}{2}{3}bin'.format(
-                    os.environ['VRAY_PLUGINS_x64'],
-                    os.pathsep,
-                    yeti_home,
-                    os.sep
-                )
-            else:
-                os.environ['VRAY_PLUGINS_x64'] = '{0}{1}bin'.format(
-                    yeti_home,
-                    os.sep
-                )
-
-            # --- Needed to get the module path in, as earlier just defines
-            # --- the local Vray install path initially (DW 2020-07-09)
-            if v_plug_key in os.environ.keys():
-                os.environ[v_plug_key] = '{0}{1}{2}{3}bin'.format(
-                    os.environ[v_plug_key],
-                    os.pathsep,
-                    yeti_home,
-                    os.sep
-                )
-            else:
-                os.environ[v_plug_key] = '{0}{1}bin'.format(yeti_home, os.sep)
-            # --- ^^^
-
-            y_arn_keys = [
-                'ARNOLD_PLUGIN_PATH',
-                'MTOA_EXTENSIONS_PATH'
-            ]
-            for y_arn_key in y_arn_keys:
-                sub_dir = ''
-                if y_arn_key == y_arn_keys[0]:
-                    sub_dir = 'bin'
-                if y_arn_key == y_arn_keys[1]:
-                    sub_dir = 'plug-ins'
-
-                if y_arn_key in os.environ.keys():
-                    os.environ[y_arn_key] = '{0}{1}{2}{3}{4}'.format(
-                        os.environ[y_arn_key],
-                        os.pathsep,
-                        yeti_home,
-                        os.sep,
-                        sub_dir
-                    )
-                else:
-                    os.environ[y_arn_key] = '{0}{1}{2}'.format(
-                        yeti_home,
-                        os.sep,
-                        sub_dir
-                    )
+            self._tk_maya_env_setup_srv_yeti()
 
             # --- SOUP OpenVDB...
-            soup_openvdb_home = '{0}{1}{2}'.format(
-                module_path,
+            self._tk_maya_env_setup_srv_soup_ovdb()
+
+            # --- HoudiniEngine for Maya...
+            self.tk_maya_env_setup_lcl_houdini_engine()
+
+            # --- Redshift (legacy, we don't actually use it, but maybe for
+            # --- retrieving old Assets?)...
+            self._tk_maya_env_setup_lcl_redshift()
+
+            # --- Arnold PATH cleanup at the end...
+            self._tk_maya_env_setup_arnold_version_bin_fix()
+        else:
+            m = 'No Maya version specific environment variables required.'
+            LOGGER.debug(m)
+
+        # - Run cg factory path setup.
+        self._tk_maya_env_setup_cgfactory()
+
+        # --- Tell the user what's up...
+        self.env_paths_sanity_check()
+
+    def _tk_maya_env_setup_srv_yeti(self):
+        """Method to set up all the wanted environment variables for Yeti with
+        Arnold in a Maya session (in addition to earlier related module adds).
+        """
+        yeti_homes = []
+
+        for mp in self._module_paths:
+            yeti_home = '{0}{1}{2}{1}yeti{1}{3}'.format(
+                mp,
                 os.sep,
-                'SOUPopenVDB'
+                self._version,
+                self._yeti_vers
             )
-            LOGGER.debug('soup_openvdb_home >> {}'.format(soup_openvdb_home))
+            yeti_home = yeti_home.replace('\\', '/')
+            LOGGER.debug('yeti_home > {}'.format(yeti_home))
+            yeti_homes.append(yeti_home)
+
+        # --- Yeti only respects one (1) path for YETI_HOME, so we check down
+        # --- the list until we get one that exists...
+        for y_item in yeti_homes:
+            if os.path.exists(y_item):
+                os.environ['YETI_HOME'] = y_item
+                break
+
+        yeti_home = y_item
+        y_bin = '{0}{1}{2}bin'.format(os.pathsep, yeti_home, os.sep)
+        y_bin = y_bin.replace('\\', '/')
+        os.environ['PATH'] = '{0}{1}'.format(os.environ['PATH'], y_bin)
+
+        y_icons = '{0}{1}{2}icons'.format(os.pathsep, yeti_home, os.sep)
+        y_icons = y_icons.replace('\\', '/')
+        os.environ['XBMLANGPATH'] = '{0}{1}'.format(
+            os.environ['XBMLANGPATH'],
+            y_icons
+        )
+
+        y_plugs = '{0}{1}{2}plug-ins'.format(os.pathsep, yeti_home, os.sep)
+        y_plugs = y_plugs.replace('\\', '/')
+        os.environ['MAYA_PLUG_IN_PATH'] = '{0}{1}'.format(
+            os.environ['MAYA_PLUG_IN_PATH'],
+            y_plugs
+        )
+
+        y_scrps = '{0}{1}{2}scripts'.format(os.pathsep, yeti_home, os.sep)
+        y_scrps = y_scrps.replace('\\', '/')
+        os.environ['MAYA_SCRIPT_PATH'] = '{0}{1}'.format(
+            os.environ['MAYA_SCRIPT_PATH'],
+            y_scrps
+        )
+
+        if 'VRAY_PLUGINS_x64' in os.environ.keys():
+            os.environ['VRAY_PLUGINS_x64'] = '{0}{1}'.format(
+                os.environ['VRAY_PLUGINS_x64'],
+                y_bin
+            )
+        else:
+            os.environ['VRAY_PLUGINS_x64'] = y_bin
+
+        # --- Needed to get the module path in, as earlier just defines
+        # --- the local Vray install path initially (DW 2020-07-09)
+        if self._v_plug_key in os.environ.keys():
+            os.environ[self._v_plug_key] = '{0}{1}'.format(
+                os.environ[self._v_plug_key],
+                y_bin
+            )
+        else:
+            os.environ[self._v_plug_key] = y_bin
+        # --- ^^^
+
+        y_arn_keys = [
+            'ARNOLD_PLUGIN_PATH',
+            'MTOA_EXTENSIONS_PATH'
+        ]
+        for y_arn_key in y_arn_keys:
+            if y_arn_key == y_arn_keys[0]:
+                sub_dir = y_bin
+            if y_arn_key == y_arn_keys[1]:
+                sub_dir = y_plugs
+
+            if y_arn_key in os.environ.keys():
+                os.environ[y_arn_key] = '{0}{1}'.format(
+                    os.environ[y_arn_key],
+                    sub_dir
+                )
+            else:
+                os.environ[y_arn_key] = sub_dir
+
+    def _tk_maya_env_setup_srv_soup_ovdb(self):
+        """Method to set up all the wanted environment variables for SOUP
+        OpenVDB with Arnold in a Maya session (in addition to earlier related
+        module adds).
+        """
+        soup_homes = []
+
+        for mp in self._module_paths:
+            soup_ovdb_home = '{0}{1}{2}{1}SOUPopenVDB'.format(
+                mp,
+                os.sep,
+                self._version
+            )
+
+            soup_ovdb_home = soup_ovdb_home.replace('\\', '/')
+            LOGGER.debug('soup_ovdb_home > {}'.format(soup_ovdb_home))
+            soup_homes.append(soup_ovdb_home)
+
+        for soup_ovdb_home in soup_homes:
             s_arn_keys = [
                 'ARNOLD_PLUGIN_PATH',
                 'MTOA_EXTENSIONS_PATH'
@@ -446,169 +667,168 @@ class BeforeAppLaunch(tank.Hook):
                     os.environ[s_arn_key] = '{0}{1}{2}{3}'.format(
                         os.environ[s_arn_key],
                         os.pathsep,
-                        soup_openvdb_home,
+                        soup_ovdb_home,
                         sub_dir
                     )
                 else:
-                    os.environ[y_arn_key] = '{0}{1}{2}'.format(
-                        soup_openvdb_home,
+                    os.environ[s_arn_key] = '{0}{1}{2}'.format(
+                        soup_ovdb_home,
                         sub_dir
                     )
 
-            # --- HoudiniEngine (again more weirdness with the Maya .mod file,
-            # --- which has this defined there but seems to be ignored, so we
-            # --- do it here... DW 2021-03-19)
-            h_ver = '18.0.597'
-            h_bin = 'C:/Program Files/Side Effects Software'
-            h_bin += '/Houdini {}/bin'.format(h_ver)
-            if os.path.exists(h_bin):
-                os.environ['PATH'] = '{0}{1}{2}'.format(
-                    os.environ['PATH'],
-                    os.pathsep,
-                    h_bin
-                )
+    def _tk_maya_env_setup_lcl_vray(self):
+        """Method to set up all the wanted environment variables for VRay in a
+        Maya session (no modules).
+        """
+        vray_home = '{0}{1}Autodesk{1}Maya{2}{1}vray'.format(
+            self._wpf_root,
+            os.sep,
+            self._version
+        )
+        os.environ[self._v_main_key] = vray_home
+        os.environ[self._v_plug_key] = '{0}{1}{2}'.format(
+            vray_home,
+            os.sep,
+            'vrayplugins'
+        )
 
-            # --- Module path wrap-up (additions should be placed in
-            # --- 'add_modules' *NOT* 'main_module_list')...
-            main_module_list = [
-                module_path,
-                yeti_home
-            ]
+        v_root = '{0}{1}Chaos Group{1}V-Ray{1}Maya {2} for x64'.format(
+            self._wpf_root,
+            os.sep,
+            self._version
+        )
+        v_tools_key = 'VRAY_TOOLS_MAYA{}_x64'.format(self._version)
+        os.environ[v_tools_key] = '{0}{1}bin'.format(
+            v_root,
+            os.sep
+        )
+        v_osl_key = 'VRAY_OSL_PATH_MAYA{}_x64'.format(self._version)
+        os.environ[v_osl_key] = '{0}{1}opensl'.format(
+            v_root,
+            os.sep
+        )
 
-            add_modules = [
-                'brSmoothWeights',
-                'iDeform',
-                'AtomsMaya',
-                'ziva',
-                'SOUPopenVDB',
-                'houdiniEngine',
-                'MayaBonusTools'
-            ]
-
-            for add_module in add_modules:
-                _home = '{0}{1}{2}'.format(module_path, os.sep, add_module)
-                main_module_list.append(_home)
-                LOGGER.debug('Added Maya module > {}'.format(_home))
-
-            maya_module_path = (os.pathsep).join(main_module_list)
-            LOGGER.debug('maya_module_path > {}'.format(maya_module_path))
-
-            os.environ['MAYA_MODULE_PATH'] = maya_module_path
-
-            # --- Legacy vtool stuff, need to revisit/update/remove possibly...
-            vtool_legacy_path = 'X:/tools/sinking_ship/maya/scripts/vtool'
+    def tk_maya_env_setup_lcl_houdini_engine(self):
+        """Method to set up all the wanted local environment variables for
+        HoudiniEngine for Maya in a Maya session (in addition to earlier
+        related module adds).
+        NOTE: again more weirdness with the Maya .mod file, which has this
+            defined there but seems to be ignored, so we do it here...
+            DW 2021-03-19
+        """
+        h_ver = '18.0.597'
+        h_bin = 'C:/Program Files/Side Effects Software'
+        h_bin += '/Houdini {}/bin'.format(h_ver)
+        path_split = os.environ['PATH'].split(os.pathsep)
+        if os.path.exists(h_bin) and h_bin not in path_split:
             os.environ['PATH'] = '{0}{1}{2}'.format(
                 os.environ['PATH'],
                 os.pathsep,
-                vtool_legacy_path
+                h_bin
             )
 
-            # --- Redshift (legacy, we don't actually use it,
-            # --- but maybe for retrieving old Assets?)...
-            r_core = 'C:/ProgramData/Redshift'
-            r_plug_maya = '{}/Plugins/Maya'.format(r_core)
-            r_common = '{}/Common'.format(r_plug_maya)
+    def _tk_maya_env_setup_lcl_redshift(self):
+        """Method to set up all the wanted environment variables for Redshift
+        in a Maya session (no modules).
+        """
+        r_core = 'C:/ProgramData/Redshift'
+        r_plug_maya = '{}/Plugins/Maya'.format(r_core)
+        r_common = '{}/Common'.format(r_plug_maya)
 
-            os.environ['REDSHIFT_COREDATAPATH'] = r_core
-            os.environ['REDSHIFT_PLUG_IN_PATH'] = '{0}/{1}/nt-x86-64'.format(
-                r_plug_maya,
-                self._version
-            )
-            os.environ['REDSHIFT_SCRIPT_PATH'] = '{}/scripts'.format(r_common)
-            os.environ['REDSHIFT_XBMLANGPATH'] = '{}/icons'.format(r_common)
-            os.environ['REDSHIFT_RENDER_DESC_PATH'] = '{}/rendererDesc'.format(
-                r_common
-            )
-            _rctp = 'REDSHIFT_CUSTOM_TEMPLATE_PATH'
-            os.environ[_rctp] = '{}/scripts/NETemplate'.format(r_common)
-            _rmep = 'REDSHIFT_MAYAEXTENSIONSPATH'
-            os.environ[_rmep] = '{0}/{1}/nt-x86-64/extensions'.format(
-                r_plug_maya,
-                self._version
-            )
-            os.environ['REDSHIFT_PROCEDURALSPATH'] = '{}/Procedural'.format(
-                r_core
-            )
+        os.environ['REDSHIFT_COREDATAPATH'] = r_core
+        os.environ['REDSHIFT_PLUG_IN_PATH'] = '{0}/{1}/nt-x86-64'.format(
+            r_plug_maya,
+            self._version
+        )
+        os.environ['REDSHIFT_SCRIPT_PATH'] = '{}/scripts'.format(r_common)
+        os.environ['REDSHIFT_XBMLANGPATH'] = '{}/icons'.format(r_common)
+        os.environ['REDSHIFT_RENDER_DESC_PATH'] = '{}/rendererDesc'.format(
+            r_common
+        )
+        _rctp = 'REDSHIFT_CUSTOM_TEMPLATE_PATH'
+        os.environ[_rctp] = '{}/scripts/NETemplate'.format(r_common)
+        _rmep = 'REDSHIFT_MAYAEXTENSIONSPATH'
+        os.environ[_rmep] = '{0}/{1}/nt-x86-64/extensions'.format(
+            r_plug_maya,
+            self._version
+        )
+        os.environ['REDSHIFT_PROCEDURALSPATH'] = '{}/Procedural'.format(
+            r_core
+        )
 
-            # --- Arnold PATH cleanup at the end...
-            self._maya_arnold_version_bin_fix()
-        else:
-            m = 'No Maya version specific environment variables required.'
-            LOGGER.debug(m)
-
-
-        # - Run cg factory path setup.
-        self._tk_maya_cgFactory_env_setup()
-
-        # --- Tell the user what's up...
-        self.env_paths_sanity_check()
-
-
-    def _tk_maya_cgFactory_env_setup(self):
-        r"""Add Maya environment relative to cg_factory submodule."""
-        def appendToEnv(envVar, *paths):
+    def _tk_maya_env_setup_cgfactory(self):
+        """Add Maya environment relative to cg_factory submodule."""
+        def append_to_env(env_var, *paths):
             # - Convert given paths to system default.
             paths = [os.path.normpath(p) for p in paths]
 
             # - If var is not already in env, make it.
-            if envVar not in os.environ:
-                os.environ[envVar] = os.pathsep.join(paths)
+            if env_var not in os.environ:
+                os.environ[env_var] = os.pathsep.join(paths)
                 return
 
             # - If env has envVar update paths to system default
-            envPaths = [os.path.normpath(ep) for ep in os.environ[envVar].split(os.pathsep)]
+            env_paths = [
+                os.path.normpath(ep)
+                for ep in os.environ[env_var].split(os.pathsep)
+            ]
             # add each path as necessary
             for path in paths:
                 # check if path already in values
-                if path not in envPaths:
-                    # os.environ[envVar] += os.pathsep+path
-                    os.environ[envVar] =  os.environ[envVar] + os.pathsep+path
+                if path not in env_paths:
+                    os.environ[env_var] = '{0}{1}{2}'.format(
+                        os.environ[env_var],
+                        os.pathsep,
+                        path,
+                    )
         # [end] appendToEnv
 
-        CG_FACTORY_PATH = os.path.join(self._repo_path, 'maya/cg_factory/')
-
         # - Environment data.
-        envDict = {
-            'CG_FACTORY_PATH':[
-                CG_FACTORY_PATH,
+        cgf_path = os.path.join(self._repo_path, 'maya/cg_factory/')
+
+        env_dict = {
+            'CG_FACTORY_PATH': [
+                cgf_path,
             ],
-            'PYTHONPATH':[
-                CG_FACTORY_PATH,
-                CG_FACTORY_PATH+'mayaConfigs/mayapy-extras/site-packages',
-                CG_FACTORY_PATH+'mayaConfigs/scripts',
-                CG_FACTORY_PATH+'assetPipeline',
-                CG_FACTORY_PATH+'riggingPipeline',
-                CG_FACTORY_PATH+'textureShadingPipeline',
+            'PYTHONPATH': [
+                cgf_path,
+                '{}mayaConfigs/mayapy-extras/site-packages'.format(cgf_path),
+                '{}mayaConfigs/scripts'.format(cgf_path),
+                '{}assetPipeline'.format(cgf_path),
+                '{}riggingPipeline'.format(cgf_path),
+                '{}textureShadingPipeline'.format(cgf_path),
             ],
-            'MAYA_SCRIPT_PATH':[
-                CG_FACTORY_PATH,
-                CG_FACTORY_PATH+'mayaConfigs/scripts'
+            'MAYA_SCRIPT_PATH': [
+                cgf_path,
+                '{}mayaConfigs/scripts'.format(cgf_path)
             ],
-            'XBMLANGPATH':[
-                CG_FACTORY_PATH+'mayaConfigs/icons'
+            'XBMLANGPATH': [
+                '{}mayaConfigs/icons'.format(cgf_path),
+                '{}mayaConfigs/projects/icons'.format(cgf_path)
             ],
-            'MAYA_PLUG_IN_PATH':[
-                CG_FACTORY_PATH + 'mayaConfigs/plugins' # for python and root for mlls.
+            'MAYA_PLUG_IN_PATH': [
+                # for python and root for mlls.
+                '{}mayaConfigs/plugins'.format(cgf_path)
             ],
-            'MAYA_MODULE_PATH':[
-                CG_FACTORY_PATH + 'mayaConfigs/modules'
+            'MAYA_MODULE_PATH': [
+                '{}mayaConfigs/modules'.format(cgf_path)
             ],
         }
 
         # - Include plugin maya version if folder exists.
-        mllDir = os.path.join(envDict['MAYA_PLUG_IN_PATH'][0], self._version)
-        if os.path.isdir(mllDir):
-            envDict['MAYA_PLUG_IN_PATH'].append(mllDir)
+        plug_dir = os.path.join(
+            env_dict['MAYA_PLUG_IN_PATH'][0],
+            self._version
+        )
+        if os.path.isdir(plug_dir):
+            env_dict['MAYA_PLUG_IN_PATH'].append(plug_dir)
 
         # - Add environments to system
-        for envK,envV in envDict.items():
-            appendToEnv(envK, *envV)
+        for env_k, env_v in env_dict.items():
+            append_to_env(env_k, *env_v)
 
-        #NOTE:
-        #
-        # do not try to get a python debugger (ie pdb trace). does not work
-        # with shotgun launcher.
-
+        # NOTE: do not try to get a python debugger (ie pdb trace).
+        # does not work with shotgun launcher.
 
     def _tk_nuke_env_setup(self):
         """
@@ -618,16 +838,19 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_nuke_env_setup'
         self._headers(_setup)
 
-        # Update the sys.path 
+        # Update the sys.path
         script_paths = []
         script_paths.append(self._sg_a3_path)
         for script_path in script_paths:
             sys.path.insert(0, script_path)
 
         # Update the NUKE_PATH
-        # - Previously, the I.T. department was configuring machines with the NUKE_PATH already set to 'x:\tools\nuke'
-        # - This is now legacy and will be ignored when we launch nuke via the sgtk
-        # - Also, log a warning if any NUKE_PATH already exists that is not a part of the expected "sgtk" launch mechanism
+        # - Previously, the I.T. department was configuring machines with the
+        # - NUKE_PATH already set to 'x:\tools\nuke'
+        # - This is now legacy and will be ignored when we launch nuke via the
+        # - sgtk
+        # - Also, log a warning if any NUKE_PATH already exists that is not a
+        # - part of the expected "sgtk" launch mechanism
         nuke_plugin_path = []
 
         # Process the existing NUKE_PATH
@@ -638,38 +861,45 @@ class BeforeAppLaunch(tank.Hook):
                 if 'sgtk' in nuke_path:
                     nuke_plugin_path.append(nuke_path)
                 else:
-                    LOGGER.warn('Bad value in NUKE_PATH, ignoring: {}'.format(nuke_path))
+                    m = 'Bad value in NUKE_PATH, ignoring: {}'.format(
+                        nuke_path
+                    )
+                    LOGGER.warn(m)
 
         # Add main/dev pipeline repos to NUKE_PATH
         try:
             # old method
-            sse_nuke_pipeline = '{}/nuke'.format(self._repo_path).replace('/', '\\')
-            nuke_plugin_path.append(sse_nuke_pipeline)
-        except:
-            # new method: 
-            # Only take the first entry in the list, the rest are fallbacks and are irrelevant for nuke.
-            sse_nuke_pipeline = '{}/nuke'.format(self._repo_paths[0]).replace('/', '\\')
-            nuke_plugin_path.append(sse_nuke_pipeline)
-            
+            sse_nuke_pipeline = '{}/nuke'.format(self._repo_path)
+        except Exception:
+            # new method:
+            # Only take the first entry in the list, the rest are fallbacks and
+            # are irrelevant for nuke.
+            sse_nuke_pipeline = '{}/nuke'.format(self._repo_paths[0])
+
+        sse_nuke_pipeline = sse_nuke_pipeline.replace('/', '\\')
+        nuke_plugin_path.append(sse_nuke_pipeline)
+
         LOGGER.debug('Setting NUKE_PATH in os.environ...')
         os.environ['NUKE_PATH'] = os.pathsep.join(nuke_plugin_path)
-         
+
         # Update SSE nuke tools paths
-        # 1) SSE_NUKE_PIPELINE 
+        # 1) SSE_NUKE_PIPELINE
         #    - location of TD controlled pipeline scripts/tools/templates/etc
-        #    - This should match the location of the currently selected repo (self._repo_paths[0])
+        #    - This should match the location of the currently selected repo
+        #    - (self._repo_paths[0])
         #
         # 2) SSE_NUKE_TOOLS
         #    - location of ARTIST controlled scripts/tools/templates/etc
         #    - For now, this is hard coded.
-        #         
+        #
         # TODO: support mac/linux paths?
         #
         LOGGER.debug('Setting SSE_NUKE_PIPELINE in os.environ...')
         os.environ['SSE_NUKE_PIPELINE'] = sse_nuke_pipeline
 
         LOGGER.debug('Setting SSE_NUKE_TOOLS in os.environ...')
-        os.environ['SSE_NUKE_TOOLS'] = "N:\\Resources\\Tools\\Nuke\\StudioTools"
+        artist_tools = 'N:\\Resources\\Tools\\Nuke\\StudioTools'
+        os.environ['SSE_NUKE_TOOLS'] = artist_tools
 
         # Prevent python from writing bytecode (avoids .pyc files)
         os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
@@ -701,12 +931,6 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_houdini_env_setup'
         self._headers(_setup)
 
-        #script_paths = []
-        #script_paths.append(self._sg_a3_path)
-        
-        #for script_path in script_paths:
-        #    sys.path.insert(0, script_path)
-
         # --- OCIO/ACES...
         os.environ['OCIO'] = OCIO_CONFIG
         os.environ['OCIO_ACTIVE_DISPLAYS'] = 'ACES'
@@ -717,30 +941,54 @@ class BeforeAppLaunch(tank.Hook):
         # --- houdini pipeline path
         houdini_path = os.environ["HOUDINI_PATH"]
         
-        # adding studio repo_path
+        # connecting studio repo_path
         os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', \
             '{}/houdini/'.format(self._repo_path))
 
+
+        # custom libs and additional scripts
+        hou_script_paths = []
+
+        # --- NOTE: probably moving to houdini packages soon.
+
+        #script_paths.append('{}/otls/qlib'.format(self._repo_path))
+        hou_script_paths.append("@\\otls;N:\\Resources\\Tools\\Houdini\\shared\\otls")
+        studio_hou_paths = os.pathsep.join(hou_script_paths)
+
+        # adding custom scripts tools to houdini_otl_scanpath
+        LOGGER.debug('Setting Custom Shared OTLS lib in HOUDINI_OTLSCAN_PATH...') 
+        os.environ['SSE_SHARED_OTLS_PATH'] = "@;N:\\Resources\\Tools\\Houdini\\shared\\otls"
+
+        if 'HOUDINI_OTLSCAN_PATH' in os.environ:
+             LOGGER.debug('Found existing HOUDINI_OTLSCAN_PATH in os.environ...')
+             os.environ['HOUDINI_OTLSCAN_PATH'] = os.pathsep.join(
+                 [
+                     os.environ['HOUDINI_OTLSCAN_PATH'],
+                     os.environ['SSE_SHARED_OTLS_PATH']
+                 ]
+             )
+        else:
+             m = 'No existing HOUDINI_OTL_SCANPATH in os.environ, creating...'
+             LOGGER.debug(m)
+             os.environ['HOUDINI_OTLSCAN_PATH'] = '{}'.format(studio_hou_paths)
+
+        
         # sg api3 to houdini
         # test purpose - replacing sys.path insertion for pythonpath
-        os.environ['PYTHONPATH'] = "{0}{1}{2}".format(os.environ["PYTHONPATH"], ';', \
-            '{}'.format(self._sg_a3_path))
+        py_paths = []
+        py_paths.append(self._sg_a3_path)
 
-        LOGGER.debug("New HOUDINI_PATH > {}".format( os.environ["HOUDINI_PATH"]))
-
-        # --- For test purpose using htoA...
-        # replace houdini version - hard coding.
-        
-        #htoa_path = "{}".format("N:/projects/RnD/Arnold_for_Houdini/htoa-5.6.1.0_rf9edb5c_houdini-18.5.532_windows/htoa-5.6.1.0_rf9edb5c_houdini-houdini-18.5.532")
-        #os.environ['PYTHONPATH'] = "{0}{1}{2}".format(os.environ["PYTHONPATH"], ';', \
-        #    '{}/scripts/bin/'.format(htoa_path))
-        
-        #os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(os.environ["HOUDINI_PATH"], ';', \
-        #    '{}'.format(htoa_path))
+        for py_path in py_paths:
+            os.environ['PYTHONPATH'] = '{0}{1}{2}'.format(
+                os.environ['PYTHONPATH'],
+                os.pathsep,
+                py_path
+            )
+        m = 'New PYTHONPATH > {}'.format(os.environ['PYTHONPATH'])
+        LOGGER.debug(m)
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
-
 
     def _tk_natron_env_setup(self):
         """
@@ -831,7 +1079,8 @@ class BeforeAppLaunch(tank.Hook):
 
         if self._engine_name == 'tk-houdini':
             _houdini_paths = [
-                'HOUDINI_PATH'
+                'HOUDINI_PATH',
+                'HOUDINI_OTLSCAN_PATH'
             ]
             path_list.extend(_houdini_paths)
 
@@ -859,7 +1108,7 @@ class BeforeAppLaunch(tank.Hook):
         for env_var_item in env_var_str:
             LOGGER.debug(env_var_item)
 
-    def _maya_arnold_version_bin_fix(self):
+    def _tk_maya_env_setup_arnold_version_bin_fix(self):
         """
         Get rid of the bad Arnold bin path from the PATH (mystery where it's
         coming from).
