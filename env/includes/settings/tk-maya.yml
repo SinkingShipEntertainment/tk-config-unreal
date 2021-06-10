@@ -137,6 +137,6 @@ settings.tk-maya.shot_step:
 frameworks:
   tk-framework-widget_v1.x.x:
     location:
-      version: v1.0.0
+      version: v1.1.0
       type: app_store
       name: tk-framework-widget
