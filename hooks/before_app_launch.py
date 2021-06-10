@@ -940,24 +940,33 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- houdini pipeline path
         houdini_path = os.environ["HOUDINI_PATH"]
-        
-        # connecting studio repo_path
-        os.environ['HOUDINI_PATH'] = "{0}{1}{2}".format(houdini_path, ';', \
-            '{}/houdini/'.format(self._repo_path))
 
+        # adding studio repo_path
+        os.environ['HOUDINI_PATH'] = '{0}{1}{2}'.format(
+            houdini_path,
+            os.pathsep,
+            '{}/houdini/'.format(self._repo_path)
+        )
 
         # custom libs and additional scripts
         hou_script_paths = []
 
         # --- NOTE: probably moving to houdini packages soon.
 
-        #script_paths.append('{}/otls/qlib'.format(self._repo_path))
         hou_script_paths.append("@\\otls;N:\\Resources\\Tools\\Houdini\\shared\\otls")
         studio_hou_paths = os.pathsep.join(hou_script_paths)
 
+        # houdini packages first move // adding custom packages reference dir
+        # packages is new to houdini 17.5, allows customize different packages
+        # the purpose here is just add a few common packages like qLIB and MOPS
+
+        # HSITE is equivalent to houdini_path, required by HOUDINI_PACKAGE_DIR
+        os.environ['HSITE'] = '{}/houdini/'.format(self._repo_path)
+        os.environ['HOUDINI_PACKAGE_DIR'] = '{}/houdini/houdini18.5/packages'.format(self._repo_path)
+
         # adding custom scripts tools to houdini_otl_scanpath
         LOGGER.debug('Setting Custom Shared OTLS lib in HOUDINI_OTLSCAN_PATH...') 
-        os.environ['SSE_SHARED_OTLS_PATH'] = "@;N:\\Resources\\Tools\\Houdini\\shared\\otls"
+        os.environ['SSE_SHARED_OTLS_PATH'] = "@;N:/Resources/Tools/Houdini/shared/otls"
 
         if 'HOUDINI_OTLSCAN_PATH' in os.environ:
              LOGGER.debug('Found existing HOUDINI_OTLSCAN_PATH in os.environ...')
@@ -1080,7 +1089,9 @@ class BeforeAppLaunch(tank.Hook):
         if self._engine_name == 'tk-houdini':
             _houdini_paths = [
                 'HOUDINI_PATH',
-                'HOUDINI_OTLSCAN_PATH'
+                'HOUDINI_OTLSCAN_PATH',
+                'HSITE',
+                'HOUDINI_PACKAGE_DIR'
             ]
             path_list.extend(_houdini_paths)
 
