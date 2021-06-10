@@ -67,17 +67,18 @@ settings.tk-nuke-writenode.shot:
     settings: {}
     tank_type: Rendered Image
     tile_color: []
-  - file_type: exr
-    name: Comp EXR, Aces2065
-    promote_write_knobs: []
-    proxy_publish_template:
-    proxy_render_template:
-    publish_template: nuke_shot_comp_render_pub_exr
-    render_template: nuke_shot_comp_render_exr
-    settings: {channels: rgba, colorspace: ACES - ACES2065-1, write_ACES_compliant_EXR: true, compression: Zip
-        (1 scanline), autocrop: true}
-    tank_type: Rendered Image
-    tile_color: []
+  # adent 07/08/2021 - remove this one and see if anyone complains
+  #- file_type: exr
+  #  name: Comp EXR, Aces2065
+  #  promote_write_knobs: []
+  #  proxy_publish_template:
+  #  proxy_render_template:
+  #  publish_template: nuke_shot_comp_render_pub_exr
+  #  render_template: nuke_shot_comp_render_exr
+  #  settings: {channels: rgba, colorspace: ACES - ACES2065-1, write_ACES_compliant_EXR: true, compression: Zip
+  #      (1 scanline), autocrop: true}
+  #  tank_type: Rendered Image
+  #  tile_color: []
   # --- DonkeyHodie ~ DW (2020-03-12)
   - file_type: exr
     name: Comp EXR, AcesRec709, DWAB 45 (final)
@@ -123,7 +124,7 @@ settings.tk-nuke-writenode.shot:
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    publish_template: nuke_shot_render_acescg_pub_exr
     render_template: nuke_shot_comp_render_acescg_exr
     settings: {channels: rgba, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
       compression: DWAB, dw_compression_level: 45, autocrop: true, datatype: 16
@@ -136,7 +137,7 @@ settings.tk-nuke-writenode.shot:
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    publish_template: nuke_shot_render_acescg_pub_exr
     render_template: nuke_shot_comp_render_acescg_exr
     settings: {channels: rgba, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
       compression: PIZ Wavelet (32 scanlines), dw_compression_level: 45, autocrop: true, datatype: 16
@@ -149,7 +150,7 @@ settings.tk-nuke-writenode.shot:
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_light_render_acescg_pub_exr
+    publish_template: nuke_shot_render_acescg_pub_exr
     render_template: nuke_shot_light_render_acescg_exr
     settings: {channels: rgba, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
       compression: DWAB, dw_compression_level: 45, autocrop: true, datatype: 16 bit half}
@@ -161,7 +162,7 @@ settings.tk-nuke-writenode.shot:
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_roto_render_acescg_pub_exr
+    publish_template: nuke_shot_render_acescg_pub_exr
     render_template: nuke_shot_roto_render_acescg_exr
     settings: {channels: rgba, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
       compression: DWAB, dw_compression_level: 400, autocrop: true, datatype: 16 bit half}
@@ -173,7 +174,7 @@ settings.tk-nuke-writenode.shot:
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_comp_render_pub_exr
+    publish_template: nuke_shot_comp_render_pub_exr # adent 07/08/2021 - doesn't make sense
     render_template: nuke_output_rgb_matte_exr
     settings: {channels: rgb, colorspace: ACES - ACES2065-1, write_ACES_compliant_EXR: false,
       compression: DWAB, dw_compression_level: 45, autocrop: false, datatype: 16
@@ -186,7 +187,7 @@ settings.tk-nuke-writenode.shot:
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_comp_render_acescg_pub_exr
+    publish_template: nuke_shot_render_acescg_pub_exr # adent 07/08/2021 - doesn't make sense
     render_template: nuke_output_rgb_matte_acescg_exr
     settings: {channels: rgb, colorspace: ACES - ACEScg, write_ACES_compliant_EXR: false,
       compression: DWAB, dw_compression_level: 45, autocrop: false, datatype: 16
@@ -195,12 +196,12 @@ settings.tk-nuke-writenode.shot:
     tile_color: []
   # --- DEGRAIN
   - file_type: exr
-    name: Degrain EXR, 16 bit
+    name: Degrain EXR, sRGB, Zip, 16-bit
     promote_write_knobs: []
     proxy_publish_template:
     proxy_render_template:
-    publish_template: nuke_shot_degrain_render_pub_exr
-    render_template: nuke_shot_degrain_render_exr
+    publish_template: nuke_shot_degrain_render_srgb_pub_exr
+    render_template: nuke_shot_degrain_render_srgb_exr
     settings: {channels: rgba, colorspace: sRGB, datatype: 16 bit half, compression: Zip
         (1 scanline)}
     tank_type: Rendered Image
