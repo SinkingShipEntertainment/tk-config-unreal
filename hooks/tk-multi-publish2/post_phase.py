@@ -477,7 +477,7 @@ class PostPhaseHook(HookBaseClass):
 
             with open(rs_file, 'w+') as j_file:
                 json.dump(
-                    renderSetup.instance().encode(None),
+                    renderSetup.instance().encode(None, includeSceneSettings=False),
                     fp=j_file,
                     indent=2,
                     sort_keys=True

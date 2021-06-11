@@ -41,6 +41,7 @@ settings.tk-desktop.project:
     tk-multi-screeningroom: "@settings.tk-multi-screeningroom.rv"
     tk-harvest: "@settings.tk-multi-launchapp.harvest"
     tk-copyasset: "@settings.tk-multi-launchapp.copyasset"
+    tk-acesconversion: "@settings.tk-multi-launchapp.acesconversion"
   groups:
   - matches:
     - "*Fla*"
