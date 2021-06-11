@@ -43,3 +43,6 @@ path.windows.harvest: X:\tools\sinking_ship\shotgun\RunHarvestPublish.bat
 
 # Sinking Ship Copy Asset
 path.windows.copyasset: X:\tools\win_tools\CopyAsset\run_CopyAsset.bat
+
+# Sinking Ship Aces Conversion
+path.windows.acesconversion: X:\tools\pipeline_repos\studio_pipeline_2_5_repo\shotgun\RunAcesConversion.bat
