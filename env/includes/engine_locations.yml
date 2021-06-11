@@ -120,6 +120,6 @@ engines.tk-natron.location:
 
 # Unreal
 engines.tk-unreal.location:
-  type: path
-  path: X:/dev/ss_dev_baptiste/tk-unreal-imgspc
-  version: v0.1
+  type: git
+  path: https://github.com/SinkingShipEntertainment/tk-unreal.git
+  version: v1.1.0
