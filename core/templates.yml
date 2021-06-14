@@ -476,10 +476,6 @@ paths:
         root_name: 'primary'
     # END >>> from old sg_config
 
-    # CFX sim guide curve cache location
-    maya_shot_guide_curve_cache_folder:
-        definition: '@sequence_root/caches/{Shot}/{Step}/guide_curve_cache/'
-        root_name: 'secondary'
 
     #
     # Houdini
@@ -581,12 +577,14 @@ paths:
         definition: '@shot_root/publish/mobu/{name}.{Step}.v{version}.fbx'
         root_name: 'primary'
 
+
     #
     # Nuke
     #
 
     # define the location of a work area
     shot_work_area_nuke:
+        #definition: '@shot_root/work/nuke'
         definition: '@shot_root/work/{current_user_name}/nuke'
         root_name: 'primary'
     # define the location of a publish area
@@ -595,107 +593,140 @@ paths:
         root_name: 'primary'
     # The location of WIP script files
     nuke_shot_work:
-        definition: '@shot_work_area_nuke/{Shot}.{task_name}.v{version}.nk'
+        #definition: '@shot_root/work/nuke/{name}.{Step}.v{version}.nk'
+        #definition: '@shot_root/work/{current_user_name}/nuke/{name}.v{version}.nk'
+        definition: '@shot_work_area_nuke/{Shot}.v{version}.nk'
         root_name: 'primary'
     # The location of backups of WIP files
     nuke_shot_snapshot:
-        definition: '@shot_work_area_nuke/snapshots/{Shot}.{task_name}.v{version}.{timestamp}.nk'
+        #definition: '@shot_root/work/nuke/snapshots/{name}.{Step}.v{version}.{timestamp}.nk'
+        definition: '@shot_work_area_nuke/snapshots/{Shot}.{Step}.v{version}.{timestamp}.nk'
         root_name: 'primary'
     # The location of published nuke script files
     nuke_shot_publish:
-        definition: '@shot_publish_area_nuke/{Shot}.{task_name}.v{version}.nk'
+        #definition: '@shot_root/publish/nuke/{name}.{Step}.v{version}.nk'
+        definition: '@shot_publish_area_nuke/{Shot}.{Step}.v{version}.nk'
         root_name: 'primary'
-
     # write node outputs
+    #nuke_shot_render_mono_dpx:
+    #    definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}_v{version}.{SEQ}.dpx'
+    #nuke_shot_render_pub_mono_dpx:
+    #    definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}_v{version}.{SEQ}.dpx'
 
-    # START >>> from old sg_config
+    # >>> from old sg_config
+
+    nuke_shot_render_mono_exr:
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_render_mono_exr_clean:
+        definition: '@sequence_root/plates/{Shot}/clean_plate/from_comp/v{version}/{name}_{nuke.output}.clean_plate.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_render_mono_exr_roto:
+        definition: '@sequence_root/plates/{Shot}/roto/v{version}/{name}_{nuke.output}.roto.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_render_pub_mono_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+
     nuke_shot_render_mono_dpx:
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}.{nuke.output}.v{version}.{SEQ}.dpx'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}.v{version}.{SEQ}.dpx'
         root_name: 'secondary'
     nuke_shot_render_pub_mono_dpx:
-        definition: '@sequence_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}.{name}.{nuke.output}.v{version}.{SEQ}.dpx'
+        definition: '@sequence_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}.v{version}.{SEQ}.dpx'
         root_name: 'primary'
-    nuke_shot_render_stereo:
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}.{nuke.output}.{eye}.{Step}.v{version}.{SEQ}.exr'
-        root_name: 'secondary'
-    nuke_shot_render_pub_stereo:
-        definition: '@sequence_root/to_online/{Shot}/publish/{width}x{height}/{name}.{nuke.output}.{eye}.{Step}.v{version}.{SEQ}.exr'
-        root_name: 'secondary'
-    # END >>> from old sg_config
-
-    # Generic SHOT - ACEScg
-    nuke_shot_render_acescg_exr:
-        definition: '@sequence_root/renders/{Shot}/{task_name}/v{version}/{Shot}.{task_name}.acescg.v{version}.{SEQ}.exr'
-        root_name: 'secondary'
-    nuke_shot_render_acescg_pub_exr:
-        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}.{task_name}.acescg.v{version}.{SEQ}.exr'
+    nuke_shot_render_pub_mono:
+        definition: '@sequence_root/to_online/{Shot}/{name}_{nuke.output}.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
-    # COMP - default (no-colorspace info in filename)
-    #      - notes:
-    #        - 'Comp' task is hard-coded to make this template path unique.
-    #        - Since all write nodes are visible for every task in nuke, the sg context is useless
-    #          to get the correct task name. (eg. Artist can pick 'Light' write node for a 'Comp' task)
-    #        - To avoid renders going to wrong path locations... must hard-code task_name in for now.
+    # NEW COMP
     nuke_shot_comp_render_exr:
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.Comp.v{version}.{SEQ}.exr'
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}_comp.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
         root_name: 'secondary'
     nuke_shot_comp_render_pub_exr:
-        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}.Comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
         root_name: 'secondary'
-
-    # COMP - ACEScg
+    nuke_shot_comp_render_jpeg:
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.jpg'
+        root_name: 'secondary'
+    nuke_shot_comp_render_pub_jpeg:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp.v{version}.{SEQ}.jpg'
+        root_name: 'secondary'
+    # COMP - ACEScg    
     nuke_shot_comp_render_acescg_exr:
-        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}.Comp.acescg.v{version}.{SEQ}.exr'
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{Shot}_comp_acescg.v{version}.{SEQ}.exr' # ~DW 2020-03-09 (couldn't get Task so it's hardcoded)
         root_name: 'secondary'
-
-    # LIGHT - ACEScg (slapcomp)
-    nuke_shot_light_render_acescg_exr:
-        definition: '@sequence_root/renders/{Shot}/3d/lt_slap_comps/v{version}/{Shot}.Light.acescg.v{version}.{SEQ}.exr'
+    nuke_shot_comp_render_acescg_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_comp_acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
-
-    # ROTO - ACEScg
-    nuke_shot_roto_render_acescg_exr:
-        definition: '@sequence_root/renders/{Shot}/roto/v{version}/{Shot}.Roto.acescg.v{version}.{SEQ}.exr'
+    # ROTO
+    nuke_shot_roto_render_jpeg:
+        definition: '@sequence_root/renders/{Shot}/roto/v{version}/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
         root_name: 'secondary'
-
-    # DEGRAIN - srgb
-    nuke_shot_degrain_render_srgb_exr:
-        definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{Shot}.[{name}.]degrain.{nuke.output}.srgb.v{version}.{SEQ}.exr'
+    nuke_shot_roto_render_pub_jpeg:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_roto.v{version}.{SEQ}.jpg'
         root_name: 'secondary'
-
-    external_plates:
-        definition: '@sequence_root/plates/{Shot}/external/'
+    # CLEAN PLATE
+    nuke_shot_clean_plate_render_exr:
+        definition: '@sequence_root/plates/{Shot}/clean_plate/from_comp/v{version}/{name}_{nuke.output}_clean_plate.v{version}.{SEQ}.exr'
         root_name: 'secondary'
-
-    acescg_plates:
-        definition: '@sequence_root/plates/{Shot}/acescg/acescg.{SEQ}.exr'
+    nuke_shot_clean_plate_render_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_clean_plate.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_clean_plate_render_jpeg:
+        definition: '@sequence_root/plates/{Shot}/clean_plate/from_comp/v{version}/{name}_{nuke.output}_clean_plate.v{version}.{SEQ}.jpg'
+        root_name: 'secondary'
+    nuke_shot_clean_plate_render_pub_jpeg:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_clean_plate.v{version}.{SEQ}.jpg'
+        root_name: 'secondary'
+    # DEGRAIN
+    nuke_shot_degrain_render_exr:
+        # definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{name}_{nuke.output}_degrain_v{version}.{SEQ}.exr'
+        definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{Shot}_[{name}_]{nuke.output}_degrain_v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_degrain_render_pub_exr:
+        # definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_degrain_v{version}.{SEQ}.jpg'
+        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}_[{name}_]{nuke.output}_degrain_v{version}.{SEQ}.jpg'
+        root_name: 'secondary'
+    # R3D -> LINEAR
+    nuke_shot_r3d_linear_render_exr:
+        definition: '@sequence_root/plates/{Shot}/linear/v{version}/{name}_{nuke.output}_linear_v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_r3d_linear_render_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{name}_{nuke.output}_linear_v{version}.{SEQ}.jpg'
         root_name: 'secondary'
 
     resolve_graded_plates:
         definition: '@sequence_root/plates/{Shot}/graded_plates/'
-
-    nuke_shot_degrain_render_srgb_pub_exr:
-        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}.[{name}.]degrain.{nuke.output}.v{version}.srgb.{SEQ}.exr'
         root_name: 'secondary'
+    # END >>> from old sg_config
 
+    nuke_shot_render_stereo:
+        #definition: '@shot_root/work/images/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}_{eye}_v{version}.{SEQ}.exr'
+        #definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_{eye}_comp.v{version}.{SEQ}.exr'
+        definition: '@sequence_root/renders/{Shot}/2d/v{version}/{name}_{nuke.output}_{eye}.{Step}.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_render_pub_stereo:
+        #definition: '@shot_root/publish/elements/{name}/v{version}/{width}x{height}/{Shot}_{name}_{nuke.output}_{eye}_v{version}.{SEQ}.exr'
+        definition: '@sequence_root/to_online/{Shot}/publish/{width}x{height}/{name}_{nuke.output}_{eye}.{Step}.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
     # review output
     shot_quicktime_quick:
-        definition: '@shot_root/review/quickdaily/{Shot}.{task_name}.{iteration}.mov'
+        definition: '@shot_root/review/quickdaily/{Shot}_{name}_{iteration}.mov'
     nuke_shot_render_movie:
-        definition: '@shot_root/review/{Shot}.{task_name}.[{nuke.output}.]v{version}.mov'
+        definition: '@shot_root/review/{Shot}_{name}_{nuke.output}_v{version}.mov'
 
-    # MULTI-CHANNEL MATTES
-    # - various output directories for multi-channel mattes
-    # - allows for many different use cases
+    # --- SSE: Various output directories for multi-channel mattes for
+    # --- different use cases (DW 2021-02-11)
     nuke_output_matte_root:
         definition: '@sequence_root/renders/{Shot}/matte'
         root_name: 'secondary'
     nuke_output_rgb_matte_exr:
-        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}.{Step}.MATTE.{SEQ}.exr'
+        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE.{SEQ}.exr'
         root_name: 'secondary'
     nuke_output_rgb_matte_acescg_exr:
-        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}.{Step}.MATTE.acescg.{SEQ}.exr'
+        definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}_{Step}_MATTE_acescg.{SEQ}.exr'
         root_name: 'secondary'
 
     #
@@ -901,6 +932,9 @@ paths:
     maya_asset_publish_surfacing_arnold_shadernetwork:
         definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD.AI.v{version}.ma'
         root_name: 'primary'
+    maya_asset_work_render:
+        definition: 'assets/{sg_asset_type}/renders/{Asset}/{Step}/{current_user_name}/turntable/v{version}/{Asset}.{SEQ}.exr'
+        root_name: 'secondary'
 
     # The location of FBX exports for Unreal
     maya_asset_fbx_publish:
