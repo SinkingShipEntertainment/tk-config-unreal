@@ -157,6 +157,13 @@ apps.tk-houdini-mantranode.location:
   name: tk-houdini-mantranode
   version: v0.4.1
 
+# houdini flipbook custom app @CH
+apps.tk-houdini-flipbook.location:
+  type: dev
+  #branch: removingNuke
+  path: X:/dev/ss_dev_claudiohickstein/tk-houdini-flipbook
+  #version: 1.1.0
+  
 # ---- Nuke apps
 
 # quickreview
