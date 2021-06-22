@@ -901,6 +901,9 @@ paths:
     maya_asset_publish_surfacing_arnold_shadernetwork:
         definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD.AI.v{version}.ma'
         root_name: 'primary'
+    maya_asset_work_render:
+        definition: 'assets/{sg_asset_type}/renders/{Asset}/{Step}/{current_user_name}/turntable/v{version}/{Asset}.{SEQ}.exr'
+        root_name: 'secondary'
 
     # The location of FBX exports for Unreal
     maya_asset_fbx_publish:
