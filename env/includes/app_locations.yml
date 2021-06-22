@@ -157,6 +157,13 @@ apps.tk-houdini-mantranode.location:
   name: tk-houdini-mantranode
   version: v0.4.1
 
+# sse_tk-houdini-flipbook
+apps.tk-houdini-flipbook.location:
+  type: github_release
+  organization: SinkingShipEntertainment
+  repository: tk-houdini-flipbook
+  version: v2.0.0
+
 # ---- Nuke apps
 
 # quickreview
