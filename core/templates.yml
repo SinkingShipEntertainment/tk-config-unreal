@@ -661,6 +661,11 @@ paths:
         definition: '@sequence_root/renders/{Shot}/3d/lt_slap_comps/v{version}/{Shot}.Light.acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
+    # FX - ACEScg (slapcomp)
+    nuke_shot_fxrnd_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/3d/fx_slap_comps/v{version}/{Shot}.FX-RnD.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+
     # ROTO - ACEScg
     nuke_shot_roto_render_acescg_exr:
         definition: '@sequence_root/renders/{Shot}/roto/v{version}/{Shot}.Roto.acescg.v{version}.{SEQ}.exr'
