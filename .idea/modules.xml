@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/config.iml" filepath="$PROJECT_DIR$/.idea/config.iml" />
+      <module fileurl="file://X:/dev/ss_dev_harrisonforbes/studio_pipeline_2_5_dev_master_repo/.idea/studio_pipeline_2_5_dev_master_repo.iml" filepath="X:/dev/ss_dev_harrisonforbes/studio_pipeline_2_5_dev_master_repo/.idea/studio_pipeline_2_5_dev_master_repo.iml" />
     </modules>
   </component>
 </project>

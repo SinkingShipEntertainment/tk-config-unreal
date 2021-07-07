@@ -536,6 +536,10 @@ class BeforeAppLaunch(tank.Hook):
 
             # --- Arnold PATH cleanup at the end...
             self._tk_maya_env_setup_arnold_version_bin_fix()
+
+            # --- AnimBot plugin
+            self._tk_maya_env_setup_animbot()
+
         else:
             m = 'No Maya version specific environment variables required.'
             LOGGER.debug(m)
@@ -545,6 +549,13 @@ class BeforeAppLaunch(tank.Hook):
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
+
+    def _tk_maya_env_setup_animbot(self):
+        """Method to setup the config for animBot."""
+        # https://help.animbot.ca/support/solutions/articles/61000292031-installing-enterprise-edition
+
+        # TODO: Find a better place to put the config; don't hardcode this?
+        os.environ['ANIMBOT_CONFIGJSONPATH'] = 'X:/tools/lic/config.json'
 
     def _tk_maya_env_setup_srv_yeti(self):
         """Method to set up all the wanted environment variables for Yeti with
