@@ -162,7 +162,7 @@ apps.tk-houdini-flipbook.location:
   type: github_release
   organization: SinkingShipEntertainment
   repository: tk-houdini-flipbook
-  version: v2.0.0
+  version: v2.0.1
 
 # ---- Nuke apps
 
