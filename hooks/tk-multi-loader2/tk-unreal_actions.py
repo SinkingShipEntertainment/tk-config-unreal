@@ -63,3 +63,45 @@ class UnrealActions(HookBaseClass):
                 # create the binding
                 imgspc_ue_imp.create_groom_binding(grm_obj_path, skeletal_mesh_obj_path,
                                                    grm_binding_path)
+
+        # create groom binding after groom import
+        if ue_import_type == unreal.GroomGeometryType.STRANDS:
+
+            grm_dst_path, grm_dst_name = imgspc_ue_imp.get_groom_destination_path_and_name(
+                path
+            )
+            grm_obj_path = '{0}/{1}.{1}'.format(grm_dst_path, grm_dst_name, grm_dst_name)
+
+            # get the groom package path from the groom object path
+            asset_reg = unreal.AssetRegistryHelpers.get_asset_registry()
+            groom_asset_data = asset_reg.get_asset_by_object_path(grm_obj_path)
+            groom_package_path = groom_asset_data.package_path.__str__()
+            groom_name = groom_asset_data.asset_name.__str__()
+
+            # form the binding path
+            grm_bind_dst, grm_bind_name = imgspc_ue_imp.get_groom_binding_destination_path_and_name(
+                groom_package_path, groom_name)
+            grm_binding_path = '%s/%s' % (grm_bind_dst, grm_bind_name)
+
+            # TODO: I am expecting the skeletal mesh to be in the parent directory of the groom
+            #  directory. A better way may be getting a context from the groom publish and using
+            #  that to build the SkeletalMesh obj path
+            # get the object path for the associated skeletal mesh
+            asset_list = unreal.AssetRegistryHelpers.get_asset_registry().get_assets_by_path(
+                '/'.join(grm_dst_path.split('/')[:-1])
+            )
+            skeletal_mesh_obj_paths = [str(x.object_path) for x in asset_list
+                                       if x.asset_class == 'SkeletalMesh']
+
+            if not skeletal_mesh_obj_paths:
+                unreal.log_warning('There is no skeletal mesh to bind %s groom to.' % groom_name)
+                return
+
+            skeletal_mesh_obj_path = skeletal_mesh_obj_paths[0]
+
+            unreal.log('Groom binding path is: %s' % grm_binding_path)
+            unreal.log('Skeletal mesh object path is: %s' % skeletal_mesh_obj_path)
+
+            # create the binding
+            imgspc_ue_imp.create_groom_binding(grm_obj_path, skeletal_mesh_obj_path,
+                                               grm_binding_path)
