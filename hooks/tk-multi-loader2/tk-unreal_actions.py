@@ -1,5 +1,5 @@
 # This file is based on templates provided and copyrighted by Autodesk, Inc.
-# This file has been modified by Epic Games, Inc. and is subject to the license 
+# This file has been modified by Epic Games, Inc. and is subject to the license
 # file included in this repository.
 
 """
@@ -58,7 +58,11 @@ class UnrealActions(HookBaseClass):
                     groom_package_path, groom_name)
                 grm_binding_path = '%s/%s' % (grm_bind_dst, grm_bind_name)
 
-                unreal.log('Groom binding path is: %s' % grm_binding_path)
+                # check if the GroomBinding exists and delete if it does
+                is_deleted = imgspc_ue_imp.delete_groom_binding(grm_binding_path)
+                if not is_deleted:
+                    unreal.log_warning('Groom binding not deleted there may be duplicates: %s' %
+                                       grm_binding_path)
 
                 # create the binding
                 imgspc_ue_imp.create_groom_binding(grm_obj_path, skeletal_mesh_obj_path,
@@ -82,6 +86,12 @@ class UnrealActions(HookBaseClass):
             grm_bind_dst, grm_bind_name = imgspc_ue_imp.get_groom_binding_destination_path_and_name(
                 groom_package_path, groom_name)
             grm_binding_path = '%s/%s' % (grm_bind_dst, grm_bind_name)
+
+            # check if the GroomBinding exists and delete if it does
+            is_deleted = imgspc_ue_imp.delete_groom_binding(grm_binding_path)
+            if not is_deleted:
+                unreal.log_warning('Groom binding not deleted there may be duplicates: %s' %
+                                   grm_binding_path)
 
             # TODO: I am expecting the skeletal mesh to be in the parent directory of the groom
             #  directory. A better way may be getting a context from the groom publish and using
