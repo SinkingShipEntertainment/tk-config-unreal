@@ -165,7 +165,7 @@ class PostPhaseHook(HookBaseClass):
             pub_chk = self.utils_api3.get_latest_asset_pub_in_proj_by_step(
                 prj_name,
                 ent_name,
-                e_step='RIG'
+                e_step='HIRIG'
             )
 
             # farm submission for simple autorig job
