@@ -676,6 +676,15 @@ paths:
         definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{Shot}.[{name}.]degrain.{nuke.output}.srgb.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
+    nuke_shot_degrain_render_srgb_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}.[{name}.]degrain.{nuke.output}.v{version}.srgb.{SEQ}.exr'
+        root_name: 'secondary'
+        
+    nuke_shot_degrainpre_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/Degrain/v{version}/{Shot}.Degrain.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+
+    # PLATES
     external_plates:
         definition: '@sequence_root/plates/{Shot}/external/'
         root_name: 'secondary'
@@ -686,9 +695,14 @@ paths:
 
     resolve_graded_plates:
         definition: '@sequence_root/plates/{Shot}/graded_plates/'
-
-    nuke_shot_degrain_render_srgb_pub_exr:
-        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}.[{name}.]degrain.{nuke.output}.v{version}.srgb.{SEQ}.exr'
+        
+    nuke_shot_cleanplatepre_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/CleanPlate/v{version}/{Shot}.CleanPlate.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+        
+    # SMART VECTOR
+    nuke_shot_smartvectorpre_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/smartVector/v{version}/{Shot}.smartVector.acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
     # review output
