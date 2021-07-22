@@ -723,6 +723,23 @@ paths:
     nuke_output_rgb_matte_acescg_exr:
         definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}.{Step}.MATTE.acescg.{SEQ}.exr'
         root_name: 'secondary'
+    
+    # PRE-RENDER
+    # - todo: instead of having fixed naming, find a way to allow the user to 
+    #         enter a name on the nuke sg write nodes. This would replaced
+    #         the 'prerender1', 'prerender2', etc.
+    nuke_shot_prerender1_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender1/v{version}/{Shot}.preRender1.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_prerender2_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender2/v{version}/{Shot}.preRender2.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_prerender3_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender3/v{version}/{Shot}.preRender3.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_prerender4_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender4/v{version}/{Shot}.preRender4.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
 
     #
     # Hiero
