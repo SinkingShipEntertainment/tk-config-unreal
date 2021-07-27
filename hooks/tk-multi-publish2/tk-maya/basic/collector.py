@@ -443,5 +443,7 @@ class MayaSessionCollector(HookBaseClass):
         from python import QCTool
 
         p_step = self.parent.context.step['name']
+        if p_step == 'AnimHiRig' or p_step == 'AnimLoRig' or p_step == 'AnimMidRig' or p_step == 'SimRig' or p_step == 'FaceRig':
+            p_step = 'Rigging'
         QCTool.main(p_step)
 # --- eof

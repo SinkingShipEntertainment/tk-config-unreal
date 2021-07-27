@@ -6,8 +6,11 @@
 
 import json
 import os
+import sys
 import sgtk
 import shutil
+
+#sys.path.append('X:/tools/pipeline_repos/studio_pipeline_2_5_repo/maya/cg_factory/assetPipeline')
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -165,7 +168,7 @@ class PostPhaseHook(HookBaseClass):
             pub_chk = self.utils_api3.get_latest_asset_pub_in_proj_by_step(
                 prj_name,
                 ent_name,
-                e_step='RIG'
+                e_step='HIRIG'
             )
 
             # farm submission for simple autorig job
@@ -190,6 +193,28 @@ class PostPhaseHook(HookBaseClass):
                     SSE_HEADER
                 )
                 self.logger.debug(m)
+
+        #import assetAPI.modelHierarchy as modelHierarchy
+        #mh = modelHierarchy.modelHierarchy()
+        #import assetAPI.shotgrid as shotgun
+        #cShotgun = shotgun.ShotgunAPI()
+        #import assetAPI.assets as assets
+       # cAssets = assets.Assets()
+        #auth = sgtk.authentication.ShotgunAuthenticator()
+        #sceneDict = cShotgun.evaluateScene()
+        #shotgunUser = cShotgun.getActiveUser().name
+        #assetUser = str(auth.get_user())
+       # mh.createModelHierarchyFile(sceneDict['assetType'], sceneDict['assetName'], shotgunUser, sceneDict['project'])
+        #versions = cAssets.getVersions(sceneDict['assetType'], sceneDict['assetName'], 'MOH', assetUser,
+        #                               software='buildData',
+       #                                project=sceneDict['project'])
+        #if versions:
+         #   if versions[0]:
+         #       versionNumber = len(versions[0])
+         #       pubEntity = mh.publishHierarchy(sceneDict['assetType'], sceneDict['assetName'], shotgunUser,
+        #                                        sceneDict['project'], versionNumber)
+         #       m = 'Published Modelhirarchy: %s' % str(pubEntity['path']['local_path_windows'])
+        #        self.logger.debug(m)
 
     def post_publish_maya_rig(self, scene_name, wk_fields):
         """For the 'Rigging'/RIG Asset Publishes, create a 'versionless'
