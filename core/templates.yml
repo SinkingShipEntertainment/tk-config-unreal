@@ -518,6 +518,13 @@ paths:
         # definition: '@shot_root/publish/houdini/{name}.{Step}.v{version}.hip'
         definition: '@shot_publish_area_houdini/{Shot}.[{name}.]{Step}.v{version}.hip'
         root_name: 'primary'
+    
+    # Houdini review files - flibbpoks aka playblast
+    houdini_shot_review:
+        #definition: "@shot_work_area_houdini/version/{Shot}/{Shot}_{Step}_v{version}.mov"
+        definition: '@sequence_root/flipbooks/{Shot}/{Shot}.[{name}.]{Step}.v{version}.mov'
+        # using equivalent definition from maya step 
+        root_name: 'secondary'
 
     # @Shervin - Discuss with FX, Change alembic, render and mantra paths to secondary
     # Alembic caches
@@ -663,6 +670,11 @@ paths:
         definition: '@sequence_root/renders/{Shot}/3d/lt_slap_comps/v{version}/{Shot}.Light.acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
+    # FX - ACEScg (slapcomp)
+    nuke_shot_fxrnd_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/3d/fx_slap_comps/v{version}/{Shot}.FX-RnD.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+
     # ROTO - ACEScg
     nuke_shot_roto_render_acescg_exr:
         definition: '@sequence_root/renders/{Shot}/roto/v{version}/{Shot}.Roto.acescg.v{version}.{SEQ}.exr'
@@ -673,6 +685,15 @@ paths:
         definition: '@sequence_root/plates/{Shot}/degrain/v{version}/{Shot}.[{name}.]degrain.{nuke.output}.srgb.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
+    nuke_shot_degrain_render_srgb_pub_exr:
+        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}.[{name}.]degrain.{nuke.output}.v{version}.srgb.{SEQ}.exr'
+        root_name: 'secondary'
+        
+    nuke_shot_degrainpre_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/Degrain/v{version}/{Shot}.Degrain.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+
+    # PLATES
     external_plates:
         definition: '@sequence_root/plates/{Shot}/external/'
         root_name: 'secondary'
@@ -683,9 +704,14 @@ paths:
 
     resolve_graded_plates:
         definition: '@sequence_root/plates/{Shot}/graded_plates/'
-
-    nuke_shot_degrain_render_srgb_pub_exr:
-        definition: '@sequence_root/to_online/{Shot}/publish/{Shot}.[{name}.]degrain.{nuke.output}.v{version}.srgb.{SEQ}.exr'
+        
+    nuke_shot_cleanplatepre_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/CleanPlate/v{version}/{Shot}.CleanPlate.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+        
+    # SMART VECTOR
+    nuke_shot_smartvectorpre_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/smartVector/v{version}/{Shot}.smartVector.acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
     # review output
@@ -705,6 +731,23 @@ paths:
         root_name: 'secondary'
     nuke_output_rgb_matte_acescg_exr:
         definition: '@nuke_output_matte_root/{Step}_matte/v{version}/{Shot}.{Step}.MATTE.acescg.{SEQ}.exr'
+        root_name: 'secondary'
+    
+    # PRE-RENDER
+    # - todo: instead of having fixed naming, find a way to allow the user to 
+    #         enter a name on the nuke sg write nodes. This would replaced
+    #         the 'prerender1', 'prerender2', etc.
+    nuke_shot_prerender1_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender1/v{version}/{Shot}.preRender1.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_prerender2_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender2/v{version}/{Shot}.preRender2.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_prerender3_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender3/v{version}/{Shot}.preRender3.acescg.v{version}.{SEQ}.exr'
+        root_name: 'secondary'
+    nuke_shot_prerender4_render_acescg_exr:
+        definition: '@sequence_root/renders/{Shot}/pre/preRender4/v{version}/{Shot}.preRender4.acescg.v{version}.{SEQ}.exr'
         root_name: 'secondary'
 
     #
@@ -914,6 +957,9 @@ paths:
     maya_asset_publish_surfacing_arnold_shadernetwork:
         definition: '@asset_publish_area_maya/{Asset}.[{name}.]SHD.AI.v{version}.ma'
         root_name: 'primary'
+    maya_asset_work_render:
+        definition: 'assets/{sg_asset_type}/renders/{Asset}/{Step}/{current_user_name}/turntable/v{version}/{Asset}.{SEQ}.exr'
+        root_name: 'secondary'
 
     # The location of FBX exports for Unreal
     maya_asset_fbx_publish:
@@ -965,6 +1011,12 @@ paths:
     houdini_asset_publish:
         definition: '@asset_root/publish/houdini/{Asset}.[{name}.]{Step}.v{version}.hip'
         root_name: 'primary'
+    # Houdini rewiew files
+    houdini_asset_review:
+        definition: '@asset_root/flipbooks/{Asset}/{Asset}.[{name}.]{Step}.v{version}.mov'
+        # using equivalent definition from maya step - is there any maya asset versioning
+        root_name: 'secondary'
+
     # Alembic caches
     houdini_asset_work_alembic_cache:
         # definition: '@asset_root/{Step}/work/{current_user_name}/houdini/cache/alembic/{houdini.node}/{Asset}_{name}_{houdini.node}.v{version}.abc'
