@@ -25,7 +25,7 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # More info here: https://docs.unrealengine.com/en-US/WorkingWithContent/Importing/FBX/index.html
 FBX_EXPORT_VERSION = 'FBX201800'
 PROJ_NAME = os.environ['CURR_PROJECT']
-ALLOWED_STEPS_FOR_EXPORT_SELECTED = ['RIG', 'ANIM']
+ALLOWED_STEPS_FOR_EXPORT_SELECTED = ['RIG', 'HIRIG', 'ANIM']
 SEARCH_GROUP = ['model', 'structure']
 ACCEPTED_ASSET_TYPES = ['Character', 'Prop', 'Environment', 'Pipeline']
 
