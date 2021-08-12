@@ -6,8 +6,11 @@
 
 import json
 import os
+import sys
 import sgtk
 import shutil
+
+#sys.path.append('X:/tools/pipeline_repos/studio_pipeline_2_5_repo/maya/cg_factory/assetPipeline')
 
 HookBaseClass = sgtk.get_hook_baseclass()
 

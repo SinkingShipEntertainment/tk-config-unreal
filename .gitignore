@@ -15,6 +15,9 @@ tk-metadata
 # compiled python files
 *.py[co]
 
+# also ignore Thumbs.db files
+Thumbs.db
+
 # Packages
 *.egg
 *.egg-info

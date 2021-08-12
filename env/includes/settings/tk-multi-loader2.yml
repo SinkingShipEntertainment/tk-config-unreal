@@ -156,6 +156,8 @@ settings.tk-multi-loader2.maya:
     filters:
     - [project, is, {type: Project, id: 166}]
   publish_filters: [["sg_status_list", "is_not", null]]
+  #publish_filters: [["sg_status_list", "is", 'cmpt']]
+  #filter_publishes_hook: '{config}/tk-multi-loader2/filter_publishes.py'
   location: "@apps.tk-multi-loader2.location"
 
 # nuke
@@ -425,6 +427,7 @@ settings.tk-multi-loader2.unreal:
   action_mappings:
     Motion Builder FBX: [import_content, import_level]
     Maya FBX: [import_content]
+    Maya ABC: [import_content]
     Alembic Cache: [import_content]
   # --- SSE: Override import behaviour with custom framework -AB (2021-06-11)
   actions_hook: '{engine}/tk-multi-loader2/tk-unreal_actions.py:{config}/tk-multi-loader2/tk-unreal_actions.py'

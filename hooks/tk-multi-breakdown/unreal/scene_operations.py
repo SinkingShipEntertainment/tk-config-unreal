@@ -55,6 +55,50 @@ class BreakdownSceneOperations(Hook):
                 continue
             refs.append(scene_item_dict)
 
+        # TODO: this is not fully functional but decent starting point
+        # lets go through the refs now and look for any fur caches associated with
+        # skeletal meshes that have not been imported in the scene
+        # engine = sgtk.platform.current_engine()
+        # tk = engine.sgtk
+        # fbx_paths = []
+        # fur_cache_paths = []
+        # fur_cache_template = tk.templates['asset_fur_cache']
+        # for node_data in refs:
+        #     if node_data['type'] == str(unreal.SkeletalMesh):
+        #         fbx_paths.append(node_data['path'])
+        #     if node_data['type'] == str(unreal.GroomAsset):
+        #         fur_cache_paths.append(node_data['path'])
+        #
+        # for fbx_path in fbx_paths:
+        #     template = tk.template_from_path(fbx_path)
+        #     if template:
+        #         fbx_fields = template.get_fields(fbx_path)
+        #         asset_name = fbx_fields['Asset']
+        #         fbx_step = fbx_fields['Step']
+        #         fcps = tk.paths_from_template(fur_cache_template, {"Asset": asset_name})
+        #         for fcp in fcps:
+        #             fcp_fields = fur_cache_template.get_fields(fcp)
+        #             name = fcp_fields['name']
+        #             fcp_step = fcp_fields['Step']
+        #             relevant_f_caches = [x for x in fur_cache_paths if fbx_path.split(fbx_step)[0] ==
+        #                                  fcp.split(fcp_step)[0]]
+        #
+        #             unreal.log_warning(relevant_f_caches)
+        #
+        #             rfc_names = []
+        #             for rfc in relevant_f_caches:
+        #                 rfc_fields = fur_cache_template.get_fields(rfc)
+        #                 rfc_names.append(rfc_fields['name'])
+        #
+        #             if name not in rfc_names:
+        #                 fcp_fields['version'] = 1
+        #                 item_data = {
+        #                     "node": 'New',
+        #                     "type": str(unreal.GroomAsset),
+        #                     "path": fur_cache_template.apply_fields(fcp_fields)
+        #                 }
+        #                 refs.append(item_data)
+
         return refs
 
 
