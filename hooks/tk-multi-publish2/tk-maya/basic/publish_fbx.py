@@ -25,7 +25,7 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # More info here: https://docs.unrealengine.com/en-US/WorkingWithContent/Importing/FBX/index.html
 FBX_EXPORT_VERSION = 'FBX201800'
 PROJ_NAME = os.environ['CURR_PROJECT']
-ALLOWED_STEPS_FOR_EXPORT_SELECTED = ['RIG', 'ANIM']
+ALLOWED_STEPS_FOR_EXPORT_SELECTED = ['RIG', 'HIRIG', 'ANIM']
 SEARCH_GROUP = ['model', 'structure']
 ACCEPTED_ASSET_TYPES = ['Character', 'Prop', 'Environment', 'Pipeline']
 
@@ -374,9 +374,30 @@ class MayaFBXPublishPlugin(HookBaseClass):
 
         if "Pipeline" in obj_type:
             for cam_shape in cmds.ls(type="camera"):
-                if "TRACKCAM" in cam_shape:
-                    self.logger.debug('Referenced camera detected!')
-                    item.properties["export_groups"] = [cam_shape]
+                if not "TRACKCAM" in cam_shape:
+                    continue
+                self.logger.debug('Referenced camera detected!')
+                item.properties["export_groups"] = [cam_shape]
+                item.properties['select_flag'] = '-s'
+
+                # Note: Since the namespace is editable by the artist,
+                # let's use use node_name instead for the fbx_name.
+                fixed_camera_name = item.properties['node_name'].replace(
+                    'RN', ''
+                )
+
+                # Since the generic `self.validate_references` sets the
+                # output fbx name of the TRACKCAM (which defaults to the
+                # node_name property), we need to override it to
+                # the proper name (without the 'RN' suffix).
+                new_path = item.properties["path"].replace(
+                    item.properties['node_name'], fixed_camera_name
+                )
+                new_publish_path = item.properties["publish_path"].replace(
+                    item.properties['node_name'], fixed_camera_name
+                )
+                item.properties["path"] = new_path
+                item.properties["publish_path"] = new_publish_path
 
         elif "Environment" in obj_type:
             # TODO: Make this more granular and require a "model" group
@@ -558,12 +579,12 @@ class MayaFBXPublishPlugin(HookBaseClass):
         maya file) to the name of the asset. This is primarily within an ANIM
         shot.
 
-        :param shotgun_instance: Shotgun instance to query data from
         :param item: Item to process
+        :param shotgun_instance: Shotgun instance to query data from
         """
         orig_name = os.path.basename(item.properties.get("publish_path"))
 
-        step =  util_reference.get_step(util_reference.get_current_shot())
+        step = util_reference.get_step(util_reference.get_current_shot())
         delimiter = shotgun_instance.get_project_entity_name_delimiter(
             my_proj=PROJ_NAME
         )
@@ -595,6 +616,11 @@ class MayaFBXPublishPlugin(HookBaseClass):
         self.logger.debug('Attempting to publish => {}'.format(
             item.properties.get('path'))
         )
+
+        # Ensure plugin is loaded...
+        if not cmds.pluginInfo('fbxmaya', q=True, loaded=True):
+            cmds.loadPlugin('fbxmaya.mll')
+
         publisher = self.parent
 
         # get the path to create and publish

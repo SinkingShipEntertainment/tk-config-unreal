@@ -836,7 +836,7 @@ paths:
         root_name: 'primary'
 
     asset_fur_cache:
-        definition: '@asset_root/publish/caches/{Asset}.{name}.GRM.v{version}.abc'
+        definition: '@asset_root/publish/caches/fur/{Asset}.{name}.GRM.v{version}.abc'
         root_name: 'primary'
 
     asset_arnold_standin:

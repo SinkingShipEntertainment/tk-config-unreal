@@ -89,4 +89,4 @@ frameworks:
     location:
       type: git
       path: https://github.com/SinkingShipEntertainment/tk-framework.git
-      version: v0.4
+      version: v1.0.0
