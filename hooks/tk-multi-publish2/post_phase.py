@@ -197,43 +197,33 @@ class PostPhaseHook(HookBaseClass):
         # During a model publish we also want to create and publish a
         # Model Hierarchy json file for use in rigging department.
         import assetAPI.modelHierarchy as modelHierarchy
-        import assetAPI.shotgrid as shotgun
-        import assetAPI.assets as assets
         mh = modelHierarchy.ModelHierarchy()
+        import assetAPI.shotgrid as shotgun
         cShotgun = shotgun.ShotgunAPI()
+        import assetAPI.assets as assets
         cAssets = assets.Assets()
         auth = sgtk.authentication.ShotgunAuthenticator()
         sceneDict = cShotgun.evaluateScene()
         shotgunUser = cShotgun.getActiveUser().name
         assetUser = str(auth.get_user())
-        mh.createModelHierarchyFile(
-            sceneDict['assetType'],
-            sceneDict['assetName'],
-            shotgunUser,
-            sceneDict['project']
-        )
-        versions = cAssets.getVersions(
-            sceneDict['assetType'],
-            sceneDict['assetName'],
-            'MOH',
-            assetUser,
-            software='buildData',
-            project=sceneDict['project']
-        )
-        if versions:
-            if versions[0]:
-                versionNumber = len(versions[0])
-                pubEntity = mh.publishHierarchy(
-                    sceneDict['assetType'], 
-                    sceneDict['assetName'],
-                    shotgunUser,
-                    sceneDict['project'],
-                    versionNumber
-                )
-                m = 'Published Model Hierarchy: {}'.format(
-                    pubEntity['path']['local_path_windows']
-                )
-                self.logger.debug(m)
+        validateHierarchy = mh.validateHierarchy()
+        if validateHierarchy[0]:
+            mh.createModelHierarchyFile(sceneDict['assetType'], sceneDict['assetName'], shotgunUser,
+                                        sceneDict['project'])
+            versions = cAssets.getVersions(sceneDict['assetType'], sceneDict['assetName'], 'MOH', assetUser,
+                                           software='buildData',
+                                           project=sceneDict['project'])
+            if versions:
+                if versions[0]:
+                    versionNumber = len(versions[0])
+                    pubEntity = mh.publishHierarchy(sceneDict['assetType'], sceneDict['assetName'], shotgunUser,
+                                                    sceneDict['project'], versionNumber)
+                    m = 'Published Modelhirarchy: %s' % str(pubEntity['path']['local_path_windows'])
+                    self.logger.debug(m)
+        else:
+            m = 'Published Modelhirarchy Failed to validate hierarchy, nodes: %s error: %s' % (
+            validateHierarchy[1], validateHierarchy[2])
+            self.logger.debug(m)
 
     def post_publish_maya_rig(self, scene_name, wk_fields):
         """For the 'Rigging'/RIG Asset Publishes, create a 'versionless'
