@@ -35,6 +35,17 @@ settings.tk-unreal.asset_step:
   launch_builtin_plugins: [basic]
   automatic_context_switch: false
 
+# asset
+settings.tk-unreal.asset:
+  apps:
+    tk-multi-publish2: "@settings.tk-multi-publish2.unreal.asset"
+  location: "@engines.tk-unreal.location"
+  menu_favourites: []
+  run_at_startup: []
+  launch_builtin_plugins: [basic]
+  automatic_context_switch: false
+
+
 # project
 settings.tk-unreal.project:
   apps:

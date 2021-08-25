@@ -34,6 +34,7 @@ includes:
 - ./includes/settings/tk-vred.yml
 - ./includes/settings/tk-shell.yml
 - ./includes/settings/tk-shotgun.yml
+- ./includes/settings/tk-unreal-publish.yml
 - ./includes/settings/tk-natron.yml               # --- SSE add (-DW 2020-02-04)
 
 
@@ -54,6 +55,7 @@ engines:
   tk-vred: "@settings.tk-vred.asset"
   tk-shell: "@settings.tk-shell.asset"
   tk-shotgun: "@settings.tk-shotgun.asset"
+  tk-unreal: "@settings.tk-unreal.asset"
   tk-natron: "@settings.tk-natron.asset"          # --- SSE add (-DW 2020-02-04)
 
 ################################################################################

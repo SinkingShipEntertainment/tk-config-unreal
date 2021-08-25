@@ -658,7 +658,7 @@ settings.tk-multi-publish2.vred.asset_step:
 
 # project
 settings.tk-multi-publish2.unreal.project:
-  collector: "{self}/collector.py:{engine}/tk-multi-publish2/basic/collector.py"
+  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-unreal/basic/collector.py"
   publish_plugins:
   - name: Publish to Shotgun
     hook: "{self}/publish_file.py"
@@ -679,6 +679,19 @@ settings.tk-multi-publish2.unreal.project:
         Publish Template: unreal_movie_publish
   help_url: *help_url
   location: "@apps.tk-multi-publish2.location"
+
+# SSE - Added hooks to publish to perforce.
+settings.tk-multi-publish2.unreal.asset:
+  collector: "{self}/collector.py:{config}/tk-multi-publish2/tk-unreal/basic/collector.py"
+  publish_plugins:
+  - name: Publish Blueprint to Perforce and Shotgun
+    hook: "{self}/publish_file.py:{config}/tk-multi-publish2/tk-unreal/basic/publish_asset.py"
+    settings: 
+      Publish Depot: vfx_bb_publish
+      Publish Depot Internal Path: BBASSETS_Publish/Content
+  help_url: *help_url
+  location: "@apps.tk-multi-publish2.location"
+
 
 ################################################################################
 
