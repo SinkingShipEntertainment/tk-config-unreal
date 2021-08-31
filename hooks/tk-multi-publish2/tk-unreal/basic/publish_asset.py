@@ -162,6 +162,9 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         :param item: Item to process
         :returns: True if item is valid, False otherwise.
         """      
+
+        publish_depot = settings.get("Publish Depot").value       
+        
         p4 = SSP4.connect_to_perforce()
         if not p4.connected():
             self.logger.error("Not connected to perforce, connect to" +
@@ -169,15 +172,14 @@ class UnrealAssetPublishPlugin(HookBaseClass):
             return False
 
         try:
-            root_folder = SSP4.set_client_workspace_and_get_root(p4)                            
+            root_folder = SSP4.set_client_workspace_and_get_root(p4, publish_depot)                            
         except :
             self.logger.error("Could not find your perforce workspace," +
                 " connect to perforce using p4v and try again.")
             return False
     
-        publish_depot = settings.get("Publish Depot").value       
         publish_folder = os.path.join(root_folder, publish_depot)
-        
+          
         if not os.path.isdir(publish_folder):
             # NOTE: We're just checking here if the publish depot is in the
             # workspace at all, not if the files we need are actually there.
@@ -245,7 +247,7 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         # set this to true when debugging to disable all the perforce calls.
         debug_skip_perforce = False
         # set this to true to do a dry run of the publish when testing.
-        debug_dry_run = True
+        debug_dry_run = False
 
         # Export the asset from Unreal
         asset_path = item.properties["asset_path"]
@@ -259,8 +261,13 @@ class UnrealAssetPublishPlugin(HookBaseClass):
 
         sg = self.parent.sgtk.shotgun
         p4 = SSP4.connect_to_perforce()
-        root_folder = SSP4.set_client_workspace_and_get_root(p4)
+        root_folder = SSP4.set_client_workspace_and_get_root(p4, publish_depot)
+
         publish_folder = os.path.join(root_folder, publish_depot)
+
+        # make sure the publish repo is up to date.
+        p4.run_sync(publish_folder)
+
         publish_path = os.path.join(publish_folder, publish_depot_internal_path) + "/"
         publish_path = publish_path.replace("\\\\", "/")
         project_dir = unreal.Paths.project_content_dir()
@@ -307,15 +314,16 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         
         if not debug_skip_perforce:                  
             new_changelist._files = depot_paths
-            p4.save_change(new_changelist)
-            ## TODO: UNCOMMENT THIS OUT WHEN READY TO ACTUALLY SUBMIT TO PERFORCE.
-            #p4.run_submit(new_changelist)
+            p4.run_submit(new_changelist)
             
         dependency_obj = {"fileList": depot_paths}
         dependency_field_string = json.dumps(dependency_obj)      
       
         asset_id = SGHelpers.get_asset_id_by_name(sg, asset_name, item.context.project)
-        highest_publish_number = SGHelpers.get_highest_publish_number_for_asset(sg, asset_id)
+        try:
+            highest_publish_number = SGHelpers.get_highest_publish_number_for_asset(sg, asset_id)
+        except:
+            highest_publish_number = 0
         new_version = highest_publish_number + 1
 
         # TODO: Figure out the published_file_type, task, and whether the way version

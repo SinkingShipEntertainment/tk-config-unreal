@@ -1,4 +1,4 @@
-﻿# This file is based on templates provided and copyrighted by Autodesk, Inc.
+# This file is based on templates provided and copyrighted by Autodesk, Inc.
 # This file has been modified by Epic Games, Inc. and is subject to the license 
 # file included in this repository.
 
@@ -164,15 +164,26 @@ class UnrealSessionCollector(HookBaseClass):
             asset_item.properties["asset_name"] = asset_name
             asset_item.properties["asset_type"] = asset_type
 
-          
-            try:
-                # take _BP out of the asset name before searching for it.
-                asset_name_cleaned = asset_name[:-3]
+        
+            if len(asset_name) > 3 and asset_name[-3:] == "_BP":
+                # if we're looking at a blueprint, we should try to switch contexts
+                # to the asset context for that asset.
+                                
+                try:
+                    # take _BP out of the asset name before searching for it.
+                    asset_name_cleaned = asset_name[:-3]
+                    print("Trying to find id for asset: " + str(asset_name_cleaned))
 
-                asset_id = SGHelpers.get_asset_id_by_name(sg, asset_name_cleaned, parent_item.context.project)
-                asset_item.context = self.parent.sgtk.context_from_entity("Asset", asset_id)              
-            except:
-                print("unable to find context for asset: " + asset_name)
+                    asset_id = SGHelpers.get_asset_id_by_name(sg, asset_name_cleaned, parent_item.context.project)
+                    print("Trying to find context for id: " + str(asset_id))
+                    asset_context = self.parent.sgtk.context_from_entity("Asset", asset_id)
+                    print("ASSET CONTEXT:")
+                    print(asset_context)
+                    if asset_context != None:
+                        asset_item.context = asset_context        
+                except Exception as e:
+                    print("unable to find context for asset: " + asset_name)
+                    print(e)
 
            
             
