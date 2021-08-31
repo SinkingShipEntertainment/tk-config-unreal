@@ -204,7 +204,7 @@ class PostPhaseHook(HookBaseClass):
         cAssets = assets.Assets()
         auth = sgtk.authentication.ShotgunAuthenticator()
         sceneDict = cShotgun.evaluateScene()
-        shotgunUser = cShotgun.getActiveUser().name
+        shotgunUser = cShotgun.getActiveUser()['name']
         assetUser = str(auth.get_user())
         validateHierarchy = mh.validateHierarchy()
         if validateHierarchy[0]:
