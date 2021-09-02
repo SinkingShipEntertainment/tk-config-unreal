@@ -1,3 +1,7 @@
+# ignore toolkit system files
+install_location.yml
+pipeline_configuration.yml
+
 # ---- ignore special files written during config setup
 
 core/app_store.yml
@@ -10,6 +14,9 @@ tk-metadata
 
 # compiled python files
 *.py[co]
+
+# also ignore Thumbs.db files
+Thumbs.db
 
 # Packages
 *.egg
@@ -36,3 +43,11 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+# ignore python caches
+__pycache__
+
+# ignore any IDE configuration folders (PyCharm, VSCode, etc.)
+.idea/
+.vs/
+.vscode/

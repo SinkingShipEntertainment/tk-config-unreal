@@ -1,5 +1,5 @@
 # This file is based on templates provided and copyrighted by Autodesk, Inc.
-# This file has been modified by Epic Games, Inc. and is subject to the license 
+# This file has been modified by Epic Games, Inc. and is subject to the license
 # file included in this repository.
 
 import os
@@ -190,7 +190,8 @@ class MayaSessionPublishPlugin(HookBaseClass):
         )
         return {
             "accepted": True,
-            "checked": True
+            "checked": True,
+            "enabled": False
         }
 
     def validate(self, settings, item):
@@ -331,7 +332,7 @@ class MayaSessionPublishPlugin(HookBaseClass):
         # Ensure that the destination path exists before copying the file
         destination_path = os.path.split(work_path)[0]
         self.parent.ensure_folder_exists(destination_path)
-        
+
         # Copy the Maya file from the session path to the work path for the actual publish
         try:
             shutil.copyfile(path, work_path)
@@ -362,7 +363,7 @@ class MayaSessionPublishPlugin(HookBaseClass):
 
         # Restore the path for finalizing
         item.properties["path"] = item.properties["local_path"]
-        
+
         # do the base class finalization
         super(MayaSessionPublishPlugin, self).finalize(settings, item)
 
@@ -417,10 +418,10 @@ def _get_work_path(path, work_template):
     """
     # Get the filename from the path
     filename = os.path.split(path)[1]
-    
+
     # Retrieve the name field from the filename excluding the extension
     work_path_fields = {"name" : os.path.splitext(filename)[0]}
-    
+
     # Apply the name to the work template
     work_path = work_template.apply_fields(work_path_fields)
     work_path = os.path.normpath(work_path)
