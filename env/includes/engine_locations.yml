@@ -13,12 +13,13 @@
 
 ################################################################################
 
-# 3dsMax
+# 3dsMax Plus
 engines.tk-3dsmaxplus.location:
   type: app_store
   name: tk-3dsmaxplus
   version: v0.5.11
 
+# 3dsMax
 engines.tk-3dsmax.location:
   type: app_store
   name: tk-3dsmax
