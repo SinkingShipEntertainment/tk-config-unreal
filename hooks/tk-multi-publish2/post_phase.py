@@ -123,7 +123,10 @@ class PostPhaseHook(HookBaseClass):
             if p_step == 'Tracking & Layout':
                 self.post_publish_maya_tlo(scene_name, wk_fields)
             if p_step == 'Animation':
-                self.post_publish_maya_anim(scene_name, wk_fields)
+                # Commenting the function call to run the Anim Cache, InitialLight and Checkpass render jobs, for the BBS1 context
+                # keeping code just in case it is needed in the future. It is currently not wanted/needed
+                # self.post_publish_maya_anim(scene_name, wk_fields)
+                pass
             if p_step == 'Character Finaling':
                 self.post_publish_maya_cfx(scene_name, wk_fields)
             if p_step == 'FX':
