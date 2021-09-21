@@ -43,6 +43,7 @@ settings.tk-maya.asset_step:
       location: '@apps.tk-multi-about.location'
     tk-multi-breakdown:
       location: '@apps.tk-multi-breakdown.location'
+      hook_get_version_number: '{config}/tk-multi-breakdown/get_version_number.py'
     tk-multi-loader2: '@settings.tk-multi-loader2.maya'
     tk-multi-publish2: '@settings.tk-multi-publish2.maya.asset_step'
     tk-multi-screeningroom: '@settings.tk-multi-screeningroom.rv'
@@ -64,6 +65,7 @@ settings.tk-maya.asset_step_surfacing:
       location: '@apps.tk-multi-about.location'
     tk-multi-breakdown:
       location: '@apps.tk-multi-breakdown.location'
+      hook_get_version_number: '{config}/tk-multi-breakdown/get_version_number.py'
     tk-multi-loader2: '@settings.tk-multi-loader2.maya'
     tk-multi-publish2: '@settings.tk-multi-publish2.maya.asset_step_surfacing'
     tk-multi-screeningroom: '@settings.tk-multi-screeningroom.rv'
@@ -118,6 +120,7 @@ settings.tk-maya.shot_step:
       location: '@apps.tk-multi-about.location'
     tk-multi-breakdown:
       location: '@apps.tk-multi-breakdown.location'
+      hook_get_version_number: '{config}/tk-multi-breakdown/get_version_number.py'
     tk-multi-setframerange:
       location: '@apps.tk-multi-setframerange.location'
     tk-multi-loader2: '@settings.tk-multi-loader2.maya'
