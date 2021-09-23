@@ -14,3 +14,11 @@ documentation:
 https://docs.unrealengine.com/en-US/Engine/Content/UsingUnrealEnginewithAutodeskShotgun/index.html
 
 -------------------------------------------------------------------------
+SSE specific modifications
+
+The `publish_fbx.py` hook has been modified to allow specific pipleine steps 
+to FBX export sepecific groups within a model's hierarchy. 
+This applies mainly to:
+- Characters
+- Props
+-------------------------------------------------------------------------
