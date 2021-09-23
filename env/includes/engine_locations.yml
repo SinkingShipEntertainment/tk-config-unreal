@@ -115,7 +115,6 @@ engines.tk-vred.location:
 # Natron
 engines.tk-natron.location:
   type: git
-  branch: master
   path: https://github.com/diegogarciahuerta/tk-natron.git
   version: v1.0.1
 

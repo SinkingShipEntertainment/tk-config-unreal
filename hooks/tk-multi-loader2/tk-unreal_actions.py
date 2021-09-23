@@ -35,10 +35,14 @@ class UnrealActions(HookBaseClass):
         imgspc_ue_imp = imgspc_fw.import_module("unreal.import_utils")
         imgspc_ue_imp.import_to_content_browser(path, sg_publish_data)
 
+        # move the materials to the "Materials" folder
+        imgspc_ue_imp.relocate_materials(sg_publish_data)
+
         # import in the groom information after bringing in the FBX
         ue_import_type = imgspc_ue_imp.get_ue_import_type(sg_publish_data)
         if ue_import_type == unreal.FBXImportType.FBXIT_SKELETAL_MESH:
             imported_grm_obj_paths = imgspc_ue_imp.import_associated_grooms(sg_publish_data)
+            imported_texture_paths = imgspc_ue_imp.import_associated_textures(sg_publish_data)
 
             # bind the groom
             skm_destination_path, skm_destination_name = imgspc_ue_imp.get_destination_path_and_name(
