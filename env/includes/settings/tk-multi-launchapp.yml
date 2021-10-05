@@ -73,7 +73,7 @@ settings.tk-multi-launchapp.harvest:
   windows_path: "@path.windows.harvest"
   menu_name: PublishAndHarvest
   location: "@apps.tk-multi-launchapp.location"
-  icon: "X:\\tools\\sinking_ship\\shotgun\\icons\\ss_logo_256x256.png"
+  icon: "X:\\tools\\win_tools\\HarvestTool\\ss_logo_256x256.png"
 
 # SSE Copy Asset Tool
 settings.tk-multi-launchapp.copyasset:
@@ -82,7 +82,7 @@ settings.tk-multi-launchapp.copyasset:
   windows_path: "@path.windows.copyasset"
   menu_name: CopyAsset
   location: "@apps.tk-multi-launchapp.location"
-  icon: "X:\\tools\\sinking_ship\\shotgun\\icons\\ss_logo_256x256.png"
+  icon: "X:\\tools\\win_tools\\CopyAsset\\ss_logo_256x256.png"
 
 # SSE ACES conversion
 settings.tk-multi-launchapp.acesconversion:

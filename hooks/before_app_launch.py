@@ -861,17 +861,20 @@ class BeforeAppLaunch(tank.Hook):
         _setup = '_tk_nuke_env_setup'
         self._headers(_setup)
 
-        # Update the sys.path
-        script_paths = []
-        script_paths.append(self._sg_a3_path)
-        for script_path in script_paths:
-            sys.path.insert(0, script_path)
+        # Update the PYTHON_PATH
+        if 'PYTHONPATH' in os.environ:
+            python_paths = os.environ['PYTHONPATH'].split(os.pathsep)
+        else:
+            python_paths = []
+
+        python_paths.append(self._sg_a3_path)
+        new_python_paths = list(set(python_paths))
+        os.environ['PYTHONPATH'] = os.pathsep.join(new_python_paths)
 
         # Update the NUKE_PATH
         # - Previously, the I.T. department was configuring machines with the
         # - NUKE_PATH already set to 'x:\tools\nuke'
-        # - This is now legacy and will be ignored when we launch nuke via the
-        # - sgtk
+        # - This is now legacy and will be ignored when we launch nuke via sgtk
         # - Also, log a warning if any NUKE_PATH already exists that is not a
         # - part of the expected "sgtk" launch mechanism
         nuke_plugin_path = []
@@ -884,9 +887,7 @@ class BeforeAppLaunch(tank.Hook):
                 if 'sgtk' in nuke_path:
                     nuke_plugin_path.append(nuke_path)
                 else:
-                    m = 'Bad value in NUKE_PATH, ignoring: {}'.format(
-                        nuke_path
-                    )
+                    m = 'Bad value in NUKE_PATH, ignoring: {}'.format(nuke_path)
                     LOGGER.warn(m)
 
         # Add main/dev pipeline repos to NUKE_PATH

@@ -170,6 +170,10 @@ class MayaFBXPublishPlugin(HookBaseClass):
         path = _session_path()
         work_template = item.parent.properties.get("work_template")
         work_fields = work_template.get_fields(path)
+        if 'RIG' in work_fields['Step']:
+            # It is assumed that Rigging is working only on one asset at a time
+            # so for convenience, the fbx item is checked by default.
+            checked = True
         if 'ANIM' in work_fields['Step']:
             # Let's uncheck the default fbx export item for the entire scene.
             # We want to export individual assets instead.
