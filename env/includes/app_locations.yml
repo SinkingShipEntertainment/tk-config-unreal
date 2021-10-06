@@ -159,8 +159,6 @@ apps.tk-houdini-mantranode.location:
 
 # sse_tk-houdini-flipbook
 apps.tk-houdini-flipbook.location:
-  #type: dev
-  #path: X:\dev\ss_dev_claudiohickstein\tk-houdini-flipbook\
   type: github_release
   organization: SinkingShipEntertainment
   repository: tk-houdini-flipbook
