@@ -96,7 +96,7 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         accept() method. Strings can contain glob patters such as *, for example
         ["maya.*", "file.maya"]
         """
-        return ["unreal.asset.Blueprint"]
+        return ["unreal.asset.Blueprint", "unreal.asset.World"]
 
     def accept(self, settings, item):
         """
@@ -200,10 +200,16 @@ class UnrealAssetPublishPlugin(HookBaseClass):
             self.logger.debug("Asset path or name not configured.")
             return False
 
-        if not asset_name[-3:] == "_BP":
-            self.logger.debug("Expected <ASSET_NAME>_BP as asset file name.")
-            return False
+        is_valid_asset_name = False
+        if asset_name[-3:] == "_BP":
+            is_valid_asset_name = True
+        if asset_name[-7:] == "_Set_Lv":
+            is_valid_asset_name = True
       
+        if not is_valid_asset_name:
+            self.logger.debug("Expected <ASSET_NAME>_BP or <ASSET_NAME>_Set_Lv as asset file name.")
+            return False
+
         if item.description == None:
             self.logger.debug("Description of publish is required.")
             return False
