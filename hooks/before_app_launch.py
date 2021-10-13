@@ -1084,6 +1084,11 @@ class BeforeAppLaunch(tank.Hook):
         if not config_p4python in os.environ.get("PYTHONPATH", ""):     
             os.environ["PYTHONPATH"] += os.pathsep + config_p4python
 
+        # add script folder to python path
+        scripts_path = '%s/unreal/scripts/python' % repo_path
+        if scripts_path not in os.environ.get('PYTHONPATH', ''):
+            os.environ["PYTHONPATH"] += os.pathsep + scripts_path
+
         # add the imgspc framework to the python path.
         imgspc_fw = self.load_framework("tk-framework-imgspc")
         config_img_spc = imgspc_fw.disk_location
