@@ -260,7 +260,12 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         # Export the asset from Unreal
         asset_path = item.properties["asset_path"]
         # Remove the last 3 characters (Should be _BP) from the asset name.
-        asset_name = item.properties["asset_name"][0:-3] 
+        asset_name = item.properties["asset_name"]
+        if item.properties["asset_name"][-3:] == "_BP":
+            asset_name = item.properties["asset_name"][0:-3]
+        elif (item.properties["asset_name"][-7:]).lower() == "_set_lv":
+            asset_name = item.properties["asset_name"][0:-7]
+        
 
         # Grab the settings variables needed to put things into the publish depot
         publish_depot = settings.get("Publish Depot").value       
@@ -292,10 +297,17 @@ class UnrealAssetPublishPlugin(HookBaseClass):
             new_changelist._description = change_description
 
         for dep in dependency_list:
+
+            if "set_lv" in dep.lower():
+                source_paths.append(dep.replace("/Game/", project_dir) + ".umap")
+                destination_paths.append(dep.replace("/Game/", publish_path) + ".umap")    
+                depot_paths.append(dep.replace("/Game/", depot_path) + ".umap")
+            else:
+                source_paths.append(dep.replace("/Game/", project_dir) + ".uasset")
+                destination_paths.append(dep.replace("/Game/", publish_path) + ".uasset")    
+                depot_paths.append(dep.replace("/Game/", depot_path) + ".uasset")
             # We're assuming all files are uassets (So far, this has been true)
-            source_paths.append(dep.replace("/Game/", project_dir) + ".uasset")
-            destination_paths.append(dep.replace("/Game/", publish_path) + ".uasset")    
-            depot_paths.append(dep.replace("/Game/", depot_path) + ".uasset")
+            
 
             if not debug_skip_perforce:
                 if os.path.isfile(destination_paths[-1]):
@@ -327,6 +339,7 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         dependency_obj = {"fileList": depot_paths}
         dependency_field_string = json.dumps(dependency_obj)      
       
+     
         asset_id = SGHelpers.get_asset_id_by_name(sg, asset_name, item.context.project)
         try:
             highest_publish_number = SGHelpers.get_highest_publish_number_for_asset(sg, asset_id)
