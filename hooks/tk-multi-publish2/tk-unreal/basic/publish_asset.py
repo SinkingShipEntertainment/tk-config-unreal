@@ -218,6 +218,8 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         asset_path_for_dependencies = str(asset_path).split(".")[0]
         dependency_json = asset_util.fetch_dependencies(asset_path_for_dependencies);
         dependency_list = json.loads(dependency_json)["fileList"]
+        if not asset_path_for_dependencies in dependency_list:
+            dependency_list.append(asset_path_for_dependencies) # put the asset itself on the list if it wasn't already there.
         for dep in dependency_list:
              self.logger.debug("Dependency discovered: " + dep)
 
@@ -338,7 +340,7 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         item.properties["sg_publish_data"] = sgtk.util.register_publish(
             self.parent.sgtk,
             item.context,
-            "null",#path
+            asset_name,#path
             asset_name,
             new_version,
             comment=item.description,
