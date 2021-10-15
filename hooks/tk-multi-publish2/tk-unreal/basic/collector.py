@@ -176,7 +176,7 @@ class UnrealSessionCollector(HookBaseClass):
                
                 asset_name_cleaned = asset_name[:-3]
                   
-            if len(asset_name) > 7 and (asset_name[-7:] == "_Set_Lv"):
+            if len(asset_name) > 7 and (asset_name[-7:].lower() == "_set_lv"):
                   # if we're looking at a Set, we should try to switch contexts
                 # to the asset context for that asset.
                 does_name_match_publishable_asset = True

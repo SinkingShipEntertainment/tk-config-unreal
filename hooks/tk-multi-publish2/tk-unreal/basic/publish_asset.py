@@ -203,7 +203,7 @@ class UnrealAssetPublishPlugin(HookBaseClass):
         is_valid_asset_name = False
         if asset_name[-3:] == "_BP":
             is_valid_asset_name = True
-        if asset_name[-7:] == "_Set_Lv":
+        if asset_name[-7:].lower() == "_set_lv":
             is_valid_asset_name = True
       
         if not is_valid_asset_name:
