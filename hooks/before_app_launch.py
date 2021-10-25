@@ -1069,24 +1069,32 @@ class BeforeAppLaunch(tank.Hook):
         project_name = os.environ['CURR_PROJECT']
         repo_path = self._return_repo_path(project_name)
         
-        paths_to_add = []
+        config_site_packages = os.path.join(
+            repo_path, "unreal", "site-packages"
+        )
 
-        site_packages_path = os.path.join(repo_path, "unreal", "site-packages")
-        paths_to_add.append (site_packages_path)
+        if not config_site_packages in os.environ.get("PYTHONPATH", ""):
+            os.environ["PYTHONPATH"] += os.pathsep + config_site_packages
 
-        p4_python_path = os.path.join(repo_path, "unreal", "p4python")
-        paths_to_add.append(p4_python_path)
+        # add the p4python library to the python path.
+        config_p4python = os.path.join(
+            repo_path, "unreal", "p4python"
+        )
 
-        imgspc_path = self.load_framework("tk-framework-imgspc").disk_location
-        paths_to_add.append(imgspc_path)
+        if not config_p4python in os.environ.get("PYTHONPATH", ""):     
+            os.environ["PYTHONPATH"] += os.pathsep + config_p4python
 
-        lib_path = os.path.join(repo_path, "unreal", "scripts", 
-            "python", "lib")
-        paths_to_add.append(lib_path)
+        # add script folder to python path
+        scripts_path = '%s/unreal/scripts/python' % repo_path
+        if scripts_path not in os.environ.get('PYTHONPATH', ''):
+            os.environ["PYTHONPATH"] += os.pathsep + scripts_path
 
-        for new_path in paths_to_add:
-            if not new_path in os.environ.get("PYTHONPATH", ""):
-                os.environ["PYTHONPATH"] += os.pathsep + new_path
+        # add the imgspc framework to the python path.
+        imgspc_fw = self.load_framework("tk-framework-imgspc")
+        config_img_spc = imgspc_fw.disk_location
+
+        if not config_img_spc in os.environ.get("PYTHONPATH", ""):     
+            os.environ["PYTHONPATH"] += os.pathsep + config_img_spc
 
         # --- Tell the user what's up...
         self.env_paths_sanity_check()
