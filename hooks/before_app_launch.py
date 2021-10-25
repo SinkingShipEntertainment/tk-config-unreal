@@ -1084,8 +1084,14 @@ class BeforeAppLaunch(tank.Hook):
         if not config_p4python in os.environ.get("PYTHONPATH", ""):     
             os.environ["PYTHONPATH"] += os.pathsep + config_p4python
 
-        # add script folder to python path
-        scripts_path = '%s/unreal/scripts/python' % repo_path
+        
+        lib_path = os.path.join(repo_path, "unreal", "scripts", 
+            "python", "lib")
+        if lib_path not in os.environ.get('PYTHONPATH', ''):
+            os.environ["PYTHONPATH"] += os.pathsep + lib_path
+        
+		# add script folder to python path
+        scripts_path = os.path.join(repo_path,'unreal', 'scripts', 'python')
         if scripts_path not in os.environ.get('PYTHONPATH', ''):
             os.environ["PYTHONPATH"] += os.pathsep + scripts_path
 
