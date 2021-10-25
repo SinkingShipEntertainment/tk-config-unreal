@@ -60,6 +60,8 @@ keys:
         type: int
     segment_name:
         type: str
+    map_type:
+        type: str
     # >>> from old sg_config
     obj_name:
         type: str
@@ -1211,6 +1213,11 @@ paths:
         #definition: 'assets/unrealdemo/exports/{YYYY}_{MM}_{DD}/{name}.fbx'
         # SSE temp customize - TODO: create unreal/exports in Schema and change this path
         definition: '@asset_root/work/{current_user_name}/exports/{YYYY}_{MM}_{DD}/{name}.fbx'
+        root_name: 'primary'
+
+    # unreal texture publish location
+    unreal_texture_publish:
+        definition: '@asset_root/publish/maps/unreal/{Asset}_[{name}_]{map_type}[_{UDIM}].exr'
         root_name: 'primary'
 
     # --------------------------------------- #
