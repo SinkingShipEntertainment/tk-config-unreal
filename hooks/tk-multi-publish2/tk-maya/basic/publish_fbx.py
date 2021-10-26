@@ -27,7 +27,9 @@ FBX_EXPORT_VERSION = 'FBX201800'
 PROJ_NAME = os.environ['CURR_PROJECT']
 ALLOWED_STEPS_FOR_EXPORT_SELECTED = ['RIG', 'HIRIG', 'ANIM']
 SEARCH_GROUP = ['model', 'structure']
-ACCEPTED_ASSET_TYPES = ['Character', 'Prop', 'Environment', 'Pipeline']
+ACCEPTED_ASSET_TYPES = [
+    'Character', 'Prop', 'Environment', 'Pipeline', 'Vehicle'
+]
 
 class MayaFBXPublishPlugin(HookBaseClass):
     """
