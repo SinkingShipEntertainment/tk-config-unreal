@@ -659,6 +659,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
             export_animation,
             embed_media,
             FBX_EXPORT_VERSION,
+            item.properties.get('current_step')
         ])
 
         cmds.select(clear=True)
@@ -674,6 +675,7 @@ class MayaFBXPublishPlugin(HookBaseClass):
         :param fbx_args: The list of arguments for fbx command to execute
         :return: True if successful, False otherwise.
         """
+        current_step = fbx_args[-1]
         selected_groups = cmds.ls(sl=True)
         if selected_groups:
             self.logger.debug('Exporting => {}'.format(selected_groups))
@@ -688,6 +690,14 @@ class MayaFBXPublishPlugin(HookBaseClass):
             cmds.FBXExportTangents('-v', True)
             cmds.FBXExportSmoothMesh('-v', True)
             cmds.FBXExportReferencedAssetsContent('-v', True)
+
+            if 'RIG' in current_step:
+                # Additional settings when exporting cloth
+                cmds.FBXExportShapes('-v', True)
+                cmds.FBXExportSkins('-v', True)
+                cmds.FBXExportConstraints('-v', True)
+                cmds.FBXExportSkeletonDefinitions('-v', True)
+
             cmds.FBXExportBakeComplexAnimation('-v', fbx_args[2])
             cmds.FBXExportEmbeddedTextures('-v', fbx_args[3])
             cmds.FBXExportFileVersion('-v', FBX_EXPORT_VERSION)
